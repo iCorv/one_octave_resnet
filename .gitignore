@@ -1,0 +1,8 @@
+model/
+models/
+first/
+second/
+__pycache__/
+.idea/
+.DS_Store
+
