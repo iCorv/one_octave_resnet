@@ -1,7 +1,7 @@
-"""Contains utility and supporting functions for ResNet.
+"""Contains the model function to train ResNet for piano transcription
 
   This module contains ResNet code which does not directly build layers. This
-includes dataset management, hyperparameter and optimizer code, and argument
+includes, hyperparameter and optimizer code, and argument
 parsing. Code for defining the ResNet layers can be found in resnet_model.py.
 """
 
@@ -11,9 +11,7 @@ from __future__ import print_function
 import tensorflow as tf
 from official.resnet import resnet_model
 
-################################################################################
-# Functions for running training/eval/validation loops for the model.
-################################################################################
+
 def learning_rate_with_decay(
         batch_size, batch_denom, num_images, boundary_epochs, decay_rates):
     """Get a learning rate that decays step-wise as training progresses.
