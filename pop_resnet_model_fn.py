@@ -95,6 +95,7 @@ def resnet_model_fn(features, labels, mode, model_class,
     tf.summary.image('images', features, max_outputs=6)
 
     features = tf.cast(features, dtype)
+    labels = tf.cast(labels, dtype)
 
     model = model_class(resnet_size, data_format, resnet_version=resnet_version,
                         dtype=dtype)
@@ -107,8 +108,8 @@ def resnet_model_fn(features, labels, mode, model_class,
     logits = tf.cast(logits, tf.float32)
 
     predictions = {
-        'classes': tf.argmax(logits, axis=1),
-        'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
+        'classes': tf.round(tf.sigmoid(logits)),
+        'probabilities': tf.sigmoid(logits, name='sigmoid_tensor')
     }
 
     if mode == tf.estimator.ModeKeys.PREDICT:
@@ -121,9 +122,11 @@ def resnet_model_fn(features, labels, mode, model_class,
             })
 
     # Calculate loss, which includes softmax cross entropy and L2 regularization.
-    cross_entropy = tf.losses.sparse_softmax_cross_entropy(
-        logits=logits, labels=labels)
+    #cross_entropy = tf.losses.sparse_softmax_cross_entropy(
+    #    logits=logits, labels=labels)
 
+    cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
+    print(cross_entropy.shape)
     # Create a tensor named cross_entropy for logging purposes.
     tf.identity(cross_entropy, name='cross_entropy')
     tf.summary.scalar('cross_entropy', cross_entropy)
@@ -177,7 +180,10 @@ def resnet_model_fn(features, labels, mode, model_class,
         train_op = None
 
     # metrics for evaluation
+    correct_prediction = tf.equal(predictions['classes'], labels)
+    accuracy2 = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     accuracy = tf.metrics.accuracy(labels, predictions['classes'])
+    tf.summary.scalar('accuracy2', accuracy2)
     mean_iou = tf.metrics.mean_iou(labels, predictions['classes'], num_classes)
     false_negatives = tf.metrics.false_negatives(labels, predictions['classes'])
     false_positives = tf.metrics.false_positives(labels, predictions['classes'])

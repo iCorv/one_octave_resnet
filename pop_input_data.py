@@ -5,6 +5,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 
 import tensorflow as tf
+import numpy as np
 
 FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.],
                   [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.],
@@ -272,3 +273,25 @@ def csv_input_fn(csv_path, batch_size):
     # print(dataset)
     # Return the dataset.
     return dataset
+
+def numpy_array_input_fn(npz_path, batch_size):
+    data = np.load(npz_path)
+    features = data["features"]#.astype(np.float32)
+    labels = data["labels"]#.astype(int)
+    #assert features.shape[0] == labels.shape[0]
+
+    #features_placeholder = tf.placeholder(features.dtype, features.shape)
+    #labels_placeholder = tf.placeholder(labels.dtype, labels.shape)
+    #dataset = tf.data.Dataset.from_tensor_slices((features_placeholder, labels_placeholder))
+
+
+    # Shuffle, repeat, and batch the examples.
+    #dataset = dataset.shuffle(1000).repeat().batch(batch_size)
+
+    # Return the read end of the pipeline.
+    #return dataset.make_one_shot_iterator().get_next()
+
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(x=features, y=labels[:, 27:39], num_epochs=None, shuffle=True, batch_size=batch_size)
+    return train_input_fn
+
+    #return dataset.make_initializable_iterator()

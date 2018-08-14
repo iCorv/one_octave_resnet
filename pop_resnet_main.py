@@ -14,22 +14,30 @@ eval_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_
 test_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/MUS_SEMI_FILT_C4toB4_TRIPEL_TEST.csv"
 predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_DUMMY.csv"
 
+train_dataset = "semitone_single_note_56496_examples.npz"
+
 DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
+num_examples = 56496
+batch_size = 128
+steps_per_epoch = int(round(num_examples/batch_size))
+train_epochs = 5
+total_train_steps = train_epochs * steps_per_epoch
+
 run_params = {
-    'batch_size': 50,
+    'batch_size': batch_size,
     'dtype': DEFAULT_DTYPE,
     'resnet_size': 34,
     'resnet_version': 2,
     'num_classes': 12,
     'weight_decay': 2e-4,
-    'train_steps': 1000,
-    'eval_steps': 2000,
+    'train_steps': total_train_steps, # 1000
+    'eval_steps': 2000, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
-    'train_epochs': 10
+    'train_epochs': train_epochs
 }
 
 
@@ -63,11 +71,11 @@ def main(argv):
 
     # Train the Model.
     classifier.train(
-        input_fn=lambda: dataset.csv_input_fn(train_dataset_fp, batch_size=run_params['batch_size']),
+        input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=run_params['batch_size']),
         steps=run_params['train_steps'])
 
     # Evaluate the model.
-    eval_result = classifier.evaluate(input_fn=lambda: dataset.csv_input_fn(test_dataset_fp, batch_size=1),
+    eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=1),
                                       steps=run_params['eval_steps'])
 
     benchmark_logger.log_evaluation_result(eval_result)
