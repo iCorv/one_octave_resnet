@@ -8,6 +8,7 @@ import pop_resnet
 import pop_input_data as dataset
 import os
 from official.utils.logs import logger
+import numpy as np
 
 train_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL.csv"
 eval_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL_EVAL.csv"
@@ -15,6 +16,8 @@ test_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/MUS_S
 predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_DUMMY.csv"
 
 train_dataset = "semitone_single_note_56496_examples.npz"
+
+eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
 
 DEFAULT_DTYPE = tf.float32
 
@@ -31,7 +34,7 @@ run_params = {
     'dtype': DEFAULT_DTYPE,
     'resnet_size': 34,
     'resnet_version': 2,
-    'num_classes': 12,
+    'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
     'eval_steps': 2000, # 2000
@@ -70,22 +73,28 @@ def main(argv):
                                   test_id=TEST_ID)
 
     # Train the Model.
-    classifier.train(
-        input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=run_params['batch_size']),
-        steps=run_params['train_steps'])
+    #classifier.train(
+    #    input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=run_params['batch_size'],
+    #                                          num_epochs=run_params['train_epochs'], shuffle=True), steps=run_params['train_steps'])
 
     # Evaluate the model.
-    eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=1),
-                                      steps=run_params['eval_steps'])
+    #eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1, shuffle=False),
+    #                                  steps=run_params['eval_steps'])
 
-    benchmark_logger.log_evaluation_result(eval_result)
+    #benchmark_logger.log_evaluation_result(eval_result)
 
-    print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+    #print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
+    predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
+                                                                                shuffle=False))
 
-    #predictions = classifier.predict(
-    #    input_fn=lambda: dataset.csv_input_fn(eval_dataset_fp, batch_size=1))
-
+    #print(list(predictions)[0])
+    props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
+    index = 0
+    for p in predictions:
+        props[:, index] = p['probabilities'][:]
+        index = index + 1
+    np.savez("props1", props=props)
 
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)

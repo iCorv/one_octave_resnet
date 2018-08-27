@@ -163,7 +163,7 @@ for file_index in range(0, len(sorted_audio_list)):
     # iterate over all onsets in current file
     for ground_truth_index in range(0, ground_truth_length):
 
-        # load onset at current ground thruth index
+        # load onset at current ground truth index
         if ground_truth_length == 1:
             onset_seconds = ground_truth[0]
             ground_truth_midi = int(ground_truth[2])

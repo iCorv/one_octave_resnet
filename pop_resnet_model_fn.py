@@ -95,7 +95,9 @@ def resnet_model_fn(features, labels, mode, model_class,
     tf.summary.image('images', features, max_outputs=6)
 
     features = tf.cast(features, dtype)
-    labels = tf.cast(labels, dtype)
+
+    if mode != tf.estimator.ModeKeys.PREDICT:
+        labels = tf.cast(labels, dtype)
 
     model = model_class(resnet_size, data_format, resnet_version=resnet_version,
                         dtype=dtype)
@@ -109,17 +111,17 @@ def resnet_model_fn(features, labels, mode, model_class,
 
     predictions = {
         'classes': tf.round(tf.sigmoid(logits)),
-        'probabilities': tf.sigmoid(logits, name='sigmoid_tensor')
+        'probabilities': tf.nn.softmax(logits, name='sigmoid_tensor')
     }
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         # Return the predictions and the specification for serving a SavedModel
         return tf.estimator.EstimatorSpec(
             mode=mode,
-            predictions=predictions,
-            export_outputs={
-                'predict': tf.estimator.export.PredictOutput(predictions)
-            })
+            predictions=predictions)
+            #export_outputs={
+            #    'predict': tf.estimator.export.PredictOutput(predictions)
+            #})
 
     # Calculate loss, which includes softmax cross entropy and L2 regularization.
     #cross_entropy = tf.losses.sparse_softmax_cross_entropy(

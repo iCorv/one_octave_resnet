@@ -274,7 +274,7 @@ def csv_input_fn(csv_path, batch_size):
     # Return the dataset.
     return dataset
 
-def numpy_array_input_fn(npz_path, batch_size):
+def numpy_array_input_fn(npz_path, batch_size, num_epochs, shuffle):
     data = np.load(npz_path)
     features = data["features"]#.astype(np.float32)
     labels = data["labels"]#.astype(int)
@@ -291,7 +291,9 @@ def numpy_array_input_fn(npz_path, batch_size):
     # Return the read end of the pipeline.
     #return dataset.make_one_shot_iterator().get_next()
 
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(x=features, y=labels[:, 27:39], num_epochs=None, shuffle=True, batch_size=batch_size)
+    #train_input_fn = tf.estimator.inputs.numpy_input_fn(x=features, y=labels[:, 27:39], num_epochs=None, shuffle=True, batch_size=batch_size)
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(x=features[0:2000,:], y=labels[0:2000,:], num_epochs=num_epochs, shuffle=shuffle,
+                                                        batch_size=batch_size)
     return train_input_fn
 
     #return dataset.make_initializable_iterator()
