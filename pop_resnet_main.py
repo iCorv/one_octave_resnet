@@ -88,7 +88,6 @@ def main(argv):
     predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
                                                                                 shuffle=False))
 
-    #print(list(predictions)[0])
     props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
     index = 0
     for p in predictions:

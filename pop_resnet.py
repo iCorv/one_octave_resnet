@@ -17,15 +17,15 @@ _NUM_IMAGES = {
 
 
 class ResNet(resnet_model.Model):
-    """Model class with uses CIFAR10 structure for maps with size 51x51.
+    """Model class
 
-    resnet_size should be either 20, 32, 44, 56, ...
+    resnet_size should be either 18, 34, 50, 101, 152, 200
     """
 
     def __init__(self, resnet_size, data_format=None, num_classes=_NUM_CLASSES,
                  resnet_version=resnet_model.DEFAULT_VERSION,
                  dtype=resnet_model.DEFAULT_DTYPE):
-        """These are the parameters that work for CIFAR-10 data.
+        """
 
         Args:
           resnet_size: The number of convolutional layers needed in the model.
@@ -34,7 +34,7 @@ class ResNet(resnet_model.Model):
           num_classes: The number of output classes needed from the model. This
             enables users to extend the same model to their own datasets.
           resnet_version: Integer representing which version of the ResNet network
-          to use. See README for details. Valid values: [1, 2]
+          to use. Valid values: [1, 2]
           dtype: The TensorFlow dtype to use for calculations.
         """
         # For bigger models, we want to use "bottleneck" layers

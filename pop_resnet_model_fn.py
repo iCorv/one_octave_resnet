@@ -36,7 +36,7 @@ def learning_rate_with_decay(
     initial_learning_rate = 0.1 * batch_size / batch_denom
     batches_per_epoch = num_images / batch_size
 
-    # Reduce the learning rate at certain epochs.
+    # Reduce the learning rate at certain epochs, for Example:
     # CIFAR-10: divide by 10 at epoch 100, 150, and 200
     # ImageNet: divide by 10 at epoch 30, 60, 80, and 90
     boundaries = [int(batches_per_epoch * epoch) for epoch in boundary_epochs]
@@ -77,9 +77,8 @@ def resnet_model_fn(features, labels, mode, model_class,
       data_format: Input format ('channels_last', 'channels_first', or None).
         If set to None, the format is dependent on whether a GPU is available.
       resnet_version: Integer representing which version of the ResNet network to
-        use. See README for details. Valid values: [1, 2]
-      loss_scale: The factor to scale the loss for numerical stability. A detailed
-        summary is present in the arg parser help text.
+        use. Valid values: [1, 2]
+      loss_scale: The factor to scale the loss for numerical stability.
       loss_filter_fn: function that takes a string variable name and returns
         True if the var should be included in loss calculation, and False
         otherwise. If None, batch_normalization variables will be excluded

@@ -38,7 +38,7 @@ def create_semitone_filterbank(frequencies):
     semitone_filterbank = np.zeros(shape=[88, len(bins)])
     current_bin = bins[0]
     start = 0
-    for i in range (0, len(bins)):
+    for i in range(0, len(bins)):
         if bins[i] > current_bin:
             center = start + int(round((i-1 - start)/2))
             semitone_filterbank[current_bin][start:i] = madmom.audio.filters.TriangularFilter(start, center, i, norm=True)
@@ -59,7 +59,7 @@ def create_mel_filterbank(frequencies):
     mel_filterbank = np.zeros(shape=[88, len(bins)])
     current_bin = bins[0]
     start = 0
-    for i in range (0, len(bins)):
+    for i in range(0, len(bins)):
         if bins[i] > current_bin:
             center = start + int(round((i-1 - start)/2))
             mel_filterbank[current_bin][start:i] = madmom.audio.filters.TriangularFilter(start, center, i, norm=True)
