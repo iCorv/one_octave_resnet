@@ -7,3 +7,29 @@ momentarily only notes from one octave of the piano are used to train and evalua
 3. Add model to interpreter path in PyCharm: PyCharm -> Preferences -> Project Interpreter -> Show All -> Show paths for the selected interpreter -> Add  ../models/official
 4. Mark the models folder as a source folder in project structure: PyCharm -> Preferences -> Project Structure -> right click models folder -> Choose Sources
 5. Restart PyCharm
+
+### Running the Project on AWS Deep Learning AMI
+1. Follow instructions in this blog: https://aws.amazon.com/de/blogs/machine-learning/get-started-with-deep-learning-using-the-aws-deep-learning-ami/
+2. Run as python3 with tensorflow environment
+    ```
+    $ source activate tensorflow_p36
+    ```
+3. git clone this project
+4. git clone the TF models (https://github.com/tensorflow/models)
+    1. Add the top-level ***/models*** folder to the Python path with the command:
+        ```
+        $ export PYTHONPATH="$PYTHONPATH:/path/to/models"
+        ```
+    2. Install dependencies:
+        ```
+        $ pip3 install --user -r official/requirements.txt
+        ```
+5. Copy Dataset to your Instance with secure copy:
+    ```
+    $ scp -i /path/to/your/pem /the/file/on/your/system/dataset.npz ubuntu@ec2-18-188-163-228.us-east-2.compute.amazonaws.com:~/the/destination/folder/
+    ```
+6. Configure the model and hit
+    ```
+    $ python3 pop_resnet_mainpy
+    ```
+    
