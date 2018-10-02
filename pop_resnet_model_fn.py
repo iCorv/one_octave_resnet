@@ -130,7 +130,7 @@ def resnet_model_fn(features, labels, mode, model_class,
     #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels, reduction=tf.losses.Reduction.NONE)
     #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=tf.add(weight_factor, labels))
 
-    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=2)
+    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=88)
     cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
 
 
