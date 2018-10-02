@@ -17,16 +17,17 @@ predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/IS
 
 train_dataset = "semitone_single_note_56496_examples.npz"
 
-eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
+#eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
+eval_dataset = "semitone_single_note_56496_examples.npz"
 
 DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-num_examples = 56496
+num_examples = 25000 #56496
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 5
+train_epochs = 1
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -73,27 +74,27 @@ def main(argv):
                                   test_id=TEST_ID)
 
     # Train the Model.
-    #classifier.train(
-    #    input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=run_params['batch_size'],
-    #                                          num_epochs=run_params['train_epochs'], shuffle=True), steps=run_params['train_steps'])
+    classifier.train(input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=run_params['batch_size'],
+                     num_epochs=run_params['train_epochs'], shuffle=True), steps=run_params['train_steps'])
 
     # Evaluate the model.
-    #eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1, shuffle=False),
-    #                                  steps=run_params['eval_steps'])
+    eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1, shuffle=False),
+                                      steps=run_params['eval_steps'])
 
-    #benchmark_logger.log_evaluation_result(eval_result)
+    benchmark_logger.log_evaluation_result(eval_result)
 
-    #print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+    print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
-    predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
-                                                                                shuffle=False))
+    ######### predict
+    #predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
+    #                                                                            shuffle=False))
 
-    props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
-    index = 0
-    for p in predictions:
-        props[:, index] = p['probabilities'][:]
-        index = index + 1
-    np.savez("props1", props=props)
+    # props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
+    # index = 0
+    # for p in predictions:
+    #     props[:, index] = p['probabilities'][:]
+    #     index = index + 1
+    # np.savez("props1", props=props)
 
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)

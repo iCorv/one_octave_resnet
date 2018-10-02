@@ -111,7 +111,7 @@ data_index = 0
 
 for file_index in range(0, len(sorted_audio_list)):
 #if(True):
-#    file_index = 1
+    #file_index = 0
     # load ground truth
     ground_truth = loadtxt(sorted_ground_truth_list[file_index], skiprows=1, delimiter='\t')
 
@@ -194,7 +194,8 @@ for file_index in range(0, len(sorted_audio_list)):
             print(data_index)
 
 #np.savez("single_note_56496_examples", features=spectrogram_data[0:data_index, :], labels=ground_truth_data[0:data_index, :])
-np.savez("semitone_single_note_56496_examples", features=spectrogram_data, labels=ground_truth_data)
+#np.savez("semitone_single_note_56496_examples", features=spectrogram_data, labels=ground_truth_data)
+
 # plot specs
 #specshow(spec=log_semitone, title='Semitone Spectrogram', center_frame=center_frame, freq_bins=semitone_freq_bins)
 

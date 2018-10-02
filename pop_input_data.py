@@ -292,7 +292,12 @@ def numpy_array_input_fn(npz_path, batch_size, num_epochs, shuffle):
     #return dataset.make_one_shot_iterator().get_next()
 
     #train_input_fn = tf.estimator.inputs.numpy_input_fn(x=features, y=labels[:, 27:39], num_epochs=None, shuffle=True, batch_size=batch_size)
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(x=features[0:2000,:], y=labels[0:2000,:], num_epochs=num_epochs, shuffle=shuffle,
+
+
+    #train_input_fn = tf.estimator.inputs.numpy_input_fn(x=features[0:2000,:], y=labels[0:2000,:], num_epochs=num_epochs, shuffle=shuffle,
+    #                                                    batch_size=batch_size)
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(x=features, y=labels,
+                                                        num_epochs=num_epochs, shuffle=shuffle,
                                                         batch_size=batch_size)
     return train_input_fn
 
