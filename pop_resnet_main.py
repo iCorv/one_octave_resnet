@@ -38,7 +38,7 @@ run_params = {
     'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
-    'eval_steps': 2000, # 2000
+    'eval_steps': 1305, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
