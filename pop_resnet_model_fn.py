@@ -126,12 +126,12 @@ def resnet_model_fn(features, labels, mode, model_class,
     #cross_entropy = tf.losses.sparse_softmax_cross_entropy(
     #    logits=logits, labels=labels)
 
-    weight_factor = tf.constant(1, dtype=tf.float32)
-    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels, reduction=tf.losses.Reduction.NONE)
-    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=tf.add(tf.multiply(tf.constant(20, dtype=tf.float32),labels),weight_factor))
+    #weight_factor = tf.constant(1, dtype=tf.float32)
+    #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels, reduction=tf.losses.Reduction.NONE)
+    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=tf.add(tf.multiply(tf.constant(20, dtype=tf.float32),labels),weight_factor))
 
-    #cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=20)
-    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
+    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=10)
+    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
 
 
     # Create a tensor named cross_entropy for logging purposes.
