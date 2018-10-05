@@ -24,10 +24,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-num_examples = 25000 #56496
+num_examples = 56496
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 50
+train_epochs = 30
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -59,6 +59,7 @@ def main(argv):
         model_fn=pop_resnet.resnet_model_fn,
         model_dir="/home/ubuntu/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
+        #model_dir="/Users/Jaedicke/tensorflow/model/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],
