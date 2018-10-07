@@ -18,7 +18,7 @@ predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/IS
 train_dataset = "semitone_single_note_56496_examples.npz"
 
 eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
-#eval_dataset = "semitone_single_note_56496_examples.npz"
+#eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
 
 DEFAULT_DTYPE = tf.float32
 
@@ -27,7 +27,7 @@ TEST_ID = 1
 num_examples = 56496
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 30
+train_epochs = 15
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -38,7 +38,7 @@ run_params = {
     'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
-    'eval_steps': 1305, # 2000
+    'eval_steps': 1305, #25050, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
@@ -53,7 +53,7 @@ def main(argv):
 
     estimator_config = tf.estimator.RunConfig(
         save_checkpoints_steps=50,  # Save checkpoints every 50 steps.
-        keep_checkpoint_max=10,  # Retain the 10 most recent checkpoints.
+        keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_resnet.resnet_model_fn,
@@ -89,14 +89,19 @@ def main(argv):
 
     ######### predict
     #predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
-    #                                                                            shuffle=False))
+    #                                 shuffle=False))
 
     # props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
+    # notes = np.zeros((run_params['num_classes'], run_params['eval_steps']))
     # index = 0
     # for p in predictions:
-    #     props[:, index] = p['probabilities'][:]
+    #     if index < run_params['eval_steps']:
+    #         props[:, index] = p['probabilities'][:]
+    #         notes[:, index] = p['classes'][:]
     #     index = index + 1
-    # np.savez("props1", props=props)
+    # np.savez("props_2018-10-05-17:51:17", props=props)
+    # np.savez("notes_2018-10-05-17:51:17", props=notes)
+    # print(index)
 
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)

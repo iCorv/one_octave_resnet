@@ -3,9 +3,12 @@ mlp.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 
-data = np.load("props1.npz")
+data = np.load("notes_2018-10-05-17:51:17.npz")
 props = data["props"]
 print(props.shape)
+
+print(np.max(props))
+print(np.min(props))
 plt.figure()
 plt.pcolormesh(np.flipud(props))
 #locs, labels = plt.yticks()
