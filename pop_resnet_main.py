@@ -27,7 +27,7 @@ TEST_ID = 1
 num_examples = 56496
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 15
+train_epochs = 5
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -38,7 +38,7 @@ run_params = {
     'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
-    'eval_steps': 1305, #25050, # 2000
+    'eval_steps': 1305, # 1305, #25050, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
@@ -80,12 +80,12 @@ def main(argv):
                      num_epochs=run_params['train_epochs'], shuffle=True), steps=run_params['train_steps'])
 
     # Evaluate the model.
-    eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1, shuffle=False),
-                                      steps=run_params['eval_steps'])
+    #eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1, shuffle=False),
+    #                                  steps=run_params['eval_steps'])
 
-    benchmark_logger.log_evaluation_result(eval_result)
+    #benchmark_logger.log_evaluation_result(eval_result)
 
-    print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+    #print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
     ######### predict
     #predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
@@ -99,8 +99,8 @@ def main(argv):
     #         props[:, index] = p['probabilities'][:]
     #         notes[:, index] = p['classes'][:]
     #     index = index + 1
-    # np.savez("props_2018-10-05-17:51:17", props=props)
-    # np.savez("notes_2018-10-05-17:51:17", props=notes)
+    # np.savez("props_2018-10-07-22_28_34", props=props)
+    # np.savez("notes_2018-10-07-22_28_34", notes=notes)
     # print(index)
 
 if __name__ == '__main__':

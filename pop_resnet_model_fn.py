@@ -48,7 +48,6 @@ def learning_rate_with_decay(
 
     return learning_rate_fn
 
-
 def resnet_model_fn(features, labels, mode, model_class,
                     resnet_size, weight_decay, learning_rate_fn, momentum,
                     data_format, resnet_version, loss_scale, num_classes,
@@ -95,6 +94,11 @@ def resnet_model_fn(features, labels, mode, model_class,
 
     features = tf.cast(features, dtype)
 
+    labels_and_weights = tf.unstack(labels, axis=-1)
+    weights = labels_and_weights[1]
+    labels = labels_and_weights[0]
+
+
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
@@ -126,14 +130,24 @@ def resnet_model_fn(features, labels, mode, model_class,
     #cross_entropy = tf.losses.sparse_softmax_cross_entropy(
     #    logits=logits, labels=labels)
 
+    # without weigts
     #cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
 
-    #weight_factor = tf.constant(1, dtype=tf.float32)
+    # weights masking to emphasize positive examples
+    #weight = tf.constant(1, dtype=tf.float32)
     #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels, reduction=tf.losses.Reduction.NONE)
     #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=tf.add(tf.multiply(tf.constant(20, dtype=tf.float32),labels),weight_factor))
 
-    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=20)
-    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
+    #cross_entropy_per_class = tf.placeholder(tf.float32, shape=labels.shape)
+    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
+                                                              reduction=tf.losses.Reduction.NONE)
+
+    #cross_entropy = tf.py_func(weighted_loss, cross_entropy_per_class, tf.float32)
+    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
+
+    # weigting precision vs recall
+    #cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=20)
+    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
 
 
     # Create a tensor named cross_entropy for logging purposes.
