@@ -17,12 +17,16 @@ predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/IS
 
 train_dataset = "semitone_single_note_56496_examples.npz"
 
-eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
-#eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
+#eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
+eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
 
 DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
+
+predict_flag = True
+train_flag = False
+eval_flag = False
 
 num_examples = 56496
 batch_size = 128
@@ -38,7 +42,7 @@ run_params = {
     'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
-    'eval_steps': 1305, # 1305, #25050, # 2000
+    'eval_steps': 25050, # 1305, #25050, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
@@ -57,9 +61,9 @@ def main(argv):
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_resnet.resnet_model_fn,
-        model_dir="/home/ubuntu/one_octave_resnet/model",
+        #model_dir="/home/ubuntu/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
-        #model_dir="/Users/Jaedicke/tensorflow/model/model",
+        model_dir="/Users/Jaedicke/tensorflow/model/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],
@@ -76,32 +80,35 @@ def main(argv):
                                   test_id=TEST_ID)
 
     # Train the Model.
-    classifier.train(input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=run_params['batch_size'],
-                     num_epochs=run_params['train_epochs'], shuffle=True), steps=run_params['train_steps'])
+    if train_flag:
+        classifier.train(input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=run_params['batch_size'],
+                         num_epochs=run_params['train_epochs'], shuffle=True), steps=run_params['train_steps'])
 
     # Evaluate the model.
-    #eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1, shuffle=False),
-    #                                  steps=run_params['eval_steps'])
+    if eval_flag:
+        eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1, shuffle=False),
+                                          steps=run_params['eval_steps'])
 
-    #benchmark_logger.log_evaluation_result(eval_result)
+        benchmark_logger.log_evaluation_result(eval_result)
 
-    #print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+        print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
     ######### predict
-    #predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
-    #                                 shuffle=False))
+    if predict_flag:
+        predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
+                                         shuffle=False))
 
-    # props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
-    # notes = np.zeros((run_params['num_classes'], run_params['eval_steps']))
-    # index = 0
-    # for p in predictions:
-    #     if index < run_params['eval_steps']:
-    #         props[:, index] = p['probabilities'][:]
-    #         notes[:, index] = p['classes'][:]
-    #     index = index + 1
-    # np.savez("props_2018-10-07-22_28_34", props=props)
-    # np.savez("notes_2018-10-07-22_28_34", notes=notes)
-    # print(index)
+        props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
+        notes = np.zeros((run_params['num_classes'], run_params['eval_steps']))
+        index = 0
+        for p in predictions:
+            if index < run_params['eval_steps']:
+                props[:, index] = p['probabilities'][:]
+                notes[:, index] = p['classes'][:]
+            index = index + 1
+        np.savez("props_2018-10-08-20_00_23", props=props)
+        np.savez("notes_2018-10-08-20_00_23", notes=notes)
+        print(index)
 
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)

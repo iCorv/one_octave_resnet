@@ -93,10 +93,10 @@ def resnet_model_fn(features, labels, mode, model_class,
     tf.summary.image('images', features, max_outputs=6)
 
     features = tf.cast(features, dtype)
-
-    labels_and_weights = tf.unstack(labels, axis=-1)
-    weights = labels_and_weights[1]
-    labels = labels_and_weights[0]
+    if mode != tf.estimator.ModeKeys.PREDICT:
+        labels_and_weights = tf.unstack(labels, axis=-1)
+        weights = labels_and_weights[1]
+        labels = labels_and_weights[0]
 
 
     if mode != tf.estimator.ModeKeys.PREDICT:
