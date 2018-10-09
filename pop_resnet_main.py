@@ -18,7 +18,7 @@ predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/IS
 train_dataset = "semitone_single_note_56496_examples.npz"
 
 #eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
-eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
+eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_5000.npz"
 
 DEFAULT_DTYPE = tf.float32
 
