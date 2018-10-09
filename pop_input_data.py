@@ -286,14 +286,14 @@ def weights_from_labels(labels):
 def numpy_array_input_fn(npz_path, batch_size, num_epochs, shuffle):
     data = np.load(npz_path)
     features = data["features"]#.astype(np.float32)
-    #labels = data["labels"]#.astype(int)
+    labels = data["labels"]#.astype(int)
 
-    weights = weights_from_labels(data["labels"])
+    #weights = weights_from_labels(data["labels"])
     #print(np.shape(weights))
     #print(weights[1, :])
     #print(np.shape(weights[1, :]))
 
-    labels = np.stack([data["labels"], weights], axis=-1)
+    #labels = np.stack([data["labels"], weights], axis=-1)
     #print(np.shape(labels))
     #print(labels[1, :, 0])
     #print(labels[1, :, 1])

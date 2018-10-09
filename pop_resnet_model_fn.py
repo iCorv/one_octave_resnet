@@ -9,6 +9,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import tensorflow as tf
+import numpy as np
+import scipy
+from scipy import ndimage
 from official.resnet import resnet_model
 
 
@@ -47,6 +50,13 @@ def learning_rate_with_decay(
         return tf.train.piecewise_constant(global_step, boundaries, vals)
 
     return learning_rate_fn
+
+def weights_from_labels(labels):
+    dist = np.array([0.4868, 0.6065, 0.7261, 0.8353, 0.9231, 0.9802, 1.0000,
+                     0.9802, 0.9231, 0.8353, 0.7261, 0.6065, 0.4868])
+
+    #dist = np.array([1, 1, 1])
+    return scipy.ndimage.convolve1d(labels, dist*2, axis=1, mode='constant') + 0.9
 
 def resnet_model_fn(features, labels, mode, model_class,
                     resnet_size, weight_decay, learning_rate_fn, momentum,
@@ -93,10 +103,10 @@ def resnet_model_fn(features, labels, mode, model_class,
     tf.summary.image('images', features, max_outputs=6)
 
     features = tf.cast(features, dtype)
-    if mode != tf.estimator.ModeKeys.PREDICT:
-        labels_and_weights = tf.unstack(labels, axis=-1)
-        weights = labels_and_weights[1]
-        labels = labels_and_weights[0]
+    #if mode != tf.estimator.ModeKeys.PREDICT:
+        #labels_and_weights = tf.unstack(labels, axis=-1)
+        #weights = labels_and_weights[1]
+        #labels = labels_and_weights[0]
 
 
     if mode != tf.estimator.ModeKeys.PREDICT:
@@ -141,7 +151,7 @@ def resnet_model_fn(features, labels, mode, model_class,
     #cross_entropy_per_class = tf.placeholder(tf.float32, shape=labels.shape)
     cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
                                                               reduction=tf.losses.Reduction.NONE)
-
+    weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
     #cross_entropy = tf.py_func(weighted_loss, cross_entropy_per_class, tf.float32)
     cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
 
