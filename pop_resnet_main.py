@@ -24,8 +24,8 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-predict_flag = False
-train_flag = True
+predict_flag = True
+train_flag = False
 eval_flag = False
 
 num_examples = 56496
@@ -106,8 +106,8 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_2018-10-08-20_00_23", props=props)
-        np.savez("notes_2018-10-08-20_00_23", notes=notes)
+        np.savez("props_2018-10-09-16_23", props=props)
+        np.savez("notes_2018-10-09-16_23", notes=notes)
         print(index)
 
 if __name__ == '__main__':

@@ -16,7 +16,7 @@ def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS/AkPnBcht/MUS/MAPS_MUS-alb_se3_AkPnBcht.txt')
-data = np.load("notes_2018-10-08-20_00_23.npz")
+data = np.load("notes_2018-10-09-16_23.npz")
 note_map = data["notes"]
 print(np.shape(note_map))
 num_est_notes = np.sum(np.sum(note_map), dtype=np.int64)
