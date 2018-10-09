@@ -35,8 +35,8 @@ est_intervals = np.zeros((num_est_notes, 2))
 notes_index = np.where(note_map)
 
 est_pitches = midi_to_hz(notes_index[0] + 21)
-est_intervals[:, 0] = (notes_index[1] * 0.01) + (512/22050 * 7) + frame_size/sample_rate/2
-est_intervals[:, 1] = (notes_index[1] * 0.01) + (512/22050 * 7) + frame_size/sample_rate
+est_intervals[:, 0] = (notes_index[1] * 0.01) + (frame_size/sample_rate * 7) + frame_size/sample_rate/2
+est_intervals[:, 1] = (notes_index[1] * 0.01) + (frame_size/sample_rate * 7) + frame_size/sample_rate
 
 metrics_with_pitch = tr.precision_recall_f1_overlap(ref_intervals, ref_pitches, est_intervals,
                                                     est_pitches, onset_tolerance=0.05,

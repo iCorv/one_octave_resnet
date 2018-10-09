@@ -277,8 +277,9 @@ def csv_input_fn(csv_path, batch_size):
     return dataset
 
 def weights_from_labels(labels):
-    dist = np.array([0.25, 0.5, 0.75, 1, 0.75, 0.5, 0.25])
-    return scipy.ndimage.convolve1d(labels, dist*5, axis=1, mode='constant')
+    dist = np.array([0.4868, 0.6065, 0.7261, 0.8353, 0.9231, 0.9802, 1.0000,
+                     0.9802, 0.9231, 0.8353, 0.7261, 0.6065, 0.4868])
+    return scipy.ndimage.convolve1d(labels, dist*2, axis=1, mode='constant')
 
 def numpy_array_input_fn(npz_path, batch_size, num_epochs, shuffle):
     data = np.load(npz_path)
@@ -286,6 +287,9 @@ def numpy_array_input_fn(npz_path, batch_size, num_epochs, shuffle):
     #labels = data["labels"]#.astype(int)
 
     weights = weights_from_labels(data["labels"])
+    #print(np.shape(weights))
+    #print(weights[1, :])
+    #print(np.shape(weights[1, :]))
 
     labels = np.stack([data["labels"], weights], axis=-1)
 
