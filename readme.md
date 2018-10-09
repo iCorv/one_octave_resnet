@@ -32,4 +32,7 @@ momentarily only notes from one octave of the piano are used to train and evalua
     ```
     $ python3 pop_resnet_mainpy
     ```
-    
+7. Copy trained model to your computer
+    ```
+    $ scp -i /path/to/your/pem -r ubuntu@ec2-18-224-61-22.us-east-2.compute.amazonaws.com:~/remote/model ./local/model/
+    ```
