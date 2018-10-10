@@ -15,7 +15,7 @@ eval_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_
 test_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/MUS_SEMI_FILT_C4toB4_TRIPEL_TEST.csv"
 predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_DUMMY.csv"
 
-train_dataset = "semitone_single_note_56496_examples.npz"
+train_dataset = "semitone_ISOL_UCHO_76634_examples.npz"
 
 #eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
 eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_5000.npz"
@@ -28,7 +28,7 @@ predict_flag = False
 train_flag = True
 eval_flag = False
 
-num_examples = 56496
+num_examples = 76634
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 5

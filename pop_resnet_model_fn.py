@@ -140,24 +140,18 @@ def resnet_model_fn(features, labels, mode, model_class,
     #cross_entropy = tf.losses.sparse_softmax_cross_entropy(
     #    logits=logits, labels=labels)
 
-    # without weigts
+    # without weights
     #cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
 
     # weights masking to emphasize positive examples
-    #weight = tf.constant(1, dtype=tf.float32)
-    #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels, reduction=tf.losses.Reduction.NONE)
-    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=tf.add(tf.multiply(tf.constant(20, dtype=tf.float32),labels),weight_factor))
-
-    #cross_entropy_per_class = tf.placeholder(tf.float32, shape=labels.shape)
-    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
-                                                              reduction=tf.losses.Reduction.NONE)
-    weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
-    #cross_entropy = tf.py_func(weighted_loss, cross_entropy_per_class, tf.float32)
-    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
+    #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
+    #                                                          reduction=tf.losses.Reduction.NONE)
+    #weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
+    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
 
     # weigting precision vs recall
-    #cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=20)
-    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
+    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=2)
+    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
 
 
     # Create a tensor named cross_entropy for logging purposes.
@@ -182,7 +176,7 @@ def resnet_model_fn(features, labels, mode, model_class,
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
 
-        learning_rate = tf.constant(0.01, dtype=tf.float32) #learning_rate_fn(global_step)
+        learning_rate = tf.constant(0.1, dtype=tf.float32) #learning_rate_fn(global_step)
 
         # Create a tensor named learning_rate for logging purposes
         tf.identity(learning_rate, name='learning_rate')

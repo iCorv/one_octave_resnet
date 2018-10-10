@@ -11,7 +11,7 @@ _WIDTH = 15
 _NUM_CHANNELS = 3
 _NUM_CLASSES = 88
 _NUM_IMAGES = {
-    'train': 56496,
+    'train': 76634,
     'validation': 2000,
 }
 
