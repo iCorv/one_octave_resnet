@@ -18,7 +18,8 @@ predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/IS
 train_dataset = "semitone_ISOL_UCHO_76634_examples.npz"
 
 #eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
-eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_5000.npz"
+#eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_5000.npz"
+eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
 
 DEFAULT_DTYPE = tf.float32
 
@@ -106,8 +107,8 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_2018-10-09-18_29", props=props)
-        np.savez("notes_2018-10-09-18_29", notes=notes)
+        np.savez("props_2018-11-09-09_20", props=props)
+        np.savez("notes_2018-11-09-09_20", notes=notes)
         print(index)
 
 if __name__ == '__main__':

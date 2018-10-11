@@ -150,7 +150,7 @@ def resnet_model_fn(features, labels, mode, model_class,
     #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
 
     # weigting precision vs recall
-    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=2)
+    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=1.5)
     cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
 
 
@@ -176,17 +176,17 @@ def resnet_model_fn(features, labels, mode, model_class,
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
 
-        learning_rate = tf.constant(0.1, dtype=tf.float32) #learning_rate_fn(global_step)
+        learning_rate = learning_rate_fn(global_step)
 
         # Create a tensor named learning_rate for logging purposes
         tf.identity(learning_rate, name='learning_rate')
         tf.summary.scalar('learning_rate', learning_rate)
 
-        optimizer = tf.train.AdamOptimizer(learning_rate)
-        #optimizer = tf.train.MomentumOptimizer(
-        #    learning_rate=learning_rate,
-        #    momentum=momentum
-        #)
+        #optimizer = tf.train.AdamOptimizer(learning_rate)
+        optimizer = tf.train.MomentumOptimizer(
+            learning_rate=learning_rate,
+            momentum=momentum
+        )
 
         if loss_scale != 1:
             # When computing fp16 gradients, often intermediate tensor values are

@@ -5,7 +5,7 @@ import numpy as np
 import pypianoroll as ppr
 from pypianoroll import Multitrack, Track
 
-data = np.load("notes_2018-10-09-18_29.npz")
+data = np.load("notes_2018-11-09-09_20.npz")
 props = data["notes"]
 print(props.shape)
 #props = np.round(props)
