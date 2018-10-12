@@ -16,7 +16,7 @@ def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS/AkPnBcht/MUS/MAPS_MUS-alb_se3_AkPnBcht.txt')
-data = np.load("notes_2018-11-09-09_20.npz")
+data = np.load("notes_2018-12-10.npz")
 note_map = data["notes"]
 print(np.shape(note_map))
 num_est_notes = np.sum(np.sum(note_map), dtype=np.int64)
@@ -35,8 +35,8 @@ est_intervals = np.zeros((num_est_notes, 2))
 notes_index = np.where(note_map)
 
 est_pitches = midi_to_hz(notes_index[0] + 21)
-est_intervals[:, 0] = (notes_index[1] * 0.01) + (frame_size/sample_rate * 7) + frame_size/sample_rate/2
-est_intervals[:, 1] = (notes_index[1] * 0.01) + (frame_size/sample_rate * 7) + frame_size/sample_rate
+est_intervals[:, 0] = (notes_index[1] * 0.01) + (frame_size/sample_rate * 0) + frame_size/sample_rate/2
+est_intervals[:, 1] = (notes_index[1] * 0.01) + (frame_size/sample_rate * 0) + frame_size/sample_rate
 
 metrics_with_pitch = tr.precision_recall_f1_overlap(ref_intervals, ref_pitches, est_intervals,
                                                     est_pitches, onset_tolerance=0.05,

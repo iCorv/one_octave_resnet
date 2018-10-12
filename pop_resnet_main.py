@@ -107,8 +107,8 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_2018-11-09-09_20", props=props)
-        np.savez("notes_2018-11-09-09_20", notes=notes)
+        np.savez("props_2018-12-10", props=props)
+        np.savez("notes_2018-12-10", notes=notes)
         print(index)
 
 if __name__ == '__main__':
