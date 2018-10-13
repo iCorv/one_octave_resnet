@@ -36,7 +36,7 @@ def learning_rate_with_decay(
       trained so far (global_step)- and returns the learning rate to be used
       for training the next batch.
     """
-    initial_learning_rate = 0.01 * batch_size / batch_denom
+    initial_learning_rate = 0.1 * batch_size / batch_denom
     batches_per_epoch = num_images / batch_size
 
     # Reduce the learning rate at certain epochs, for Example:
