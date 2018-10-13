@@ -25,8 +25,8 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-predict_flag = True
-train_flag = False
+predict_flag = False
+train_flag = True
 eval_flag = False
 
 num_examples = 10113
