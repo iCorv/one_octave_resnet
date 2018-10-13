@@ -5,8 +5,8 @@ import numpy as np
 import pypianoroll as ppr
 from pypianoroll import Multitrack, Track
 
-data = np.load("notes_2018-12-10.npz")
-props = data["notes"]
+data = np.load("props_2018-13-10.npz")
+props = data["props"]
 print(props.shape)
 #props = np.round(props)
 print(np.max(props))

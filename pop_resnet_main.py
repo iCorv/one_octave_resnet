@@ -32,7 +32,7 @@ eval_flag = False
 num_examples = 10113
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 20
+train_epochs = 30
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -107,8 +107,8 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_2018-12-10", props=props)
-        np.savez("notes_2018-12-10", notes=notes)
+        np.savez("props_2018-13-10", props=props)
+        np.savez("notes_2018-13-10", notes=notes)
         print(index)
 
 if __name__ == '__main__':
