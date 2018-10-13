@@ -15,7 +15,7 @@ eval_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_
 test_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/MUS_SEMI_FILT_C4toB4_TRIPEL_TEST.csv"
 predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_DUMMY.csv"
 
-train_dataset = "semitone_ISOL_UCHO_76634_examples.npz"
+train_dataset = "semitone_ISOL_UCHO_48_59_10113_examples.npz"
 
 #eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
 #eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_5000.npz"
@@ -25,11 +25,11 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-predict_flag = False
-train_flag = True
+predict_flag = True
+train_flag = False
 eval_flag = False
 
-num_examples = 76634
+num_examples = 10113
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 5
@@ -40,7 +40,7 @@ run_params = {
     'dtype': DEFAULT_DTYPE,
     'resnet_size': 34,
     'resnet_version': 2,
-    'num_classes': 88,
+    'num_classes': 12,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
     'eval_steps': 25050, # 1305, #25050, # 2000

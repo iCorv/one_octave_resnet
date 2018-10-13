@@ -249,11 +249,24 @@ def load_preprocessed_data(filepath):
 
 def append_preprocessed_data(files, filename):
     features, labels = load_preprocessed_data(files[0])
-    for filepath_index in range(1,len(files)):
-        f, l = load_preprocessed_data(files[filepath_index])
-        features = np.append(features, f, axis=0)
-        labels = np.append(labels, l, axis=0)
+    for filepath_index in range(1, len(files)):
+        temp_features, temp_labels = load_preprocessed_data(files[filepath_index])
+        features = np.append(features, temp_features, axis=0)
+        labels = np.append(labels, temp_labels, axis=0)
     np.savez(filename, features=features, labels=labels)
+
+def save_note_range(filepath, new_file, midi_range):
+    features, labels = load_preprocessed_data(filepath=filepath)
+    array_range = midi_range - 21
+    total_notes_in_example = np.sum(labels, axis=1)
+    notes_in_range = np.sum(labels[:, array_range[0]:array_range[1]+1], axis=1)
+    range_indices = np.where(notes_in_range == total_notes_in_example)
+    features_in_range = np.squeeze(features[range_indices, :])
+    labels_in_range = np.squeeze(labels[range_indices, :])
+    print(labels_in_range.shape)
+    np.savez(new_file + "_" + str(np.size(labels_in_range, axis=0)) + "_examples", features=features_in_range, labels=labels_in_range)
+
+
 
 
 #np.savez("single_note_56496_examples", features=spectrogram_data[0:data_index, :], labels=ground_truth_data[0:data_index, :])
