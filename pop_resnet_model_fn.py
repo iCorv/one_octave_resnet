@@ -36,7 +36,7 @@ def learning_rate_with_decay(
       trained so far (global_step)- and returns the learning rate to be used
       for training the next batch.
     """
-    initial_learning_rate = 0.01 * batch_size / batch_denom
+    initial_learning_rate = 0.001 * batch_size / batch_denom
     batches_per_epoch = num_images / batch_size
 
     # Reduce the learning rate at certain epochs, for Example:
@@ -150,7 +150,7 @@ def resnet_model_fn(features, labels, mode, model_class,
     #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
 
     # weigting precision vs recall
-    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=40)
+    cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=5)
     cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
 
 
