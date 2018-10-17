@@ -67,8 +67,8 @@ def main(argv):
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_resnet.resnet_model_fn,
-        #model_dir="/home/ubuntu/one_octave_resnet/model",
-        model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
+        model_dir="/home/ubuntu/one_octave_resnet/model",
+        #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/model/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
