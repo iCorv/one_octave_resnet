@@ -9,7 +9,7 @@ import tensorflow as tf
 _HEIGHT = 88
 _WIDTH = 15
 _NUM_CHANNELS = 3
-_NUM_CLASSES = 12
+_NUM_CLASSES = 88
 _NUM_IMAGES = {
     'train': 76634,
     'validation': 2000,
@@ -95,7 +95,7 @@ def resnet_model_fn(features, labels, mode, params):
 
     learning_rate_fn = pop_resnet_model_fn.learning_rate_with_decay(
         batch_size=params['batch_size'], batch_denom=params['batch_size'],
-        num_images=_NUM_IMAGES['train'], boundary_epochs=[5, 10, 20],  # boundary_epochs=[100, 150, 200],
+        num_images=_NUM_IMAGES['train'], boundary_epochs=[5, 10, 15],  # boundary_epochs=[100, 150, 200],
         decay_rates=[1, 0.1, 0.01, 0.001])
 
     # We use a weight decay of 0.0002, which performs better

@@ -139,6 +139,105 @@ def framed_log_magnitude_spectrogram(filt_sig_1, filt_sig_2, filt_sig_3):
     return log_filt_1, log_filt_2, log_filt_3
 
 
+def _float_feature(value):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+
+def _int64_feature(value):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+
+
+def write_to_tfrecords(audio_list, label_list, filename, sr=22050):
+    hop_size = librosa.time_to_samples(0.01, sr=sr)
+    frame_length_samples = [512, 1024, 2048]
+
+    num_examples = count_examples(label_list)
+    print("Total of " + str(num_examples) + " examples")
+
+    # open the TFRecords file
+    writer = tf.python_io.TFRecordWriter(str(num_examples) + "_" + filename + ".tfrecords")
+
+    midi_note_offset = 21
+
+    spec_filter, semitone_freq_bins = create_semitone_filterbank(audio_list[0], sr=sr,
+                                                                 frame_length_samples=frame_length_samples,
+                                                                 hop_size=hop_size)
+    examples_processed = 0
+
+    for file_index in range(0, len(audio_list)):
+        # load signal
+        sig = madmom.audio.signal.Signal(audio_list[file_index], sample_rate=sr, num_channels=1, norm=True,
+                                         dtype=np.float32)
+
+        # split signal into frames
+        framed_sig_1, framed_sig_2, framed_sig_3 = framed_signal(sig, frame_length_samples, hop_size=hop_size,
+                                                                 origin='right')
+
+        # apply STFT
+        stft_sig_1, stft_sig_2, stft_sig_3 = framed_signal_stft(framed_sig_1, framed_sig_2, framed_sig_3,
+                                                                fft_size=10000, circular_shift=True)
+
+        # transform to spectrogram
+        spec_sig_1, spec_sig_2, spec_sig_3 = framed_stft_spectrogram(stft_sig_1, stft_sig_2, stft_sig_3)
+
+        # apply filter
+        filt_sig_1, filt_sig_2, filt_sig_3 = framed_filter_spectrogram(spec_sig_1, spec_sig_2, spec_sig_3, spec_filter)
+
+        # apply log magnitude
+        log_filt_1, log_filt_2, log_filt_3 = framed_log_magnitude_spectrogram(filt_sig_1, filt_sig_2, filt_sig_3)
+
+        # load ground truth
+        labeled_intervals = loadtxt(label_list[file_index], skiprows=1, delimiter='\t')
+
+        # in case only one note exist in this example
+        if labeled_intervals.ndim == 1:
+            labeled_intervals = labeled_intervals.reshape(1, 3)
+
+        # find unique onsets
+        unique_onsets = np.unique(labeled_intervals[:, 0])
+
+        # iterate over all onsets in current file
+        for onset in unique_onsets:
+
+            onset_occurence = np.where(labeled_intervals[:, 0] == onset)
+            onset_midi_notes = labeled_intervals[onset_occurence, 2]
+            onset_notes_index = onset_midi_notes.ravel().astype(int) - midi_note_offset
+
+            if examples_processed < num_examples:
+                # if ground_truth_midi >= 48 and ground_truth_midi <= 59:
+                # three layer spectrogram placeholder
+                layered_spectrogram = np.zeros((88, 15, 3), np.float32)
+
+                # iterate over all three frame length settings
+
+                # use only frame length of 512 samples since it provides the best time resolution to find the true frame with onset
+                # with longer frame length the onset might be found in several frames
+                center_frame = find_onset_frame(onset, frame_length_samples[0], hop_size, sr)
+                # flip spectrograms up to down for convenient representation of filters in tensorboard. Filters are presented as
+                # png files therefor the upper left corner is (0,0)
+                layered_spectrogram[:, :, 0] = np.flipud(log_filt_1[(center_frame - 7):(center_frame + 8), :].T)
+                layered_spectrogram[:, :, 1] = np.flipud(log_filt_2[(center_frame - 7):(center_frame + 8), :].T)
+                layered_spectrogram[:, :, 2] = np.flipud(log_filt_3[(center_frame - 7):(center_frame + 8), :].T)
+
+                label = np.zeros(88, dtype=int)
+                label[onset_notes_index] = 1
+
+                # Create a feature
+                feature = {filename+"/label": _int64_feature(label),
+                           filename+"/spec": _float_feature(layered_spectrogram.ravel())}
+                # Create an example protocol buffer
+                example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+                # Serialize to string and write on the file
+                writer.write(example.SerializeToString())
+
+                examples_processed = examples_processed + 1
+                if np.mod(examples_processed, 100) == 0:
+                    print(str(examples_processed) + " of " + str(num_examples) + " examples processed")
+    writer.close()
+
+
+
 def main():
     sr = 22050
     frame_length_samples = [512, 1024, 2048]
@@ -150,10 +249,10 @@ def main():
 
     subset = 'StbgTGd2'
 
-    sorted_audio_list = glob.glob('/Users/Jaedicke/MAPS/**/ISOL/**/*.wav')
+    sorted_audio_list = glob.glob('/Users/Jaedicke/MAPS/AkPnBcht/MUS/MAPS_MUS-alb_se3_AkPnBcht.wav')
     sorted_audio_list.sort()
 
-    sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS/**/ISOL/**/*.txt')
+    sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS/AkPnBcht/MUS/MAPS_MUS-alb_se3_AkPnBcht.txt')
     sorted_ground_truth_list.sort()
 
     num_examples = count_examples(sorted_ground_truth_list)
@@ -234,7 +333,7 @@ def main():
                 if np.mod(examples_processed, 100) == 0:
                     print(str(examples_processed) + " of " + str(num_examples) + " examples processed")
 
-    np.savez("semitone_ISOL_" + str(num_examples) + "_examples", features=spectrogram_data,
+    np.savez("semitone_MAPS_MUS-alb_se3_AkPnBcht_onsets_" + str(num_examples) + "_examples", features=spectrogram_data,
              labels=ground_truth_data)
     specshow(spec=np.flipud(layered_spectrogram[:, :, 1]), title='Semitone Spectrogram')
     print(onset_notes_index+21)

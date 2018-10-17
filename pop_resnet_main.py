@@ -19,20 +19,25 @@ train_dataset = "semitone_ISOL_UCHO_48_59_10113_examples.npz"
 
 #eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
 #eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_5000.npz"
-eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_25050.npz"
+eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
+
+
+train_dataset_tfrecord = "208374_train.tfrecords"
+val_dataset_tfrecord = "38678_val.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
+train_and_val = True
 predict_flag = False
-train_flag = True
+train_flag = False
 eval_flag = False
 
-num_examples = 10113
+num_examples = 208374
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 30
+train_epochs = 20
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -40,10 +45,10 @@ run_params = {
     'dtype': DEFAULT_DTYPE,
     'resnet_size': 34,
     'resnet_version': 2,
-    'num_classes': 12,
+    'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
-    'eval_steps': 25050, # 1305, #25050, # 2000
+    'eval_steps': 38678, # 1305, #25050, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
@@ -62,8 +67,8 @@ def main(argv):
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_resnet.resnet_model_fn,
-        model_dir="/home/ubuntu/one_octave_resnet/model",
-        #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
+        #model_dir="/home/ubuntu/one_octave_resnet/model",
+        model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/model/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
@@ -79,6 +84,14 @@ def main(argv):
     benchmark_logger = logger.get_benchmark_logger()
     benchmark_logger.log_run_info('resnet', 'MAPS', run_params,
                                   test_id=TEST_ID)
+
+    if train_and_val:
+        train_spec = tf.estimator.TrainSpec(input_fn=lambda: dataset.tfrecord_train_input_fn(train_dataset_tfrecord, batch_size=run_params['batch_size'],
+                         num_epochs=run_params['train_epochs']), max_steps=total_train_steps)
+        eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord, batch_size=run_params['batch_size'],
+                         num_epochs=1))
+
+        tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
     # Train the Model.
     if train_flag:
@@ -107,8 +120,8 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_2018-13-10", props=props)
-        np.savez("notes_2018-13-10", notes=notes)
+        np.savez("props_2018-15-10", props=props)
+        np.savez("notes_2018-15-10", notes=notes)
         print(index)
 
 if __name__ == '__main__':

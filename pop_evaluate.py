@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import loadtxt
+from scipy import signal
 import matplotlib as mlp
 mlp.use('TkAgg')
 import matplotlib.pyplot as plt
@@ -16,12 +17,18 @@ midi_range_low = 48
 midi_range_high = 59
 midi_range = np.arange(midi_range_low, midi_range_high+1)
 
+hamming = np.matlib.repmat(np.hamming(5), 1, 88)
+
 def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS/AkPnBcht/MUS/MAPS_MUS-alb_se3_AkPnBcht.txt')
-data = np.load("notes_2018-13-10.npz")
-note_map = data["notes"]
+data = np.load("props_2018-15-10.npz")
+
+props = signal.convolve2d(data["props"], hamming, mode='same')
+#props = data["props"]
+note_map = np.where(props > 50, 1, 0)
+#note_map = data["notes"]
 print(np.shape(note_map))
 num_est_notes = np.sum(np.sum(note_map), dtype=np.int64)
 print(num_est_notes)
@@ -44,6 +51,7 @@ est_intervals = np.zeros((num_est_notes, 2))
 
 
 notes_index = np.where(note_map)
+
 
 est_pitches = midi_to_hz(notes_index[0] + midi_range_low)
 est_intervals[:, 0] = (notes_index[1] * 0.01) + (frame_size/sample_rate * 7) + frame_size/sample_rate/2
