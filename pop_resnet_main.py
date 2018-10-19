@@ -50,7 +50,7 @@ run_params = {
     'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
-    'eval_steps': int(round(num_val_examples/batch_size)), # 1305, #25050, # 2000
+    'eval_steps': 100, #int(round(num_val_examples/batch_size)), # 1305, #25050, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
@@ -64,7 +64,7 @@ def main(argv):
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
 
     estimator_config = tf.estimator.RunConfig(
-        save_checkpoints_steps=50,  # Save checkpoints every 50 steps.
+        save_checkpoints_steps=100,  # Save checkpoints every 50 steps.
         keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
@@ -94,7 +94,7 @@ def main(argv):
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                                                          batch_size=run_params['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'], start_delay_secs=3600, throttle_secs=3600)
+                                          steps=run_params['eval_steps'], throttle_secs=3600)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
