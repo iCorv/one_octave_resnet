@@ -288,6 +288,7 @@ def numpy_array_input_fn(npz_path, batch_size, num_epochs, shuffle):
     features = data["features"]#.astype(np.float32)
     labels = data["labels"]#.astype(int)
 
+
     #weights = weights_from_labels(data["labels"])
     #print(np.shape(weights))
     #print(weights[1, :])
@@ -350,6 +351,18 @@ def tfrecord_val_parser(serialized_example):
     labels = tf.cast(features['val/label'], tf.int32)
     return spec, labels
 
+def tfrecord_test_parser(serialized_example):
+    """Parses a single tf.Example into spectrogram and label tensors."""
+    features = tf.parse_single_example(
+        serialized_example,
+        features={"test/spec": tf.FixedLenFeature([3960], tf.float32),
+                  "test/label": tf.FixedLenFeature([88], tf.int64)})
+    spec = tf.cast(features['test/spec'], tf.float32)
+    # Reshape spec data into the original shape
+    spec = tf.reshape(spec, [88, 15, 3])
+    spec = tf.image.per_image_standardization(spec)
+    labels = tf.cast(features["test/label"], tf.int32)
+    return spec, labels
 
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     dataset = tf.data.TFRecordDataset(filepath)
@@ -375,6 +388,19 @@ def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
     dataset = dataset.shuffle(2048)
     dataset = dataset.repeat(num_epochs)
     dataset = dataset.map(tfrecord_val_parser)
+    dataset = dataset.batch(batch_size)
+
+    return dataset
+
+
+def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
+
+    dataset = tf.data.TFRecordDataset([filepath])
+
+    # Map the parser over dataset, and batch results by up to batch_size
+    #dataset = dataset.shuffle(2048)
+    dataset = dataset.repeat(num_epochs)
+    dataset = dataset.map(tfrecord_test_parser)
     dataset = dataset.batch(batch_size)
 
     return dataset

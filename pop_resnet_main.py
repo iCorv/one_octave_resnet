@@ -24,6 +24,7 @@ eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
 
 train_dataset_tfrecord = "208374_train.tfrecords"
 val_dataset_tfrecord = "38678_val.tfrecords"
+test_dataset_tfrecord = "MAPS_MUS-chpn_op7_1_ENSTDkAm_1029_test.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
 
@@ -35,9 +36,10 @@ train_flag = False
 eval_flag = False
 
 num_examples = 208374
+num_val_examples = 38678
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 20
+train_epochs = 10
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -48,7 +50,7 @@ run_params = {
     'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
-    'eval_steps': 38678, # 1305, #25050, # 2000
+    'eval_steps': int(round(num_val_examples/batch_size)), # 1305, #25050, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
@@ -86,10 +88,13 @@ def main(argv):
                                   test_id=TEST_ID)
 
     if train_and_val:
-        train_spec = tf.estimator.TrainSpec(input_fn=lambda: dataset.tfrecord_train_input_fn(train_dataset_tfrecord, batch_size=run_params['batch_size'],
-                         num_epochs=run_params['train_epochs']), max_steps=total_train_steps)
-        eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord, batch_size=run_params['batch_size'],
-                         num_epochs=1))
+        train_spec = tf.estimator.TrainSpec(input_fn=lambda: dataset.tfrecord_train_input_fn(train_dataset_tfrecord,
+                                                                                             batch_size=run_params['batch_size'],
+                                            num_epochs=run_params['train_epochs']), max_steps=total_train_steps)
+        eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
+                                                                                         batch_size=run_params['batch_size'],
+                                                                                         num_epochs=1),
+                                          steps=run_params['eval_steps'], throttle_secs=1800)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
@@ -100,7 +105,8 @@ def main(argv):
 
     # Evaluate the model.
     if eval_flag:
-        eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1, shuffle=False),
+        eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1,
+                                                                                num_epochs=1, shuffle=False),
                                           steps=run_params['eval_steps'])
 
         benchmark_logger.log_evaluation_result(eval_result)
@@ -109,8 +115,8 @@ def main(argv):
 
     ######### predict
     if predict_flag:
-        predictions = classifier.predict(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1, num_epochs=1,
-                                         shuffle=False))
+        predictions = classifier.predict(input_fn=lambda: dataset.tfrecord_test_input_fn(filepath=test_dataset_tfrecord,
+                                                                                         batch_size=1, num_epochs=1))
 
         props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
         notes = np.zeros((run_params['num_classes'], run_params['eval_steps']))
@@ -120,8 +126,8 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_2018-15-10", props=props)
-        np.savez("notes_2018-15-10", notes=notes)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", props=props)
+        #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 
 if __name__ == '__main__':
