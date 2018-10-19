@@ -30,16 +30,16 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = True
+train_and_val = False
 predict_flag = False
-train_flag = False
+train_flag = True
 eval_flag = False
 
 num_examples = 208374
 num_val_examples = 38678
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 40
+train_epochs = 15
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -64,7 +64,7 @@ def main(argv):
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
 
     estimator_config = tf.estimator.RunConfig(
-        save_checkpoints_steps=100,  # Save checkpoints every 50 steps.
+        save_checkpoints_steps=50,  # Save checkpoints every 50 steps.
         keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
@@ -94,14 +94,16 @@ def main(argv):
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                                                          batch_size=run_params['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'], throttle_secs=3600)
+                                          steps=run_params['eval_steps'], throttle_secs=7200)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
     # Train the Model.
     if train_flag:
-        classifier.train(input_fn=dataset.numpy_array_input_fn(train_dataset, batch_size=run_params['batch_size'],
-                         num_epochs=run_params['train_epochs'], shuffle=True), steps=run_params['train_steps'])
+        classifier.train(input_fn=lambda: dataset.tfrecord_train_input_fn(train_dataset_tfrecord,
+                                                                          batch_size=run_params['batch_size'],
+                                                                          num_epochs=run_params['train_epochs']),
+                         steps=run_params['train_steps'])
 
     # Evaluate the model.
     if eval_flag:
