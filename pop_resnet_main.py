@@ -39,7 +39,7 @@ num_examples = 208374
 num_val_examples = 38678
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 10
+train_epochs = 40
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -94,7 +94,7 @@ def main(argv):
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                                                          batch_size=run_params['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'], start_delay_secs=3600, throttle_secs=1800)
+                                          steps=run_params['eval_steps'], start_delay_secs=3600, throttle_secs=3600)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
