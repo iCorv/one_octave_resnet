@@ -30,10 +30,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = False
+train_and_val = True
 predict_flag = False
 train_flag = False
-eval_flag = True
+eval_flag = False
 
 num_examples = 208374
 num_val_examples = 38678
@@ -129,7 +129,7 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", props=props)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-20-10", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 

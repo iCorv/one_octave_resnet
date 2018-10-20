@@ -42,7 +42,7 @@ def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.txt')
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10.npz")
+data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-20-10.npz")
 
 #props = signal.convolve2d(data["props"], hamming, mode='same')
 props = data["props"]

@@ -13,7 +13,7 @@ sr = 22050
 hop_size = hop_size = librosa.time_to_samples(0.01, sr=sr)
 frame_length = 512
 
-plot_frames = 500
+plot_frames = 309
 
 midi_range_low = 21
 midi_range_high = 108
@@ -53,7 +53,7 @@ print(hamming)
 
 f, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, sharey=True)
 
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10.npz")
+data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-20-10.npz")
 props = data["props"]
 prefix = np.zeros((88, 7))
 props = np.append(prefix,props,axis=1)
@@ -78,7 +78,7 @@ ax2.set_title("Smoothed Activation Function")
 print(np.max(props))
 print(props[np.nonzero(props)].mean())
 print(np.min(props))
-props = np.where(props > 0.7, 1, 0)
+props = np.where(props > 0.8, 1, 0)
 
 props_shape = props.shape
 props = reduce_consecutive_ones_mat(props, props_shape[1])
@@ -115,7 +115,8 @@ pitch_per_frame = ground_truth[midi_range_indices, 2] - midi_range_low
 
 
 
-piano_roll = np.zeros(np.shape(props))
+#piano_roll = np.zeros(np.shape(props))
+piano_roll = np.zeros((88, 14000))
 piano_roll[pitch_per_frame.astype(int), onset_frames] = 1
 
 
