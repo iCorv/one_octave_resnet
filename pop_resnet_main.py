@@ -32,8 +32,8 @@ TEST_ID = 1
 
 train_and_val = False
 predict_flag = False
-train_flag = True
-eval_flag = False
+train_flag = False
+eval_flag = True
 
 num_examples = 208374
 num_val_examples = 38678
@@ -50,7 +50,7 @@ run_params = {
     'num_classes': 88,
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
-    'eval_steps': 100, #int(round(num_val_examples/batch_size)), # 1305, #25050, # 2000
+    'eval_steps': int(round(num_val_examples/batch_size)), # 1305, #25050, # 2000
     'data_format': 'channels_last',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
@@ -107,8 +107,9 @@ def main(argv):
 
     # Evaluate the model.
     if eval_flag:
-        eval_result = classifier.evaluate(input_fn=dataset.numpy_array_input_fn(eval_dataset, batch_size=1,
-                                                                                num_epochs=1, shuffle=False),
+        eval_result = classifier.evaluate(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
+                                                                                         batch_size=run_params['batch_size'],
+                                                                                         num_epochs=1),
                                           steps=run_params['eval_steps'])
 
         benchmark_logger.log_evaluation_result(eval_result)
