@@ -30,8 +30,8 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = False
-predict_flag = True
+train_and_val = True
+predict_flag = False
 train_flag = False
 eval_flag = False
 
