@@ -30,8 +30,8 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = True
-predict_flag = False
+train_and_val = False
+predict_flag = True
 train_flag = False
 eval_flag = False
 
@@ -45,7 +45,7 @@ total_train_steps = train_epochs * steps_per_epoch
 run_params = {
     'batch_size': batch_size,
     'dtype': DEFAULT_DTYPE,
-    'resnet_size': 34,
+    'resnet_size': 50,
     'resnet_version': 2,
     'num_classes': 88,
     'weight_decay': 2e-4,
@@ -69,9 +69,9 @@ def main(argv):
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_resnet.resnet_model_fn,
-        model_dir="/home/ubuntu/one_octave_resnet/model",
+        #model_dir="/home/ubuntu/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
-        #model_dir="/Users/Jaedicke/tensorflow/model/model",
+        model_dir="/Users/Jaedicke/tensorflow/model/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],
@@ -121,15 +121,15 @@ def main(argv):
         predictions = classifier.predict(input_fn=lambda: dataset.tfrecord_test_input_fn(filepath=test_dataset_tfrecord,
                                                                                          batch_size=1, num_epochs=1))
 
-        props = np.zeros((run_params['num_classes'], run_params['eval_steps']))
-        notes = np.zeros((run_params['num_classes'], run_params['eval_steps']))
+        props = np.zeros((run_params['num_classes'], num_val_examples))
+        notes = np.zeros((run_params['num_classes'], num_val_examples))
         index = 0
         for p in predictions:
-            if index < run_params['eval_steps']:
+            if index < num_val_examples:
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-20-10", props=props)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-21-10", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 

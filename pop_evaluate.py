@@ -42,7 +42,7 @@ def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.txt')
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-20-10.npz")
+data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-21-10.npz")
 
 #props = signal.convolve2d(data["props"], hamming, mode='same')
 props = data["props"]
@@ -50,13 +50,13 @@ prefix = np.zeros((88, 7))
 props = np.append(prefix,props,axis=1)
 #for bins in range(0, 87):
 #    props[bins, :] = signal.convolve(props[bins, :], hamming, mode='same')
-note_map = np.where(props > 0.5, 1, 0)
+note_map = np.where(props > 0.7, 1, 0)
 note_map_shape = note_map.shape
 note_map = reduce_consecutive_ones_mat(note_map, note_map_shape[1])
 #note_map = data["notes"]
 print(np.shape(note_map))
 num_est_notes = np.sum(np.sum(note_map), dtype=np.int64)
-print(num_est_notes)
+print("number of estimated notes: " + str(num_est_notes))
 
 # load ground truth
 ground_truth = loadtxt(sorted_ground_truth_list[0], skiprows=1, delimiter='\t')
@@ -83,7 +83,7 @@ est_intervals[:, 0] = (notes_index[1] * 0.01) + frame_size/sample_rate/2
 est_intervals[:, 1] = (notes_index[1] * 0.01) + frame_size/sample_rate
 
 metrics_with_pitch = tr.precision_recall_f1_overlap(ref_intervals, ref_pitches, est_intervals,
-                                                    est_pitches, onset_tolerance=0.3,
+                                                    est_pitches, onset_tolerance=0.05,
                                                     pitch_tolerance=50.0, offset_ratio=None,
                                                     strict=False,
                                                     beta=1.0)
