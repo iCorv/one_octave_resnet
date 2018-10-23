@@ -1,7 +1,11 @@
 from random import shuffle
 import glob
 import pop_preprocessing as prep
+import numpy as np
 shuffle_data = True  # shuffle the addresses before saving
+
+# number of frequency bands (per octave for logarithmic and total for mel-scaled)
+num_bands = 48
 
 # configuration II (using real piano recording as test set)
 num_train_pieces = 180
@@ -33,6 +37,9 @@ if shuffle_data:
     shuffle(c)
     audio_addrs, label_addrs = zip(*c)
 
+# save data order for reuse (e.g. creating other data folds)
+np.savez("shuffeled_file_addrs", audio_addrs=audio_addrs, label_addrs=label_addrs)
+
 # number of musical pieces
 num_files = len(audio_addrs)
 
@@ -46,6 +53,6 @@ val_label_addrs = label_addrs[num_train_pieces:]
 # check number of pieces in each group
 print("train/validate/test - split: " + str(len(train_audio_addrs)) + "/" + str(len(val_audio_addrs)) + "/" + str(len(test_audio_addrs)))
 
-prep.write_to_tfrecords(train_audio_addrs, train_label_addrs, "train")
-prep.write_to_tfrecords(val_audio_addrs, val_label_addrs, "val")
-prep.write_to_tfrecords(test_audio_addrs, test_label_addrs, "test")
+prep.write_to_tfrecords(train_audio_addrs, train_label_addrs, "train", num_bands=num_bands, num_frames=5)
+prep.write_to_tfrecords(val_audio_addrs, val_label_addrs, "val", num_bands=num_bands, num_frames=5)
+#prep.write_to_tfrecords(test_audio_addrs, test_label_addrs, "test")

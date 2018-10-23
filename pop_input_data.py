@@ -244,6 +244,8 @@ FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0
                   [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.],
                   [0]]  # sets field types
 
+feature_shape = [231, 5, 3]
+num_features = feature_shape[0] * feature_shape[1] * feature_shape[2]
 
 def _parse_line(line):
     # Decode the line into its fields
@@ -328,13 +330,14 @@ def tfrecord_train_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
     features = tf.parse_single_example(
         serialized_example,
-        features={"train/spec": tf.FixedLenFeature([3960], tf.float32),
-                  "train/label": tf.FixedLenFeature([88], tf.int64)})
+        features={"train/spec": tf.FixedLenFeature([num_features], tf.float32),
+                  "train/label": tf.FixedLenFeature([feature_shape[0]], tf.int64)})
     spec = tf.cast(features['train/spec'], tf.float32)
     # Reshape spec data into the original shape
-    spec = tf.reshape(spec, [88, 15, 3])
+    spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
-    labels = tf.cast(features["train/label"], tf.int32)
+    shit = features["train/label"][0:88]
+    labels = tf.cast(shit, tf.int32)
     return spec, labels
 
 
@@ -342,26 +345,28 @@ def tfrecord_val_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
     features = tf.parse_single_example(
         serialized_example,
-        features={'val/spec': tf.FixedLenFeature([3960], tf.float32),
-                  'val/label': tf.FixedLenFeature([88], tf.int64)})
+        features={'val/spec': tf.FixedLenFeature([num_features], tf.float32),
+                  'val/label': tf.FixedLenFeature([feature_shape[0]], tf.int64)})
     spec = tf.cast(features['val/spec'], tf.float32)
     # Reshape spec data into the original shape
-    spec = tf.reshape(spec, [88, 15, 3])
+    spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
-    labels = tf.cast(features['val/label'], tf.int32)
+    shit = features["val/label"][0:88]
+    labels = tf.cast(shit, tf.int32)
     return spec, labels
 
 def tfrecord_test_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
     features = tf.parse_single_example(
         serialized_example,
-        features={"test/spec": tf.FixedLenFeature([3960], tf.float32),
-                  "test/label": tf.FixedLenFeature([88], tf.int64)})
+        features={"test/spec": tf.FixedLenFeature([num_features], tf.float32),
+                  "test/label": tf.FixedLenFeature([feature_shape[0]], tf.int64)})
     spec = tf.cast(features['test/spec'], tf.float32)
     # Reshape spec data into the original shape
-    spec = tf.reshape(spec, [88, 15, 3])
+    spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
-    labels = tf.cast(features["test/label"], tf.int32)
+    shit = features["test/label"][0:88]
+    labels = tf.cast(shit, tf.int32)
     return spec, labels
 
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):

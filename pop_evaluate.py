@@ -42,20 +42,33 @@ def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.txt')
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-21-10.npz")
+data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-22-10.npz")
+
+#act = madmom.features.notes.RNNPianoNoteProcessor()('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.wav')
 
 #props = signal.convolve2d(data["props"], hamming, mode='same')
 props = data["props"]
 prefix = np.zeros((88, 7))
-props = np.append(prefix,props,axis=1)
+props = np.append(prefix, props, axis=1)
+
+fps = 1/hop_size
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.6, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.2, combine=0.03, smooth=0.0, fps=fps)
+
+est_intervals_notes = proc(props.T)
+#est_intervals_notes = proc(act)
+
+
+
 #for bins in range(0, 87):
 #    props[bins, :] = signal.convolve(props[bins, :], hamming, mode='same')
-note_map = np.where(props > 0.7, 1, 0)
-note_map_shape = note_map.shape
-note_map = reduce_consecutive_ones_mat(note_map, note_map_shape[1])
+#note_map = np.where(props > 0.7, 1, 0)
+#note_map_shape = note_map.shape
+#note_map = reduce_consecutive_ones_mat(note_map, note_map_shape[1])
 #note_map = data["notes"]
-print(np.shape(note_map))
-num_est_notes = np.sum(np.sum(note_map), dtype=np.int64)
+
+
+
+num_est_notes = np.shape(est_intervals_notes)[0]
 print("number of estimated notes: " + str(num_est_notes))
 
 # load ground truth
@@ -75,12 +88,17 @@ est_intervals = np.zeros((num_est_notes, 2))
 
 
 
-notes_index = np.where(note_map)
+#notes_index = np.where(note_map)
 
 
-est_pitches = midi_to_hz(notes_index[0] + midi_range_low)
-est_intervals[:, 0] = (notes_index[1] * 0.01) + frame_size/sample_rate/2
-est_intervals[:, 1] = (notes_index[1] * 0.01) + frame_size/sample_rate
+#est_pitches = midi_to_hz(notes_index[0] + midi_range_low)
+#est_intervals[:, 0] = (notes_index[1] * 0.01) + frame_size/sample_rate/2
+#est_intervals[:, 1] = (notes_index[1] * 0.01) + frame_size/sample_rate
+
+est_pitches = midi_to_hz(est_intervals_notes[:, 1])
+print(est_intervals_notes[:, 1])
+est_intervals[:, 0] = est_intervals_notes[:, 0]
+est_intervals[:, 1] = est_intervals_notes[:, 0] + frame_size/sample_rate
 
 metrics_with_pitch = tr.precision_recall_f1_overlap(ref_intervals, ref_pitches, est_intervals,
                                                     est_pitches, onset_tolerance=0.05,

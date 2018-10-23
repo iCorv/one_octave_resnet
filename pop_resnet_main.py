@@ -22,8 +22,8 @@ train_dataset = "semitone_ISOL_UCHO_48_59_10113_examples.npz"
 eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
 
 
-train_dataset_tfrecord = "208374_train.tfrecords"
-val_dataset_tfrecord = "38678_val.tfrecords"
+train_dataset_tfrecord = "212546_train_231x5.tfrecords"
+val_dataset_tfrecord = "34506_val_231x5.tfrecords"
 test_dataset_tfrecord = "MAPS_MUS-chpn_op7_1_ENSTDkAm_1029_test.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
@@ -35,11 +35,11 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-num_examples = 208374
-num_val_examples = 38678
+num_examples = 212546
+num_val_examples = 34506
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 20
+train_epochs = 10
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -129,7 +129,7 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-21-10", props=props)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-22-10", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 

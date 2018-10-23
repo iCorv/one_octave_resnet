@@ -36,7 +36,7 @@ def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 
-def create_semitone_filterbank(signal_file, sr, frame_length_samples, hop_size):
+def create_semitone_filterbank(signal_file, sr, frame_length_samples, hop_size, bands_per_octave):
     # load signal
     sig = madmom.audio.signal.Signal(signal_file, sample_rate=sr, num_channels=1, norm=True,
                                      dtype=np.float32)
@@ -49,7 +49,8 @@ def create_semitone_filterbank(signal_file, sr, frame_length_samples, hop_size):
 
     frequencies = stft_sig_1.bin_frequencies
 
-    semitone_freq_bins = madmom.audio.filters.semitone_frequencies(fmin=27.5, fmax=4186.0090448096, fref=440.0)
+    semitone_freq_bins = madmom.audio.filters.log_frequencies(bands_per_octave=bands_per_octave, fmin=27.5,
+                                                              fmax=4186.0090448096, fref=440.0)
     bins = madmom.audio.filters.frequencies2bins(frequencies, semitone_freq_bins, unique_bins=False)
     semitone_filterbank = np.zeros(shape=[88, len(bins)])
     current_bin = bins[0]
@@ -57,15 +58,26 @@ def create_semitone_filterbank(signal_file, sr, frame_length_samples, hop_size):
     for i in range(0, len(bins)):
         if bins[i] > current_bin:
             center = start + int(round((i-1 - start)/2))
-            semitone_filterbank[current_bin][start:i] = madmom.audio.filters.TriangularFilter(start, center, i, norm=True)
+            semitone_filterbank[current_bin][start:i] = madmom.audio.filters.TriangularFilter(start, center, i,
+                                                                                              norm=True)
             current_bin = bins[i]
             start = i
     # last semitone triangle filter
     center = start + int(round((len(bins) - 1 - start) / 2))
-    semitone_filterbank[current_bin][start:len(bins)-1] = madmom.audio.filters.TriangularFilter(start, center, len(bins) - 1, norm=True)
+    semitone_filterbank[current_bin][start:len(bins)-1] = madmom.audio.filters.TriangularFilter(start, center,
+                                                                                                len(bins) - 1,
+                                                                                                norm=True)
 
     return semitone_filterbank.T, semitone_freq_bins
 
+def create_logarithmic_filterbank(sr, longest_frame, bands_per_octave):
+    bin_frequencies = madmom.audio.stft.fft_frequencies(longest_frame, sr)
+    log_frequencies = madmom.audio.filters.log_frequencies(bands_per_octave=bands_per_octave, fmin=27.5,
+                                                           fmax=4186.0090448096, fref=440.0)
+    log_filter = madmom.audio.filters.LogarithmicFilterbank(bin_frequencies, num_bands=bands_per_octave, fmin=27.5,
+                                                            fmax=4186.0090448096, fref=440.0, norm_filters=True,
+                                                            unique_filters=True, bands_per_octave=True)
+    return log_filter, log_frequencies
 
 def create_mel_filterbank(frequencies):
     mel_freq_bins = madmom.audio.filters.mel_frequencies(num_bands=88, fmin=27.5, fmax=4186.0090448096)
@@ -147,7 +159,7 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 
-def write_to_tfrecords(audio_list, label_list, filename, sr=22050):
+def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, sr=22050):
     hop_size = librosa.time_to_samples(0.01, sr=sr)
     frame_length_samples = [512, 1024, 2048]
 
@@ -159,9 +171,18 @@ def write_to_tfrecords(audio_list, label_list, filename, sr=22050):
 
     midi_note_offset = 21
 
-    spec_filter, semitone_freq_bins = create_semitone_filterbank(audio_list[0], sr=sr,
-                                                                 frame_length_samples=frame_length_samples,
-                                                                 hop_size=hop_size)
+    # offset from the center frame depending on the number of frames used
+    left_offset_frame = np.floor(num_frames/2.0).astype(int)
+    right_offset_frame = np.ceil(num_frames/2.0).astype(int)
+
+    #spec_filter, semitone_freq_bins = create_semitone_filterbank(audio_list[0], sr=sr,
+    #                                                             frame_length_samples=frame_length_samples,
+    #                                                             hop_size=hop_size)
+
+    spec_filter, log_frequencies = create_logarithmic_filterbank(sr=sr, longest_frame=frame_length_samples[2],
+                                                                 bands_per_octave=num_bands)
+    num_bins = np.shape(spec_filter)[1]
+
     examples_processed = 0
 
     for file_index in range(0, len(audio_list)):
@@ -173,9 +194,9 @@ def write_to_tfrecords(audio_list, label_list, filename, sr=22050):
         framed_sig_1, framed_sig_2, framed_sig_3 = framed_signal(sig, frame_length_samples, hop_size=hop_size,
                                                                  origin='right')
 
-        # apply STFT
+        # apply STFT (fft_size=10000 for semitone_filterbank
         stft_sig_1, stft_sig_2, stft_sig_3 = framed_signal_stft(framed_sig_1, framed_sig_2, framed_sig_3,
-                                                                fft_size=10000, circular_shift=True)
+                                                                fft_size=frame_length_samples[2]*2, circular_shift=True)
 
         # transform to spectrogram
         spec_sig_1, spec_sig_2, spec_sig_3 = framed_stft_spectrogram(stft_sig_1, stft_sig_2, stft_sig_3)
@@ -206,7 +227,7 @@ def write_to_tfrecords(audio_list, label_list, filename, sr=22050):
             if examples_processed < num_examples:
                 # if ground_truth_midi >= 48 and ground_truth_midi <= 59:
                 # three layer spectrogram placeholder
-                layered_spectrogram = np.zeros((88, 15, 3), np.float32)
+                layered_spectrogram = np.zeros((num_bins, num_frames, 3), np.float32)
 
                 # iterate over all three frame length settings
 
@@ -215,11 +236,11 @@ def write_to_tfrecords(audio_list, label_list, filename, sr=22050):
                 center_frame = find_onset_frame(onset, frame_length_samples[0], hop_size, sr)
                 # flip spectrograms up to down for convenient representation of filters in tensorboard. Filters are presented as
                 # png files therefor the upper left corner is (0,0)
-                layered_spectrogram[:, :, 0] = np.flipud(log_filt_1[(center_frame - 7):(center_frame + 8), :].T)
-                layered_spectrogram[:, :, 1] = np.flipud(log_filt_2[(center_frame - 7):(center_frame + 8), :].T)
-                layered_spectrogram[:, :, 2] = np.flipud(log_filt_3[(center_frame - 7):(center_frame + 8), :].T)
+                layered_spectrogram[:, :, 0] = np.flipud(log_filt_1[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
+                layered_spectrogram[:, :, 1] = np.flipud(log_filt_2[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
+                layered_spectrogram[:, :, 2] = np.flipud(log_filt_3[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
 
-                label = np.zeros(88, dtype=int)
+                label = np.zeros(num_bins, dtype=int)
                 label[onset_notes_index] = 1
 
                 # Create a feature
