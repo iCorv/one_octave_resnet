@@ -42,7 +42,8 @@ def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.txt')
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-22-10.npz")
+#data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-23-10.npz")
+data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-23-10.npz")
 
 #act = madmom.features.notes.RNNPianoNoteProcessor()('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.wav')
 
@@ -52,7 +53,7 @@ prefix = np.zeros((88, 7))
 props = np.append(prefix, props, axis=1)
 
 fps = 1/hop_size
-proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.6, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.2, combine=0.03, smooth=0.0, fps=fps)
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.2, combine=0.03, smooth=0.0, fps=fps)
 
 est_intervals_notes = proc(props.T)
 #est_intervals_notes = proc(act)

@@ -360,7 +360,7 @@ def tfrecord_test_parser(serialized_example):
     features = tf.parse_single_example(
         serialized_example,
         features={"test/spec": tf.FixedLenFeature([num_features], tf.float32),
-                  "test/label": tf.FixedLenFeature([feature_shape[0]], tf.int64)})
+                  "test/label": tf.FixedLenFeature([88], tf.int64)})
     spec = tf.cast(features['test/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
