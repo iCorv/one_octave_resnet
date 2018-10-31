@@ -144,7 +144,7 @@ def conv_net_prep(features, labels, mode,
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = cnn_model(features, momentum, mode == tf.estimator.ModeKeys.TRAIN)
+    logits = cnn_model(features, 0.99, mode == tf.estimator.ModeKeys.TRAIN)
 
     # This acts as a no-op if the logits are already in fp32 (provided logits are
     # not a SparseTensor). If dtype is of low precision, logits must be cast to
@@ -300,12 +300,14 @@ def cnn_model(input_layer, momentum, is_training):
 
     # dense layer
     conv3_pool = tf.reshape(conv3_pool, [-1, 56*1*64])
+    print(conv3_pool.shape)
     dense = tf.layers.dense(conv3_pool, units=512, name='dense')
     dense = tf.layers.batch_normalization(dense, momentum=momentum, training=is_training, name='dense_bn')
     dense = tf.nn.relu(dense, name='dense_act')
 
     dense = tf.layers.dropout(dense, rate=0.5, noise_shape=None, seed=None, training=is_training,
                               name='dropout3')
+    print(dense.shape)
 
     # logits layer
     logits = tf.layers.dense(dense, units=88, name='logits')
