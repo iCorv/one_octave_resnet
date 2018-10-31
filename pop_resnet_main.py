@@ -38,9 +38,9 @@ eval_flag = False
 
 num_examples = 212546
 num_val_examples = 34506
-batch_size = 128
+batch_size = 512
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 10
+train_epochs = 40
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
