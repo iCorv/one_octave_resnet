@@ -33,9 +33,8 @@ def conv_net_model_fn(features, labels, mode, params):
     # for the CIFAR-10 dataset, perhaps because the regularization prevents
     # overfitting on the small data set. We therefore include all vars when
     # regularizing and computing loss during training.
-    # turned off -> false
     def loss_filter_fn(_):
-        return False
+        return True
 
     return conv_net_prep(
         features=features,
@@ -48,7 +47,7 @@ def conv_net_model_fn(features, labels, mode, params):
         data_format=params['data_format'],
         resnet_version=params['resnet_version'],
         loss_scale=params['loss_scale'],
-        loss_filter_fn=loss_filter_fn,
+        #loss_filter_fn=loss_filter_fn,
         dtype=params['dtype'],
         num_classes=params['num_classes']
     )
@@ -182,12 +181,12 @@ def conv_net_prep(features, labels, mode,
     loss_filter_fn = loss_filter_fn or exclude_batch_norm
 
     # Add weight decay to the loss.
-    # l2_loss = weight_decay * tf.add_n(
-    #     # loss is computed using fp32 for numerical stability.
-    #     [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
-    #      if loss_filter_fn(v.name)])
-    # tf.summary.scalar('l2_loss', l2_loss)
-    loss = cross_entropy #+ l2_loss
+    l2_loss = weight_decay * tf.add_n(
+        # loss is computed using fp32 for numerical stability.
+        [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
+         if loss_filter_fn(v.name)])
+    tf.summary.scalar('l2_loss', l2_loss)
+    loss = cross_entropy + l2_loss
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
