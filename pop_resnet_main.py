@@ -9,6 +9,7 @@ import pop_input_data as dataset
 import os
 from official.utils.logs import logger
 import numpy as np
+import pop_conv_net_kelz
 
 train_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL.csv"
 eval_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL_EVAL.csv"
@@ -68,7 +69,8 @@ def main(argv):
         keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
-        model_fn=pop_resnet.resnet_model_fn,
+        model_fn=pop_conv_net_kelz.conv_net_model_fn,
+        #model_fn=pop_resnet.resnet_model_fn,
         #model_dir="/home/ubuntu/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/model/model",
@@ -95,7 +97,7 @@ def main(argv):
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                                                          batch_size=run_params['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'], throttle_secs=1200)
+                                          steps=run_params['eval_steps'], throttle_secs=600)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
