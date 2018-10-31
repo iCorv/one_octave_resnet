@@ -61,7 +61,7 @@ print(hamming)
 
 f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharey=True)
 
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-23-10.npz")
+data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-31-10.npz")
 props = data["props"]
 prefix = np.zeros((88, 7))
 props = np.append(prefix, props, axis=1)

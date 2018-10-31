@@ -132,7 +132,7 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-23-10", props=props)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-31-10", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 

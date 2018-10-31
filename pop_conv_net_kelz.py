@@ -33,8 +33,9 @@ def conv_net_model_fn(features, labels, mode, params):
     # for the CIFAR-10 dataset, perhaps because the regularization prevents
     # overfitting on the small data set. We therefore include all vars when
     # regularizing and computing loss during training.
+    # turned off -> false
     def loss_filter_fn(_):
-        return True
+        return False
 
     return conv_net_prep(
         features=features,
