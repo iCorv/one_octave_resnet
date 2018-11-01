@@ -23,21 +23,21 @@ train_dataset = "semitone_ISOL_UCHO_48_59_10113_examples.npz"
 eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
 
 
-train_dataset_tfrecord = "training/212546_train_231x5.tfrecords"
-val_dataset_tfrecord = "validation/34506_val_231x5.tfrecords"
+train_dataset_tfrecord = "1062510_train.tfrecords"
+val_dataset_tfrecord = "228270_var.tfrecords"
 test_dataset_tfrecord = "MAPS_MUS-chpn_op7_1_ENSTDkAm_13718_231x5_test.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = False
-predict_flag = True
+train_and_val = True
+predict_flag = False
 train_flag = False
 eval_flag = False
 
-num_examples = 212546
-num_val_examples = 34506
+num_examples = 1062510
+num_val_examples = 228270
 batch_size = 512
 steps_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 40
@@ -73,8 +73,8 @@ def main(argv):
         #model_fn=pop_resnet.resnet_model_fn,
         #model_dir="/home/ubuntu/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
-        model_dir="/Users/Jaedicke/tensorflow/model/model",
-        #model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
+        #model_dir="/Users/Jaedicke/tensorflow/model/model",
+        model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],

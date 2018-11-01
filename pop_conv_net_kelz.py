@@ -12,8 +12,8 @@ _WIDTH = 5
 _NUM_CHANNELS = 3
 _NUM_CLASSES = 88
 _NUM_IMAGES = {
-    'train': 212546,
-    'validation': 34506,
+    'train': 1062510,
+    'validation': 228270,
 }
 
 
@@ -141,13 +141,13 @@ def conv_net_prep(features, labels, mode,
 
     features = tf.cast(features, dtype)
 
-    label_weights = labels
-
-    # since labels also encode the weights, we have to transform them to a binary format for evaluation
-    labels = tf.cast(tf.math.ceil(labels), tf.float32)
+    # determine weights from labels encoding weights
+    weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
 
 
     if mode != tf.estimator.ModeKeys.PREDICT:
+        # since labels also encode the weights, we have to transform them to a binary format for evaluation
+        labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)
 
     logits = cnn_model(features, 0.99, mode == tf.estimator.ModeKeys.TRAIN)
@@ -178,7 +178,6 @@ def conv_net_prep(features, labels, mode,
     # weights masking to emphasize positive examples
     cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
                                                               reduction=tf.losses.Reduction.NONE)
-    weights = tf.py_func(weights_from_labels, [label_weights], [tf.float32])[0]
     cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
 
 
