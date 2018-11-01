@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import matplotlib
 import tensorflow as tf
+import numpy as np
 
 matplotlib.use('TkAgg')
 _HEIGHT = 231
@@ -90,6 +91,10 @@ def learning_rate_with_decay(
     return learning_rate_fn
 
 
+def weights_from_labels(labels):
+    return np.where(labels == 0.0, 1.0, labels)
+
+
 def conv_net_prep(features, labels, mode,
                     resnet_size, weight_decay, learning_rate_fn, momentum,
                     data_format, resnet_version, loss_scale, num_classes,
@@ -135,10 +140,11 @@ def conv_net_prep(features, labels, mode,
     tf.summary.image('images', features, max_outputs=6)
 
     features = tf.cast(features, dtype)
-    #if mode != tf.estimator.ModeKeys.PREDICT:
-        #labels_and_weights = tf.unstack(labels, axis=-1)
-        #weights = labels_and_weights[1]
-        #labels = labels_and_weights[0]
+
+    label_weights = labels
+
+    # since labels also encode the weights, we have to transform them to a binary format for evaluation
+    labels = tf.cast(tf.math.ceil(labels), tf.float32)
 
 
     if mode != tf.estimator.ModeKeys.PREDICT:
@@ -167,7 +173,15 @@ def conv_net_prep(features, labels, mode,
 
 
     # without weights
-    cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
+    #cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
+
+    # weights masking to emphasize positive examples
+    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
+                                                              reduction=tf.losses.Reduction.NONE)
+    weights = tf.py_func(weights_from_labels, [label_weights], [tf.float32])[0]
+    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
+
+
 
     # Create a tensor named cross_entropy for logging purposes.
     tf.identity(cross_entropy, name='cross_entropy')

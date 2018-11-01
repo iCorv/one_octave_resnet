@@ -57,6 +57,6 @@ val_label_addrs = label_addrs[num_train_pieces:]
 # check number of pieces in each group
 print("train/validate/test - split: " + str(len(train_audio_addrs)) + "/" + str(len(val_audio_addrs)) + "/" + str(len(test_audio_addrs)))
 
-prep.write_to_tfrecords(train_audio_addrs, train_label_addrs, "train", num_bands=num_bands, num_frames=5)
+#prep.write_to_tfrecords(train_audio_addrs, train_label_addrs, "train", num_bands=num_bands, num_frames=5)
 prep.write_to_tfrecords(val_audio_addrs, val_label_addrs, "val", num_bands=num_bands, num_frames=5)
 #prep.write_to_tfrecords(test_audio_addrs, test_label_addrs, "test")
