@@ -24,7 +24,7 @@ eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
 
 
 train_dataset_tfrecord = "1062510_train.tfrecords"
-val_dataset_tfrecord = "228270_var.tfrecords"
+val_dataset_tfrecord = "228270_val.tfrecords"
 test_dataset_tfrecord = "MAPS_MUS-chpn_op7_1_ENSTDkAm_13718_231x5_test.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
