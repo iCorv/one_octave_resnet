@@ -48,7 +48,7 @@ def conv_net_model_fn(features, labels, mode, params):
         data_format=params['data_format'],
         resnet_version=params['resnet_version'],
         loss_scale=params['loss_scale'],
-        #loss_filter_fn=loss_filter_fn,
+        loss_filter_fn=loss_filter_fn,
         dtype=params['dtype'],
         num_classes=params['num_classes']
     )
