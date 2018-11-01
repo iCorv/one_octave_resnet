@@ -163,7 +163,7 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
     hop_size = librosa.time_to_samples(0.01, sr=sr)
     frame_length_samples = [512, 1024, 2048]
 
-    num_examples = count_examples(label_list)
+    num_examples = count_examples(label_list) * 5
     print("Total of " + str(num_examples) + " examples")
 
     # open the TFRecords file
@@ -175,6 +175,9 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
     left_offset_frame = np.floor(num_frames/2.0).astype(int)
     right_offset_frame = np.ceil(num_frames/2.0).astype(int)
 
+    # weight factors
+    weight_factors = [0.0, 0.25, 1.0, 0.25, 0.0]
+
     #spec_filter, semitone_freq_bins = create_semitone_filterbank(audio_list[0], sr=sr,
     #                                                             frame_length_samples=frame_length_samples,
     #                                                             hop_size=hop_size)
@@ -182,6 +185,8 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
     spec_filter, log_frequencies = create_logarithmic_filterbank(sr=sr, longest_frame=frame_length_samples[2],
                                                                  bands_per_octave=num_bands)
     num_bins = np.shape(spec_filter)[1]
+
+    num_classes = 88
 
     examples_processed = 0
 
@@ -226,36 +231,52 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
 
             if examples_processed < num_examples:
                 # if ground_truth_midi >= 48 and ground_truth_midi <= 59:
-                # three layer spectrogram placeholder
-                layered_spectrogram = np.zeros((num_bins, num_frames, 3), np.float32)
+
 
                 # iterate over all three frame length settings
 
                 # use only frame length of 512 samples since it provides the best time resolution to find the true frame with onset
                 # with longer frame length the onset might be found in several frames
                 center_frame = find_onset_frame(onset, frame_length_samples[0], hop_size, sr)
-                # flip spectrograms up to down for convenient representation of filters in tensorboard. Filters are presented as
-                # png files therefor the upper left corner is (0,0)
-                layered_spectrogram[:, :, 0] = np.flipud(log_filt_1[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
-                layered_spectrogram[:, :, 1] = np.flipud(log_filt_2[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
-                layered_spectrogram[:, :, 2] = np.flipud(log_filt_3[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
 
-                label = np.zeros(num_bins, dtype=int)
-                label[onset_notes_index] = 1
+                # three layer spectrogram placeholder
+                layered_spectrogram = np.zeros((num_bins, num_frames, 3), np.float32)
 
-                # Create a feature
-                feature = {filename+"/label": _int64_feature(label),
-                           filename+"/spec": _float_feature(layered_spectrogram.ravel())}
-                # Create an example protocol buffer
-                example = tf.train.Example(features=tf.train.Features(feature=feature))
+                for index in range(-2, 2):
+                    # get slices from framed spec for this center frame
+                    example = example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3,
+                                                        (center_frame + index), left_offset_frame, right_offset_frame,
+                                                        num_classes, onset_notes_index, filename, weight_factors[index+2])
 
-                # Serialize to string and write on the file
-                writer.write(example.SerializeToString())
+                    # Serialize to string and write on the file
+                    writer.write(example.SerializeToString())
 
-                examples_processed = examples_processed + 1
-                if np.mod(examples_processed, 100) == 0:
-                    print(str(examples_processed) + " of " + str(num_examples) + " examples processed")
+                    examples_processed = examples_processed + 1
+                    if np.mod(examples_processed, 100) == 0:
+                        print(str(examples_processed) + " of " + str(num_examples) + " examples processed")
     writer.close()
+
+
+def example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3, center_frame, left_offset_frame, right_offset_frame, num_classes, onset_notes_index, filename, weight_factor):
+    # flip spectrograms up to down for convenient representation of filters in tensorboard. Filters are presented as
+    # png files therefor the upper left corner is (0,0)
+    layered_spectrogram[:, :, 0] = np.flipud(
+        log_filt_1[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
+    layered_spectrogram[:, :, 1] = np.flipud(
+        log_filt_2[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
+    layered_spectrogram[:, :, 2] = np.flipud(
+        log_filt_3[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
+
+    label = np.zeros(num_classes, dtype=float)
+    label[onset_notes_index] = 1.0 * weight_factor
+
+    # Create a feature
+    feature = {filename + "/label": _float_feature(label),
+               filename + "/spec": _float_feature(layered_spectrogram.ravel())}
+    # Create an example protocol buffer
+    example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+    return example
 
 
 

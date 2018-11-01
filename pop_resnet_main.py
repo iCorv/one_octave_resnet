@@ -31,8 +31,8 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = True
-predict_flag = False
+train_and_val = False
+predict_flag = True
 train_flag = False
 eval_flag = False
 
@@ -73,8 +73,8 @@ def main(argv):
         #model_fn=pop_resnet.resnet_model_fn,
         #model_dir="/home/ubuntu/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
-        #model_dir="/Users/Jaedicke/tensorflow/model/model",
-        model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
+        model_dir="/Users/Jaedicke/tensorflow/model/model",
+        #model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],
