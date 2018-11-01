@@ -242,7 +242,8 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
                 # three layer spectrogram placeholder
                 layered_spectrogram = np.zeros((num_bins, num_frames, 3), np.float32)
 
-                for index in range(-2, 2):
+                for index in range(-2, 3):
+                    print(index)
                     # get slices from framed spec for this center frame
                     example = example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3,
                                                         (center_frame + index), left_offset_frame, right_offset_frame,
