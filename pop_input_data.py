@@ -369,14 +369,14 @@ def tfrecord_val_parser(serialized_example):
     features = tf.parse_single_example(
         serialized_example,
         features={'val/spec': tf.FixedLenFeature([num_features], tf.float32),
-                  'val/label': tf.FixedLenFeature([feature_shape[0]], tf.int64)})
+                  'val/label': tf.FixedLenFeature([88], tf.float32)})
     spec = tf.cast(features['val/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
     #spec = tf.image.per_image_standardization(spec)
     spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
-    shit = features["val/label"][0:88]
-    labels = tf.cast(shit, tf.float32)
+    #shit = features["val/label"][0:88]
+    labels = tf.cast(features["val/label"], tf.float32)
     return spec, labels
 
 def tfrecord_test_parser(serialized_example):
@@ -411,7 +411,7 @@ def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
 
 def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
 
-    dataset = tf.data.TFRecordDataset([filepath])
+    dataset = tf.data.TFRecordDataset(filepath)
 
     # Map the parser over dataset, and batch results by up to batch_size
     dataset = dataset.shuffle(2048)
@@ -424,7 +424,7 @@ def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
 
 def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
 
-    dataset = tf.data.TFRecordDataset([filepath])
+    dataset = tf.data.TFRecordDataset(filepath)
 
     # Map the parser over dataset, and batch results by up to batch_size
     #dataset = dataset.shuffle(2048)

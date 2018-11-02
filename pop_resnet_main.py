@@ -10,6 +10,7 @@ import os
 from official.utils.logs import logger
 import numpy as np
 import pop_conv_net_kelz
+import glob
 
 train_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL.csv"
 eval_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL_EVAL.csv"
@@ -23,24 +24,24 @@ train_dataset = "semitone_ISOL_UCHO_48_59_10113_examples.npz"
 eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
 
 
-train_dataset_tfrecord = "1062510_train.tfrecords"
-val_dataset_tfrecord = "validation/34506_val_231x5.tfrecords"
+train_dataset_tfrecord = glob.glob("maps_mus_train/*.tfrecords")
+val_dataset_tfrecord = glob.glob("maps_mus_val/*.tfrecords")
 test_dataset_tfrecord = "MAPS_MUS-chpn_op7_1_ENSTDkAm_13718_231x5_test.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = False
-predict_flag = True
+train_and_val = True
+predict_flag = False
 train_flag = False
 eval_flag = False
 
-num_examples = 1062510
-num_val_examples = 34506
-batch_size = 128
+num_examples = 4163882
+num_val_examples = 792567
+batch_size = 256
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 5
+train_epochs = 40
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -65,7 +66,7 @@ def main(argv):
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
 
     estimator_config = tf.estimator.RunConfig(
-        save_checkpoints_steps=50,  # Save checkpoints every 50 steps.
+        save_checkpoints_steps=1000,  # Save checkpoints every 50 steps.
         keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
@@ -97,7 +98,7 @@ def main(argv):
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                                                          batch_size=run_params['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'], throttle_secs=200)
+                                          steps=run_params['eval_steps'], throttle_secs=3600)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
