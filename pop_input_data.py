@@ -352,7 +352,7 @@ def tfrecord_val_parser(serialized_example):
     spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
     shit = features["val/label"][0:88]
-    labels = tf.cast(shit, tf.int32)
+    labels = tf.cast(shit, tf.float32)
     return spec, labels
 
 def tfrecord_test_parser(serialized_example):
