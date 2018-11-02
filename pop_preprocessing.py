@@ -7,6 +7,8 @@ import librosa
 import madmom
 import glob
 import warnings
+from joblib import Parallel, delayed
+import multiprocessing
 
 warnings.filterwarnings("ignore")
 import tensorflow as tf
@@ -390,9 +392,21 @@ def write_piece_to_tfrecords(audio_list, label_list, filename, num_bands, num_fr
 
     num_classes = 88
 
-    examples_processed = 0
+    #examples_processed = 0
 
-    for file_index in range(0, len(audio_list)):
+
+
+    # what are your inputs, and what operation do you want to
+    # perform on each input. For example...
+    inputs = range(len(audio_list))
+
+
+
+
+
+    #for file_index in range(0, len(audio_list)):
+    def process_file(file_index):
+        examples_processed = 0
         # open the TFRecords file
         writer = tf.python_io.TFRecordWriter(str(file_index) + "_" + filename + ".tfrecords")
 
@@ -456,11 +470,14 @@ def write_piece_to_tfrecords(audio_list, label_list, filename, num_bands, num_fr
             writer.write(example.SerializeToString())
 
             examples_processed = examples_processed + 1
-            if np.mod(examples_processed, 1000) == 0:
-                print(str(examples_processed) + " examples processed")
+
         print(str(file_index+1) + " of " + str(len(audio_list)) + " music pieces processed")
         writer.close()
-    print(str(examples_processed) + " examples processed!")
+        print(str(examples_processed) + " examples processed!")
+
+    num_cores = multiprocessing.cpu_count()
+
+    Parallel(n_jobs=num_cores)(delayed(process_file)(i) for i in inputs)
 
 
 def example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3, center_frame, left_offset_frame, right_offset_frame, num_classes, onset_notes_index, filename, weight_factor):
