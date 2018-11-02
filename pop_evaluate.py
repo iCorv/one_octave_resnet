@@ -53,7 +53,7 @@ prefix = np.zeros((88, 7))
 props = np.append(prefix, props, axis=1)
 
 fps = 1/hop_size
-proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.2, combine=0.03, smooth=0.5, fps=fps)
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.13, combine=0.03, smooth=0.1, fps=fps)
 
 est_intervals_notes = proc(props.T)
 #est_intervals_notes = proc(act)

@@ -159,6 +159,120 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 
+def spec_mean_per_bin(audio_list, filename='mean_per_bin', num_bands=12, sr=22050):
+    hop_size = librosa.time_to_samples(0.01, sr=sr)
+    frame_length_samples = [512, 1024, 2048]
+
+    spec_filter, log_frequencies = create_logarithmic_filterbank(sr=sr, longest_frame=frame_length_samples[2],
+                                                                 bands_per_octave=num_bands)
+    bin_sum_1 = 0.0
+    bin_sum_2 = 0.0
+    bin_sum_3 = 0.0
+
+    bin_elem_1 = 0.0
+    bin_elem_2 = 0.0
+    bin_elem_3 = 0.0
+
+    for file_index in range(0, len(audio_list)):
+        # load signal
+        sig = madmom.audio.signal.Signal(audio_list[file_index], sample_rate=sr, num_channels=1, norm=True,
+                                         dtype=np.float32)
+
+        # split signal into frames
+        framed_sig_1, framed_sig_2, framed_sig_3 = framed_signal(sig, frame_length_samples, hop_size=hop_size,
+                                                                 origin='right')
+
+        # apply STFT (fft_size=10000 for semitone_filterbank
+        stft_sig_1, stft_sig_2, stft_sig_3 = framed_signal_stft(framed_sig_1, framed_sig_2, framed_sig_3,
+                                                                fft_size=frame_length_samples[2]*2, circular_shift=True)
+
+        # transform to spectrogram
+        spec_sig_1, spec_sig_2, spec_sig_3 = framed_stft_spectrogram(stft_sig_1, stft_sig_2, stft_sig_3)
+
+        # apply filter
+        filt_sig_1, filt_sig_2, filt_sig_3 = framed_filter_spectrogram(spec_sig_1, spec_sig_2, spec_sig_3, spec_filter)
+
+        # apply log magnitude
+        log_filt_1, log_filt_2, log_filt_3 = framed_log_magnitude_spectrogram(filt_sig_1, filt_sig_2, filt_sig_3)
+
+        bin_sum_1 = bin_sum_1 + np.sum(log_filt_1, axis=0)
+        bin_sum_2 = bin_sum_2 + np.sum(log_filt_2, axis=0)
+        bin_sum_3 = bin_sum_3 + np.sum(log_filt_3, axis=0)
+
+        bin_elem_1 = bin_elem_1 + np.shape(log_filt_1)[0]
+        bin_elem_2 = bin_elem_2 + np.shape(log_filt_2)[0]
+        bin_elem_3 = bin_elem_3 + np.shape(log_filt_3)[0]
+
+        print(str(file_index) + " of " + str(len(audio_list)) + " files processed")
+
+    bin_mean_1 = bin_sum_1 / bin_elem_1
+    bin_mean_2 = bin_sum_2 / bin_elem_2
+    bin_mean_3 = bin_sum_3 / bin_elem_3
+
+    np.savez(filename, bin_mean_1=bin_mean_1, bin_mean_2=bin_mean_2, bin_mean_3=bin_mean_3)
+
+    return bin_mean_1, bin_mean_2, bin_mean_3
+
+
+def spec_var_per_bin(audio_list, mean_1, mean_2, mean_3, filename='var_per_bin', num_bands=12, sr=22050):
+    hop_size = librosa.time_to_samples(0.01, sr=sr)
+    frame_length_samples = [512, 1024, 2048]
+
+    spec_filter, log_frequencies = create_logarithmic_filterbank(sr=sr, longest_frame=frame_length_samples[2],
+                                                                 bands_per_octave=num_bands)
+    bin_sqr_deviation_sum_1 = 0.0
+    bin_sqr_deviation_sum_2 = 0.0
+    bin_sqr_deviation_sum_3 = 0.0
+
+    bin_elem_1 = 0.0
+    bin_elem_2 = 0.0
+    bin_elem_3 = 0.0
+
+    for file_index in range(0, len(audio_list)):
+        # load signal
+        sig = madmom.audio.signal.Signal(audio_list[file_index], sample_rate=sr, num_channels=1, norm=True,
+                                         dtype=np.float32)
+
+        # split signal into frames
+        framed_sig_1, framed_sig_2, framed_sig_3 = framed_signal(sig, frame_length_samples, hop_size=hop_size,
+                                                                 origin='right')
+
+        # apply STFT (fft_size=10000 for semitone_filterbank
+        stft_sig_1, stft_sig_2, stft_sig_3 = framed_signal_stft(framed_sig_1, framed_sig_2, framed_sig_3,
+                                                                fft_size=frame_length_samples[2]*2, circular_shift=True)
+
+        # transform to spectrogram
+        spec_sig_1, spec_sig_2, spec_sig_3 = framed_stft_spectrogram(stft_sig_1, stft_sig_2, stft_sig_3)
+
+        # apply filter
+        filt_sig_1, filt_sig_2, filt_sig_3 = framed_filter_spectrogram(spec_sig_1, spec_sig_2, spec_sig_3, spec_filter)
+
+        # apply log magnitude
+        log_filt_1, log_filt_2, log_filt_3 = framed_log_magnitude_spectrogram(filt_sig_1, filt_sig_2, filt_sig_3)
+
+        means_expanded_1 = np.outer(mean_1, np.ones(np.shape(log_filt_1)[0])).T
+        means_expanded_2 = np.outer(mean_2, np.ones(np.shape(log_filt_2)[0])).T
+        means_expanded_3 = np.outer(mean_3, np.ones(np.shape(log_filt_3)[0])).T
+
+        bin_sqr_deviation_sum_1 = bin_sqr_deviation_sum_1 + np.sum(np.abs(log_filt_1 - means_expanded_1)**2, axis=0)
+        bin_sqr_deviation_sum_2 = bin_sqr_deviation_sum_2 + np.sum(np.abs(log_filt_2 - means_expanded_2)**2, axis=0)
+        bin_sqr_deviation_sum_3 = bin_sqr_deviation_sum_3 + np.sum(np.abs(log_filt_3 - means_expanded_3)**2, axis=0)
+
+        bin_elem_1 = bin_elem_1 + np.shape(log_filt_1)[0]
+        bin_elem_2 = bin_elem_2 + np.shape(log_filt_2)[0]
+        bin_elem_3 = bin_elem_3 + np.shape(log_filt_3)[0]
+
+        print(str(file_index) + " of " + str(len(audio_list)) + " files processed")
+
+    bin_var_1 = bin_sqr_deviation_sum_1 / bin_elem_1
+    bin_var_2 = bin_sqr_deviation_sum_2 / bin_elem_2
+    bin_var_3 = bin_sqr_deviation_sum_3 / bin_elem_3
+
+    np.savez(filename, bin_var_1=bin_var_1, bin_var_2=bin_var_2, bin_var_3=bin_var_3)
+
+    return bin_var_1, bin_var_2, bin_var_3
+
+
 def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, sr=22050):
     hop_size = librosa.time_to_samples(0.01, sr=sr)
     frame_length_samples = [512, 1024, 2048]

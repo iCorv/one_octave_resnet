@@ -247,6 +247,17 @@ FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0
 feature_shape = [231, 5, 3]
 num_features = feature_shape[0] * feature_shape[1] * feature_shape[2]
 
+var_per_bin = np.load("stats/var_per_bin.npz")
+mean_per_bin = np.load("stats/mean_per_bin.npz")
+
+mean_1 = np.outer(mean_per_bin['bin_mean_1'], np.ones(5))
+mean_2 = np.outer(mean_per_bin['bin_mean_2'], np.ones(5))
+mean_3 = np.outer(mean_per_bin['bin_mean_3'], np.ones(5))
+
+var_1 = np.outer(var_per_bin['bin_var_1'], np.ones(5))
+var_2 = np.outer(var_per_bin['bin_var_2'], np.ones(5))
+var_3 = np.outer(var_per_bin['bin_var_3'], np.ones(5))
+
 def _parse_line(line):
     # Decode the line into its fields
     parsed_line = tf.decode_csv(line, FIELD_DEFAULTS)
@@ -326,6 +337,17 @@ def numpy_array_input_fn(npz_path, batch_size, num_epochs, shuffle):
 
     #return dataset.make_initializable_iterator()
 
+def spec_norm(spec):
+    spec[:, :, 0] = spec[:, :, 0] - mean_1
+    spec[:, :, 1] = spec[:, :, 1] - mean_2
+    spec[:, :, 2] = spec[:, :, 2] - mean_3
+
+    spec[:, :, 0] = spec[:, :, 0] / var_1
+    spec[:, :, 1] = spec[:, :, 1] / var_2
+    spec[:, :, 2] = spec[:, :, 2] / var_3
+
+    return spec
+
 def tfrecord_train_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
     features = tf.parse_single_example(
@@ -335,7 +357,8 @@ def tfrecord_train_parser(serialized_example):
     spec = tf.cast(features['train/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
-    spec = tf.image.per_image_standardization(spec)
+    #spec = tf.image.per_image_standardization(spec)
+    spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     #shit = features["train/label"][0:88]
     labels = tf.cast(features["train/label"], tf.float32)
     return spec, labels
@@ -350,7 +373,8 @@ def tfrecord_val_parser(serialized_example):
     spec = tf.cast(features['val/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
-    spec = tf.image.per_image_standardization(spec)
+    #spec = tf.image.per_image_standardization(spec)
+    spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     shit = features["val/label"][0:88]
     labels = tf.cast(shit, tf.float32)
     return spec, labels
@@ -364,7 +388,7 @@ def tfrecord_test_parser(serialized_example):
     spec = tf.cast(features['test/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
-    spec = tf.image.per_image_standardization(spec)
+    spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     #shit = features["test/label"][0:88]
     labels = tf.cast(features["test/label"], tf.int32)
     return spec, labels

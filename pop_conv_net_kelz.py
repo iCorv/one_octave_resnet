@@ -92,7 +92,7 @@ def learning_rate_with_decay(
 
 
 def weights_from_labels(labels):
-    return np.where(labels == 0.0, 0.25, labels)
+    return np.where(labels == 0.0, 0.5, labels)
 
 
 def conv_net_prep(features, labels, mode,
