@@ -14,7 +14,7 @@ import tensorflow as tf
 
 # this function finds the frame were the onset is nearest to the middle of the frame
 def find_onset_frame(onset_in_sec, frame_length, hop_size, sample_rate):
-    frame_onset_in_samples = onset_in_sec * sample_rate - (frame_length / 2)
+    frame_onset_in_samples = onset_in_sec * sample_rate #- (frame_length / 2)
     onset_in_frame = frame_onset_in_samples / hop_size
 
     return int(round(onset_in_frame))
@@ -277,7 +277,9 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
     hop_size = librosa.time_to_samples(0.01, sr=sr)
     frame_length_samples = [512, 1024, 2048]
 
-    num_examples = count_examples(label_list) * 5
+    temp_smearing = 9
+
+    num_examples = count_examples(label_list) * temp_smearing
     print("Total of " + str(num_examples) + " examples")
 
     # open the TFRecords file
@@ -290,7 +292,7 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
     right_offset_frame = np.ceil(num_frames/2.0).astype(int)
 
     # weight factors
-    weight_factors = [0.0, 0.25, 1.0, 0.25, 0.0]
+    weight_factors = [0.0, 0.0, 0.25, 0.5, 1.0, 0.5, 0.25, 0.0, 0.0]
 
     #spec_filter, semitone_freq_bins = create_semitone_filterbank(audio_list[0], sr=sr,
     #                                                             frame_length_samples=frame_length_samples,
@@ -356,12 +358,12 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
                 # three layer spectrogram placeholder
                 layered_spectrogram = np.zeros((num_bins, num_frames, 3), np.float32)
 
-                for index in range(-2, 3):
+                for index in range(-np.floor(temp_smearing/2), np.ceil(temp_smearing/2)):
 
                     # get slices from framed spec for this center frame
                     example = example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3,
                                                         (center_frame + index), left_offset_frame, right_offset_frame,
-                                                        num_classes, onset_notes_index, filename, weight_factors[index+2])
+                                                        num_classes, onset_notes_index, filename, weight_factors[index+np.floor(temp_smearing/2)])
 
                     # Serialize to string and write on the file
                     writer.write(example.SerializeToString())
@@ -370,6 +372,95 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
                     if np.mod(examples_processed, 100) == 0:
                         print(str(examples_processed) + " of " + str(num_examples) + " examples processed")
     writer.close()
+
+
+def write_piece_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, sr=22050):
+    hop_size = librosa.time_to_samples(0.01, sr=sr)
+    frame_length_samples = [512, 1024, 2048]
+
+    midi_note_offset = 21
+
+    # offset from the center frame depending on the number of frames used
+    left_offset_frame = np.floor(num_frames/2.0).astype(int)
+    right_offset_frame = np.ceil(num_frames/2.0).astype(int)
+
+    spec_filter, log_frequencies = create_logarithmic_filterbank(sr=sr, longest_frame=frame_length_samples[2],
+                                                                 bands_per_octave=num_bands)
+    num_bins = np.shape(spec_filter)[1]
+
+    num_classes = 88
+
+    examples_processed = 0
+
+    for file_index in range(0, len(audio_list)):
+        # open the TFRecords file
+        writer = tf.python_io.TFRecordWriter(str(file_index) + "_" + filename + ".tfrecords")
+
+        # load signal
+        sig = madmom.audio.signal.Signal(audio_list[file_index], sample_rate=sr, num_channels=1, norm=True,
+                                         dtype=np.float32)
+
+        # split signal into frames
+        framed_sig_1, framed_sig_2, framed_sig_3 = framed_signal(sig, frame_length_samples, hop_size=hop_size,
+                                                                 origin='right')
+
+        # apply STFT (fft_size=10000 for semitone_filterbank
+        stft_sig_1, stft_sig_2, stft_sig_3 = framed_signal_stft(framed_sig_1, framed_sig_2, framed_sig_3,
+                                                                fft_size=frame_length_samples[2]*2, circular_shift=True)
+
+        # transform to spectrogram
+        spec_sig_1, spec_sig_2, spec_sig_3 = framed_stft_spectrogram(stft_sig_1, stft_sig_2, stft_sig_3)
+
+        # apply filter
+        filt_sig_1, filt_sig_2, filt_sig_3 = framed_filter_spectrogram(spec_sig_1, spec_sig_2, spec_sig_3, spec_filter)
+
+        # apply log magnitude
+        log_filt_1, log_filt_2, log_filt_3 = framed_log_magnitude_spectrogram(filt_sig_1, filt_sig_2, filt_sig_3)
+
+        # load ground truth
+        labeled_intervals = loadtxt(label_list[file_index], skiprows=1, delimiter='\t')
+
+        # in case only one note exist in this example
+        if labeled_intervals.ndim == 1:
+            labeled_intervals = labeled_intervals.reshape(1, 3)
+
+        # find unique onsets
+        unique_onsets = np.unique(labeled_intervals[:, 0])
+        unique_onsets_frames = np.zeros(np.shape(unique_onsets))
+        for idx in range(0, len(unique_onsets)):
+            unique_onsets_frames[idx] = find_onset_frame(unique_onsets[idx], frame_length_samples[0], hop_size, sr)
+        onset_index = 0
+
+        # iterate over all onsets in current file
+        for frame_index in range(int(np.floor(num_frames)), int(np.shape(log_filt_1)[0]-np.ceil(num_frames))):
+
+            if frame_index == unique_onsets_frames[onset_index]:
+                onset_occurence = np.where(labeled_intervals[:, 0] == unique_onsets[onset_index])
+                onset_midi_notes = labeled_intervals[onset_occurence, 2]
+                onset_notes_index = onset_midi_notes.ravel().astype(int) - midi_note_offset
+                if onset_index < len(unique_onsets_frames)-1:
+                    onset_index = onset_index + 1
+            else:
+                onset_notes_index = None
+
+            # three layer spectrogram placeholder
+            layered_spectrogram = np.zeros((num_bins, num_frames, 3), np.float32)
+
+
+            # get slices from framed spec for this center frame
+            example = example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3,
+                                                frame_index, left_offset_frame, right_offset_frame,
+                                                num_classes, onset_notes_index, filename, 1.0)
+
+            # Serialize to string and write on the file
+            writer.write(example.SerializeToString())
+
+            examples_processed = examples_processed + 1
+            if np.mod(examples_processed, 1000) == 0:
+                print(str(examples_processed) + " examples processed")
+        print(str(file_index+1) + " of " + str(len(audio_list)) + " music pieces processed")
+        writer.close()
+    print(str(examples_processed) + " examples processed!")
 
 
 def example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3, center_frame, left_offset_frame, right_offset_frame, num_classes, onset_notes_index, filename, weight_factor):
@@ -383,7 +474,8 @@ def example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_f
         log_filt_3[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
 
     label = np.zeros(num_classes, dtype=float)
-    label[onset_notes_index] = 1.0 * weight_factor
+    if onset_notes_index is not None:
+        label[onset_notes_index] = 1.0 * weight_factor
 
     # Create a feature
     feature = {filename + "/label": _float_feature(label),
