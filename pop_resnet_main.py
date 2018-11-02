@@ -40,7 +40,7 @@ num_examples = 1062510
 num_val_examples = 34506
 batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 10
+train_epochs = 5
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -97,7 +97,7 @@ def main(argv):
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                                                          batch_size=run_params['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'], throttle_secs=600)
+                                          steps=run_params['eval_steps'], throttle_secs=200)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
@@ -132,7 +132,7 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-01-11", props=props)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-02-11", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 
