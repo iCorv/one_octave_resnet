@@ -346,7 +346,7 @@ def tfrecord_val_parser(serialized_example):
     features = tf.parse_single_example(
         serialized_example,
         features={'val/spec': tf.FixedLenFeature([num_features], tf.float32),
-                  'val/label': tf.FixedLenFeature([feature_shape[1]], tf.int64)})
+                  'val/label': tf.FixedLenFeature([feature_shape[0]], tf.int64)})
     spec = tf.cast(features['val/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
