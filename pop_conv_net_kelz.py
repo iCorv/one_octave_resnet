@@ -22,7 +22,7 @@ def conv_net_model_fn(features, labels, mode, params):
 
     learning_rate_fn = learning_rate_with_decay(
         batch_size=params['batch_size'], batch_denom=params['batch_size'],
-        num_images=_NUM_IMAGES['train'], boundary_epochs=[10, 20, 30],  # boundary_epochs=[100, 150, 200],
+        num_images=_NUM_IMAGES['train'], boundary_epochs=[2, 4, 6],  # boundary_epochs=[100, 150, 200],
         decay_rates=[1, 0.5, 0.25, 0.125])
 
     # We use a weight decay of 0.0002, which performs better
@@ -92,7 +92,7 @@ def learning_rate_with_decay(
 
 
 def weights_from_labels(labels):
-    return np.where(labels == 0.0, 1.0, labels)
+    return np.where(labels == 0.0, 0.5, labels)
 
 
 def conv_net_prep(features, labels, mode,
@@ -141,11 +141,13 @@ def conv_net_prep(features, labels, mode,
 
     features = tf.cast(features, dtype)
 
-    # determine weights from labels encoding weights
-    weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
+
 
 
     if mode != tf.estimator.ModeKeys.PREDICT:
+        # determine weights from labels encoding weights
+        weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
+
         # since labels also encode the weights, we have to transform them to a binary format for evaluation
         labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)

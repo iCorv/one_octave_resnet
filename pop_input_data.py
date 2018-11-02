@@ -346,13 +346,13 @@ def tfrecord_val_parser(serialized_example):
     features = tf.parse_single_example(
         serialized_example,
         features={'val/spec': tf.FixedLenFeature([num_features], tf.float32),
-                  'val/label': tf.FixedLenFeature([88], tf.float32)})
+                  'val/label': tf.FixedLenFeature([feature_shape[1]], tf.int64)})
     spec = tf.cast(features['val/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
-    #shit = features["val/label"][0:88]
-    labels = tf.cast(features["val/label"], tf.float32)
+    shit = features["val/label"][0:88]
+    labels = tf.cast(shit, tf.int32)
     return spec, labels
 
 def tfrecord_test_parser(serialized_example):
@@ -360,13 +360,13 @@ def tfrecord_test_parser(serialized_example):
     features = tf.parse_single_example(
         serialized_example,
         features={"test/spec": tf.FixedLenFeature([num_features], tf.float32),
-                  "test/label": tf.FixedLenFeature([88], tf.float32)})
+                  "test/label": tf.FixedLenFeature([88], tf.int64)})
     spec = tf.cast(features['test/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
     #shit = features["test/label"][0:88]
-    labels = tf.cast(features["test/label"], tf.float32)
+    labels = tf.cast(features["test/label"], tf.int32)
     return spec, labels
 
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):

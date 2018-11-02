@@ -24,7 +24,7 @@ eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
 
 
 train_dataset_tfrecord = "1062510_train.tfrecords"
-val_dataset_tfrecord = "228270_val.tfrecords"
+val_dataset_tfrecord = "validation/34506_val_231x5.tfrecords"
 test_dataset_tfrecord = "MAPS_MUS-chpn_op7_1_ENSTDkAm_13718_231x5_test.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
@@ -132,7 +132,7 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-31-10", props=props)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-01-11", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 
