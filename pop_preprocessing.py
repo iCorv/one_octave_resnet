@@ -473,11 +473,14 @@ def write_piece_to_tfrecords(audio_list, label_list, filename, num_bands, num_fr
 
         print(str(file_index+1) + " of " + str(len(audio_list)) + " music pieces processed")
         writer.close()
-        print(str(examples_processed) + " examples processed!")
+        #print(str(examples_processed) + " examples processed!")
+        return examples_processed
 
     num_cores = multiprocessing.cpu_count()
 
-    Parallel(n_jobs=num_cores)(delayed(process_file)(i) for i in inputs)
+    num_examples_per_file = Parallel(n_jobs=num_cores)(delayed(process_file)(i) for i in inputs)
+    print(np.sum(num_examples_per_file))
+    np.savez("num_examples_per_file" + filename, num_examples_per_file=num_examples_per_file)
 
 
 def example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3, center_frame, left_offset_frame, right_offset_frame, num_classes, onset_notes_index, filename, weight_factor):

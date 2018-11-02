@@ -68,7 +68,7 @@ print("train/validate/test - split: " + str(len(train_audio_addrs)) + "/" + str(
 #prep.spec_var_per_bin(val_audio_addrs, mean_1=mean['bin_mean_1'], mean_2=mean['bin_mean_2'], mean_3=mean['bin_mean_3'], filename='var_per_bin', num_bands=num_bands)
 
 
-
-prep.write_piece_to_tfrecords(train_audio_addrs, train_label_addrs, "train", num_bands=num_bands, num_frames=5)
 prep.write_to_tfrecords(val_audio_addrs, val_label_addrs, "val", num_bands=num_bands, num_frames=5)
+prep.write_piece_to_tfrecords(train_audio_addrs, train_label_addrs, "train", num_bands=num_bands, num_frames=5)
+
 #prep.write_to_tfrecords(test_audio_addrs, test_label_addrs, "test")
