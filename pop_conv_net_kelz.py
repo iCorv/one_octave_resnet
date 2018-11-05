@@ -147,7 +147,7 @@ def conv_net_prep(features, labels, mode,
     if mode != tf.estimator.ModeKeys.PREDICT:
         # determine weights from labels encoding weights
         weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
-
+        weights = tf.cast(weights, dtype=dtype)
         # since labels also encode the weights, we have to transform them to a binary format for evaluation
         #labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)
