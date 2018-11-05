@@ -23,7 +23,7 @@ def conv_net_model_fn(features, labels, mode, params):
     learning_rate_fn = learning_rate_with_decay(
         batch_size=params['batch_size'], batch_denom=params['batch_size'],
         num_images=_NUM_IMAGES['train'], boundary_epochs=[1, 2, 3],  # boundary_epochs=[100, 150, 200],
-        decay_rates=[1, 0.5, 0.25, 0.125])
+        decay_rates=[1, 0.5, 0.25, 0.0125])
 
     # We use a weight decay of 0.0002, which performs better
     # than the 0.0001 that was originally suggested.
