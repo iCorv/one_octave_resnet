@@ -9,7 +9,7 @@ import numpy as np
 matplotlib.use('TkAgg')
 _HEIGHT = 231
 _WIDTH = 5
-_NUM_CHANNELS = 3
+_NUM_CHANNELS = 1
 _NUM_CLASSES = 88
 _NUM_IMAGES = {
     'train': 4163882,
