@@ -94,8 +94,8 @@ def learning_rate_with_decay(
 def weights_from_labels(labels):
     labeled_examples = np.where(labels == 1.0)
     weights = np.zeros(np.shape(labels))
-    weights[labeled_examples[0], :] = 0.5
-    weights[labeled_examples] = 1.0
+    weights[labeled_examples[0], :] = 1.0
+    weights[labeled_examples] = 10.0
     return np.where(weights == 0.0, 0.25, weights)
 
 
