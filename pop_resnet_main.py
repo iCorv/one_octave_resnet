@@ -41,7 +41,7 @@ num_examples = 4163882
 num_val_examples = 792567
 batch_size = 256
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 40
+train_epochs = 5
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -74,8 +74,8 @@ def main(argv):
         #model_fn=pop_resnet.resnet_model_fn,
         #model_dir="/home/ubuntu/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
-        model_dir="/Users/Jaedicke/tensorflow/model/model",
-        #model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
+        #model_dir="/Users/Jaedicke/tensorflow/model/model",
+        model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],
@@ -133,7 +133,7 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-02-11", props=props)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-03-11", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 
