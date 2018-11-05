@@ -146,7 +146,7 @@ def conv_net_prep(features, labels, mode,
 
     if mode != tf.estimator.ModeKeys.PREDICT:
         # determine weights from labels encoding weights
-        weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
+        #weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
 
         # since labels also encode the weights, we have to transform them to a binary format for evaluation
         #labels = tf.ceil(labels)
@@ -175,12 +175,12 @@ def conv_net_prep(features, labels, mode,
 
 
     # without weights
-    #cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
+    cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
 
     # weights masking to emphasize positive examples
-    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
-                                                              reduction=tf.losses.Reduction.NONE)
-    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
+    #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
+    #                                                          reduction=tf.losses.Reduction.NONE)
+    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
 
 
 
