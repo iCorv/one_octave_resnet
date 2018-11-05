@@ -9,7 +9,7 @@ import numpy as np
 matplotlib.use('TkAgg')
 _HEIGHT = 231
 _WIDTH = 5
-_NUM_CHANNELS = 1
+_NUM_CHANNELS = 3
 _NUM_CLASSES = 88
 _NUM_IMAGES = {
     'train': 4163882,
@@ -94,8 +94,9 @@ def learning_rate_with_decay(
 def weights_from_labels(labels):
     labeled_examples = np.where(labels == 1.0)
     weights = np.zeros(np.shape(labels))
-    weights[labeled_examples[0]] = 1.0
-    return np.where(weights == 0.0, 0.25, 1.0)
+    weights[labeled_examples[0], :] = 0.5
+    weights[labeled_examples] = 1.0
+    return np.where(weights == 0.0, 0.25, weights)
 
 
 def conv_net_prep(features, labels, mode,

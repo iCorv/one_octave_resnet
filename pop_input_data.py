@@ -358,7 +358,7 @@ def tfrecord_train_parser(serialized_example):
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
-    spec = tf.image.rgb_to_grayscale(spec, name=None)
+    #spec = tf.image.rgb_to_grayscale(spec, name=None)
     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     #shit = features["train/label"][0:88]
     labels = tf.cast(features["train/label"], tf.float32)
@@ -375,7 +375,7 @@ def tfrecord_val_parser(serialized_example):
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
-    spec = tf.image.rgb_to_grayscale(spec, name=None)
+    #spec = tf.image.rgb_to_grayscale(spec, name=None)
     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     #shit = features["val/label"][0:88]
     labels = tf.cast(features["val/label"], tf.float32)
@@ -391,7 +391,7 @@ def tfrecord_test_parser(serialized_example):
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
     spec = tf.image.per_image_standardization(spec)
-    spec = tf.image.rgb_to_grayscale(spec, name=None)
+    #spec = tf.image.rgb_to_grayscale(spec, name=None)
     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     #shit = features["test/label"][0:88]
     labels = tf.cast(features["test/label"], tf.int32)
