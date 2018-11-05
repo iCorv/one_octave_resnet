@@ -92,7 +92,10 @@ def learning_rate_with_decay(
 
 
 def weights_from_labels(labels):
-    return np.where(labels == 0.0, 0.8, 10.0)
+    labeled_examples = np.where(labels == 1.0)
+    weights = np.zeros(np.shape(labels))
+    weights[labeled_examples[0]] = 1.0
+    return np.where(weights == 0.0, 0.25, 1.0)
 
 
 def conv_net_prep(features, labels, mode,
@@ -142,7 +145,7 @@ def conv_net_prep(features, labels, mode,
     features = tf.cast(features, dtype)
 
 
-
+    print(labels.shape)
 
     if mode != tf.estimator.ModeKeys.PREDICT:
         # determine weights from labels encoding weights

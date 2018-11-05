@@ -76,18 +76,18 @@ plt.grid(True)
 
 
 
-# fps = 1/hop_size_sec
-# proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.1, fps=fps)
-#
-# est_intervals_notes = proc(props.T)
-#
-#
-# est_onset_frames = find_onset_frame(est_intervals_notes[:, 0], frame_length=frame_length, hop_size=hop_size, sample_rate=sr)
-#
-# est_piano_roll = piano_roll_rep(onset_frames=est_onset_frames, midi_pitches=est_intervals_notes[:, 1].astype(int)-21, piano_roll_shape=np.shape(props))
-#
-# ax2.pcolormesh(np.log10(est_piano_roll[:, 0:plot_frames]+1))
-# ax2.set_title("Peak Picked Notes")
+fps = 1/hop_size_sec
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.1, fps=fps)
+
+est_intervals_notes = proc(props.T)
+
+
+est_onset_frames = find_onset_frame(est_intervals_notes[:, 0], frame_length=frame_length, hop_size=hop_size, sample_rate=sr)
+
+est_piano_roll = piano_roll_rep(onset_frames=est_onset_frames, midi_pitches=est_intervals_notes[:, 1].astype(int)-21, piano_roll_shape=np.shape(props))
+
+ax2.pcolormesh(np.log10(est_piano_roll[:, 0:plot_frames]+1))
+ax2.set_title("Peak Picked Notes")
 
 #locs, labels = plt.yticks()
 # set last y-tick to 88
