@@ -95,7 +95,7 @@ def weights_from_labels(labels):
     labeled_examples = np.where(labels == 1.0)
     weights = np.zeros(np.shape(labels))
     weights[labeled_examples[0], :] = 1.0
-    weights[labeled_examples] = 10.0
+    weights[labeled_examples] = 2.0
     return np.where(weights == 0.0, 0.25, weights)
 
 
@@ -144,9 +144,6 @@ def conv_net_prep(features, labels, mode,
     tf.summary.image('images', features, max_outputs=6)
 
     features = tf.cast(features, dtype)
-
-
-    print(labels.shape)
 
     if mode != tf.estimator.ModeKeys.PREDICT:
         # determine weights from labels encoding weights

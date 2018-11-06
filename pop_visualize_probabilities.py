@@ -61,7 +61,7 @@ print(hamming)
 
 f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharey=True)
 
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-05-11.npz")
+data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-06-11.npz")
 props = data["props"]
 prefix = np.zeros((88, 7))
 props = np.append(prefix, props, axis=1)
@@ -77,7 +77,7 @@ plt.grid(True)
 
 
 fps = 1/hop_size_sec
-proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.1, fps=fps)
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.0, fps=fps)
 
 est_intervals_notes = proc(props.T)
 
