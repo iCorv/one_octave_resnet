@@ -41,13 +41,13 @@ num_examples = 4163882
 num_val_examples = 792567
 batch_size = 256
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 40
+train_epochs = 5
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
     'batch_size': batch_size,
     'dtype': DEFAULT_DTYPE,
-    'resnet_size': 50,
+    'resnet_size': 18,
     'resnet_version': 2,
     'num_classes': 88,
     'weight_decay': 2e-4,
@@ -70,8 +70,8 @@ def main(argv):
         keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
-        model_fn=pop_conv_net_kelz.conv_net_model_fn,
-        #model_fn=pop_resnet.resnet_model_fn,
+        #model_fn=pop_conv_net_kelz.conv_net_model_fn,
+        model_fn=pop_resnet.resnet_model_fn,
         #model_dir="/home/ubuntu/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/model/model",

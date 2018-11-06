@@ -51,12 +51,21 @@ def learning_rate_with_decay(
 
     return learning_rate_fn
 
-def weights_from_labels(labels):
-    dist = np.array([0.4868, 0.6065, 0.7261, 0.8353, 0.9231, 0.9802, 1.0000,
-                     0.9802, 0.9231, 0.8353, 0.7261, 0.6065, 0.4868])
+# def weights_from_labels(labels):
+#     dist = np.array([0.4868, 0.6065, 0.7261, 0.8353, 0.9231, 0.9802, 1.0000,
+#                      0.9802, 0.9231, 0.8353, 0.7261, 0.6065, 0.4868])
+#
+#     #dist = np.array([1, 1, 1])
+#     return scipy.ndimage.convolve1d(labels, dist*2, axis=1, mode='constant') + 0.9
 
-    #dist = np.array([1, 1, 1])
-    return scipy.ndimage.convolve1d(labels, dist*2, axis=1, mode='constant') + 0.9
+
+def weights_from_labels(labels):
+    labeled_examples = np.where(labels == 1.0)
+    weights = np.zeros(np.shape(labels))
+    weights[labeled_examples[0], :] = 1.0
+    weights[labeled_examples] = 2.0
+    return np.where(weights == 0.0, 0.25, weights)
+
 
 def resnet_model_fn(features, labels, mode, model_class,
                     resnet_size, weight_decay, learning_rate_fn, momentum,
@@ -110,6 +119,11 @@ def resnet_model_fn(features, labels, mode, model_class,
 
 
     if mode != tf.estimator.ModeKeys.PREDICT:
+        # determine weights from labels encoding weights
+        weights = tf.py_func(weights_from_labels, [labels], [tf.float64])[0]
+        weights = tf.cast(weights, dtype=dtype)
+        # since labels also encode the weights, we have to transform them to a binary format for evaluation
+        #labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)
 
     model = model_class(resnet_size, data_format, resnet_version=resnet_version,
@@ -141,13 +155,13 @@ def resnet_model_fn(features, labels, mode, model_class,
     #    logits=logits, labels=labels)
 
     # without weights
-    cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
+    #cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
 
     # weights masking to emphasize positive examples
-    #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
-    #                                                          reduction=tf.losses.Reduction.NONE)
+    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
+                                                              reduction=tf.losses.Reduction.NONE)
     #weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
-    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
+    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
 
     # weigting precision vs recall
     #cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=1)
