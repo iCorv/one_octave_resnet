@@ -147,8 +147,8 @@ def conv_net_prep(features, labels, mode,
 
     if mode != tf.estimator.ModeKeys.PREDICT:
         # determine weights from labels encoding weights
-        weights = tf.py_func(weights_from_labels, [labels], [tf.float64])[0]
-        weights = tf.cast(weights, dtype=dtype)
+        #weights = tf.py_func(weights_from_labels, [labels], [tf.float64])[0]
+        #weights = tf.cast(weights, dtype=dtype)
         # since labels also encode the weights, we have to transform them to a binary format for evaluation
         #labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)
@@ -176,12 +176,12 @@ def conv_net_prep(features, labels, mode,
 
 
     # without weights
-    #cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
+    cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
 
     # weights masking to emphasize positive examples
-    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
-                                                              reduction=tf.losses.Reduction.NONE)
-    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
+    #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
+    #                                                          reduction=tf.losses.Reduction.NONE)
+    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
 
 
 
@@ -279,14 +279,12 @@ def cnn_model(input_layer, momentum, is_training):
 
     # Convolutional Layer #1
     conv1 = tf.layers.conv2d(input_layer, 32, (3, 3), strides=(1, 1), padding='same', name='conv1')
-    conv1 = tf.layers.batch_normalization(conv1, momentum=momentum, training=is_training, name='conv1_bn')
-    conv1 = tf.nn.relu(conv1, name='conv1_act')
+    conv1 = tf.layers.batch_normalization(conv1, activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal, momentum=momentum, training=is_training, name='conv1_bn')
     print(conv1.shape)
 
     # Convolutional Layer #2
     conv2 = tf.layers.conv2d(conv1, 32, (3, 3), strides=(1, 1), padding='valid', name='conv2')
-    conv2 = tf.layers.batch_normalization(conv2, momentum=momentum, training=is_training, name='conv2_bn')
-    conv2 = tf.nn.relu(conv2, name='conv2_act')
+    conv2 = tf.layers.batch_normalization(conv2, activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal, momentum=momentum, training=is_training, name='conv2_bn')
     print(conv2.shape)
 
     # save image
@@ -302,8 +300,7 @@ def cnn_model(input_layer, momentum, is_training):
 
     # Convolutional Layer #3
     conv3 = tf.layers.conv2d(conv2_pool, 64, (3, 3), strides=(1, 1), padding='valid', name='conv3')
-    conv3 = tf.layers.batch_normalization(conv3, momentum=momentum, training=is_training, name='conv3_bn')
-    conv3 = tf.nn.relu(conv3, name='conv3_act')
+    conv3 = tf.layers.batch_normalization(conv3, activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal, momentum=momentum, training=is_training, name='conv3_bn')
     print(conv3.shape)
 
     # Pooling layer #2 - down-sample by 2X over freq.
