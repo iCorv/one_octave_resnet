@@ -64,4 +64,4 @@ def show_record(filepath):
 
 
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/50_train.tfrecords"])
-show_record(["D:/Users/cjaedicke/one_octave_resnet/training/50_train.tfrecords"])
+show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/50_train.tfrecords"])
