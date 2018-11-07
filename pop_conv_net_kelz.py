@@ -278,12 +278,12 @@ def cnn_model(input_layer, momentum, is_training):
     """Model function for CNN."""
 
     # Convolutional Layer #1
-    conv1 = tf.layers.conv2d(input_layer, 32, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal, strides=(1, 1), padding='same', name='conv1')
+    conv1 = tf.layers.conv2d(input_layer, 32, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal(), strides=(1, 1), padding='same', name='conv1')
     conv1 = tf.layers.batch_normalization(conv1, momentum=momentum, training=is_training, name='conv1_bn')
     print(conv1.shape)
 
     # Convolutional Layer #2
-    conv2 = tf.layers.conv2d(conv1, 32, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal, strides=(1, 1), padding='valid', name='conv2')
+    conv2 = tf.layers.conv2d(conv1, 32, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal(), strides=(1, 1), padding='valid', name='conv2')
     conv2 = tf.layers.batch_normalization(conv2, momentum=momentum, training=is_training, name='conv2_bn')
     print(conv2.shape)
 
@@ -299,7 +299,7 @@ def cnn_model(input_layer, momentum, is_training):
                                    name='dropout1')
 
     # Convolutional Layer #3
-    conv3 = tf.layers.conv2d(conv2_pool, 64, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal, strides=(1, 1), padding='valid', name='conv3')
+    conv3 = tf.layers.conv2d(conv2_pool, 64, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal(), strides=(1, 1), padding='valid', name='conv3')
     conv3 = tf.layers.batch_normalization(conv3, momentum=momentum, training=is_training, name='conv3_bn')
     print(conv3.shape)
 
@@ -314,7 +314,7 @@ def cnn_model(input_layer, momentum, is_training):
     # dense layer
     conv3_pool = tf.reshape(conv3_pool, [-1, 56*1*64])
     print(conv3_pool.shape)
-    dense = tf.layers.dense(conv3_pool,  activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal, units=512, name='dense')
+    dense = tf.layers.dense(conv3_pool,  activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal(), units=512, name='dense')
     dense = tf.layers.batch_normalization(dense, momentum=momentum, training=is_training, name='dense_bn')
 
     dense = tf.layers.dropout(dense, rate=0.5, noise_shape=None, seed=None, training=is_training,
