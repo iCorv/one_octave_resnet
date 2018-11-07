@@ -28,6 +28,65 @@ def reduce_consecutive_ones_mat(mat, mat_length):
         mat[index, :] = reduce_consecutive_ones(mat[index, :], mat_length)
     return mat
 
+
+# this function finds the frame were the onset is nearest to the middle of the frame
+def find_onset_frame(onset_in_sec, frame_length, hop_size, sample_rate):
+    frame_onset_in_samples = onset_in_sec * sample_rate - (frame_length / 2)
+    onset_in_frame = frame_onset_in_samples / hop_size
+
+    return np.round(onset_in_frame, decimals=0).astype(int)
+
+
+def piano_roll_rep(onset_frames, midi_pitches, piano_roll_shape):
+    piano_roll = np.zeros(piano_roll_shape)
+    piano_roll[midi_pitches, onset_frames] = 1
+    return piano_roll
+
+
+def eval_framewise(predictions, targets, thresh=0.5):
+    """
+    author: filip (+ data-format amendments by rainer)
+    """
+    if predictions.shape != targets.shape:
+        raise ValueError('predictions.shape {} != targets.shape {} !'.format(predictions.shape, targets.shape))
+
+    pred = predictions > thresh
+    targ = targets > thresh
+
+    tp = pred & targ
+    fp = pred ^ tp
+    fn = targ ^ tp
+
+    # tp, fp, tn, fn
+    return tp.sum(), fp.sum(), 0, fn.sum()
+
+
+def prf_framewise(tp, fp, tn, fn):
+    tp, fp, tn, fn = float(tp), float(fp), float(tn), float(fn)
+
+    if tp + fp == 0.:
+        p = 0.
+    else:
+        p = tp / (tp + fp)
+
+    if tp + fn == 0.:
+        r = 0.
+    else:
+        r = tp / (tp + fn)
+
+    if p + r == 0.:
+        f = 0.
+    else:
+        f = 2 * ((p * r) / (p + r))
+
+    if tp + fp + fn == 0.:
+        a = 0.
+    else:
+        a = tp / (tp + fp + fn)
+
+    return p, r, f, a
+
+
 hop_size = 0.01
 sample_rate = 22050
 frame_size = 512
@@ -49,11 +108,11 @@ data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-05-11.npz")
 
 #props = signal.convolve2d(data["props"], hamming, mode='same')
 props = data["props"]
-prefix = np.zeros((88, 7))
+prefix = np.zeros((88, 4))
 props = np.append(prefix, props, axis=1)
 
 fps = 1/hop_size
-proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.13, combine=0.03, smooth=0.3, fps=fps)
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.13, combine=0.03, smooth=0.0, fps=fps)
 
 est_intervals_notes = proc(props.T)
 #est_intervals_notes = proc(act)
@@ -74,6 +133,25 @@ print("number of estimated notes: " + str(num_est_notes))
 
 # load ground truth
 ground_truth = loadtxt(sorted_ground_truth_list[0], skiprows=1, delimiter='\t')
+
+# calculate targets
+onset_frames = find_onset_frame(ground_truth[:, 0], frame_length=frame_size, hop_size=librosa.time_to_samples(0.01, sr=sample_rate), sample_rate=sample_rate)
+pitch_per_frame = ground_truth[:, 2] - midi_range_low
+print(np.max(onset_frames))
+targets = piano_roll_rep(onset_frames=onset_frames, midi_pitches=pitch_per_frame.astype(int), piano_roll_shape=np.shape(props))
+
+tp, fp, tn, fn = eval_framewise(props, targets)
+
+p, r, f, a = prf_framewise(tp, fp, tn, fn)
+
+print("TP: " + str(tp))
+print("FP: " + str(fp))
+print("TN: " + str(tn))
+print("FN: " + str(fn))
+print("Precision: " + str(p))
+print("Recall: " + str(r))
+print("F1-Score: " + str(f))
+print("Accuracy: " + str(a))
 
 
 # find values within range

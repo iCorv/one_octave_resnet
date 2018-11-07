@@ -50,6 +50,8 @@ def show_record(filepath):
             except tf.errors.OutOfRangeError:
                 break
 
+        print(np.max(np_spec))
+        print(np.min(np_spec))
         ax1.pcolormesh(np.flipud(np_spec[:, 150:, 0]))
         ax1.set_title("spec_512")
 
@@ -66,4 +68,4 @@ def show_record(filepath):
         plt.show()
 
 
-show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
+show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/50_train.tfrecords"])
