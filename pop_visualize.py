@@ -3,12 +3,7 @@ mlp.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 import madmom
-from numpy import loadtxt
-from scipy import signal
-import pypianoroll as ppr
-from pypianoroll import Multitrack, Track
 import glob
-import librosa
 import tensorflow as tf
 import pop_input_data
 
