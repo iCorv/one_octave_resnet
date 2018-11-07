@@ -337,6 +337,7 @@ def numpy_array_input_fn(npz_path, batch_size, num_epochs, shuffle):
 
     #return dataset.make_initializable_iterator()
 
+
 def spec_norm(spec):
     spec[:, :, 0] = spec[:, :, 0] - mean_1
     spec[:, :, 1] = spec[:, :, 1] - mean_2
@@ -348,6 +349,11 @@ def spec_norm(spec):
 
     return spec
 
+
+def spec_norm_0_1(spec):
+    return np.divide(spec, 2.0)
+
+
 def tfrecord_train_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
     features = tf.parse_single_example(
@@ -357,6 +363,7 @@ def tfrecord_train_parser(serialized_example):
     spec = tf.cast(features['train/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
+    spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
     #spec = tf.image.per_image_standardization(spec)
     #spec = tf.image.rgb_to_grayscale(spec, name=None)
     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
@@ -374,7 +381,8 @@ def tfrecord_val_parser(serialized_example):
     spec = tf.cast(features['val/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
-    spec = tf.image.per_image_standardization(spec)
+    spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
+    #spec = tf.image.per_image_standardization(spec)
     #spec = tf.image.rgb_to_grayscale(spec, name=None)
     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     #shit = features["val/label"][0:88]
@@ -390,7 +398,8 @@ def tfrecord_test_parser(serialized_example):
     spec = tf.cast(features['test/spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
-    spec = tf.image.per_image_standardization(spec)
+    spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
+    #spec = tf.image.per_image_standardization(spec)
     #spec = tf.image.rgb_to_grayscale(spec, name=None)
     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     #shit = features["test/label"][0:88]

@@ -39,7 +39,7 @@ eval_flag = False
 
 num_examples = 4163882
 num_val_examples = 792567
-batch_size = 128
+batch_size = 256
 steps_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 5
 total_train_steps = train_epochs * steps_per_epoch
