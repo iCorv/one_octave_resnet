@@ -244,19 +244,9 @@ FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0
                   [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.],
                   [0]]  # sets field types
 
-feature_shape = [231, 5, 3]
-num_features = feature_shape[0] * feature_shape[1] * feature_shape[2]
+feature_shape = [5, 229]
+num_features = feature_shape[0] * feature_shape[1]
 
-var_per_bin = np.load("stats/var_per_bin.npz")
-mean_per_bin = np.load("stats/mean_per_bin.npz")
-
-mean_1 = np.outer(mean_per_bin['bin_mean_1'], np.ones(5))
-mean_2 = np.outer(mean_per_bin['bin_mean_2'], np.ones(5))
-mean_3 = np.outer(mean_per_bin['bin_mean_3'], np.ones(5))
-
-var_1 = np.outer(var_per_bin['bin_var_1'], np.ones(5))
-var_2 = np.outer(var_per_bin['bin_var_2'], np.ones(5))
-var_3 = np.outer(var_per_bin['bin_var_3'], np.ones(5))
 
 def _parse_line(line):
     # Decode the line into its fields
@@ -358,53 +348,62 @@ def tfrecord_train_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
     features = tf.parse_single_example(
         serialized_example,
-        features={"train/spec": tf.FixedLenFeature([num_features], tf.float32),
-                  "train/label": tf.FixedLenFeature([88], tf.float32)})
-    spec = tf.cast(features['train/spec'], tf.float32)
+        features={"spec": tf.FixedLenFeature([num_features], tf.float32),
+                  "label": tf.FixedLenFeature([88], tf.int64)})
+    spec = tf.cast(features['spec'], tf.float32)
     # Reshape spec data into the original shape
     spec = tf.reshape(spec, feature_shape)
-    spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
+    #spec = tf.slice(spec, [0, 0, 1], [231, 5, 1])
+    #spec = tf.divide(spec, 2.0)
+    #spec = tf.transpose(spec, perm=[1, 0, 2])
+    #spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
     #spec = tf.image.per_image_standardization(spec)
     #spec = tf.image.rgb_to_grayscale(spec, name=None)
     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
     #shit = features["train/label"][0:88]
-    labels = tf.cast(features["train/label"], tf.float32)
+    labels = tf.cast(features["label"], tf.int64)
     return spec, labels
 
 
-def tfrecord_val_parser(serialized_example):
-    """Parses a single tf.Example into spectrogram and label tensors."""
-    features = tf.parse_single_example(
-        serialized_example,
-        features={'val/spec': tf.FixedLenFeature([num_features], tf.float32),
-                  'val/label': tf.FixedLenFeature([88], tf.float32)})
-    spec = tf.cast(features['val/spec'], tf.float32)
-    # Reshape spec data into the original shape
-    spec = tf.reshape(spec, feature_shape)
-    spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
-    #spec = tf.image.per_image_standardization(spec)
-    #spec = tf.image.rgb_to_grayscale(spec, name=None)
-    #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
-    #shit = features["val/label"][0:88]
-    labels = tf.cast(features["val/label"], tf.float32)
-    return spec, labels
-
-def tfrecord_test_parser(serialized_example):
-    """Parses a single tf.Example into spectrogram and label tensors."""
-    features = tf.parse_single_example(
-        serialized_example,
-        features={"test/spec": tf.FixedLenFeature([num_features], tf.float32),
-                  "test/label": tf.FixedLenFeature([88], tf.int64)})
-    spec = tf.cast(features['test/spec'], tf.float32)
-    # Reshape spec data into the original shape
-    spec = tf.reshape(spec, feature_shape)
-    spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
-    #spec = tf.image.per_image_standardization(spec)
-    #spec = tf.image.rgb_to_grayscale(spec, name=None)
-    #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
-    #shit = features["test/label"][0:88]
-    labels = tf.cast(features["test/label"], tf.int32)
-    return spec, labels
+# def tfrecord_val_parser(serialized_example):
+#     """Parses a single tf.Example into spectrogram and label tensors."""
+#     features = tf.parse_single_example(
+#         serialized_example,
+#         features={'val/spec': tf.FixedLenFeature([num_features], tf.float32),
+#                   'val/label': tf.FixedLenFeature([88], tf.float32)})
+#     spec = tf.cast(features['val/spec'], tf.float32)
+#     # Reshape spec data into the original shape
+#     spec = tf.reshape(spec, feature_shape)
+#     spec = tf.slice(spec, [0, 0, 1], [231, 5, 1])
+#     spec = tf.divide(spec, 2.0)
+#     #spec = tf.transpose(spec, perm=[1, 0, 2])
+#     #spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
+#     #spec = tf.image.per_image_standardization(spec)
+#     #spec = tf.image.rgb_to_grayscale(spec, name=None)
+#     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
+#     #shit = features["val/label"][0:88]
+#     labels = tf.cast(features["val/label"], tf.float32)
+#     return spec, labels
+#
+# def tfrecord_test_parser(serialized_example):
+#     """Parses a single tf.Example into spectrogram and label tensors."""
+#     features = tf.parse_single_example(
+#         serialized_example,
+#         features={"test/spec": tf.FixedLenFeature([num_features], tf.float32),
+#                   "test/label": tf.FixedLenFeature([88], tf.int64)})
+#     spec = tf.cast(features['test/spec'], tf.float32)
+#     # Reshape spec data into the original shape
+#     spec = tf.reshape(spec, feature_shape)
+#     spec = tf.slice(spec, [0, 0, 1], [231, 5, 1])
+#     spec = tf.divide(spec, 2.0)
+#     #spec = tf.transpose(spec, perm=[1, 0, 2])
+#     #spec = tf.py_func(spec_norm_0_1, [spec], [tf.float32])[0]
+#     #spec = tf.image.per_image_standardization(spec)
+#     #spec = tf.image.rgb_to_grayscale(spec, name=None)
+#     #spec = tf.py_func(spec_norm, [spec], [tf.float32])[0]
+#     #shit = features["test/label"][0:88]
+#     labels = tf.cast(features["test/label"], tf.int32)
+#     return spec, labels
 
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     dataset = tf.data.TFRecordDataset(filepath)
@@ -422,27 +421,27 @@ def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     return dataset
 
 
-def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
-
-    dataset = tf.data.TFRecordDataset(filepath)
-
-    # Map the parser over dataset, and batch results by up to batch_size
-    dataset = dataset.shuffle(2048)
-    dataset = dataset.repeat(num_epochs)
-    dataset = dataset.map(tfrecord_val_parser)
-    dataset = dataset.batch(batch_size)
-
-    return dataset
-
-
-def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
-
-    dataset = tf.data.TFRecordDataset(filepath)
-
-    # Map the parser over dataset, and batch results by up to batch_size
-    #dataset = dataset.shuffle(2048)
-    dataset = dataset.repeat(num_epochs)
-    dataset = dataset.map(tfrecord_test_parser)
-    dataset = dataset.batch(batch_size)
-
-    return dataset
+# def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
+#
+#     dataset = tf.data.TFRecordDataset(filepath)
+#
+#     # Map the parser over dataset, and batch results by up to batch_size
+#     dataset = dataset.shuffle(2048)
+#     dataset = dataset.repeat(num_epochs)
+#     dataset = dataset.map(tfrecord_val_parser)
+#     dataset = dataset.batch(batch_size)
+#
+#     return dataset
+#
+#
+# def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
+#
+#     dataset = tf.data.TFRecordDataset(filepath)
+#
+#     # Map the parser over dataset, and batch results by up to batch_size
+#     #dataset = dataset.shuffle(2048)
+#     dataset = dataset.repeat(num_epochs)
+#     dataset = dataset.map(tfrecord_test_parser)
+#     dataset = dataset.batch(batch_size)
+#
+#     return dataset

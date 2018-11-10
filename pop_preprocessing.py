@@ -9,9 +9,310 @@ import glob
 import warnings
 from joblib import Parallel, delayed
 import multiprocessing
+from multiprocessing import Pool
 
 warnings.filterwarnings("ignore")
 import tensorflow as tf
+import os
+from madmom.utils import midi
+from enum import Enum
+import configurations.maps_preprocessing_parameter as mpp
+
+
+class Fold(Enum):
+    fold_1 = 0
+    fold_2 = 1
+    fold_3 = 2
+    fold_4 = 3
+    fold_benchmark = 4
+
+
+def _wav_to_spec_ground_truth(base_dir, filename, _audio_options):
+    audio_filename = os.path.join(base_dir, filename + '.wav')
+    midi_filename = os.path.join(base_dir, filename + '.mid')
+
+    spec_type, audio_options = _get_spec_processor(_audio_options, madmom.audio.spectrogram)
+
+    # it's necessary to cast this to np.array, b/c the madmom-class holds references to way too much memory
+    spectrogram = np.array(spec_type(audio_filename, **audio_options))
+    ground_truth = _midi_to_groundtruth(midi_filename, 1. / audio_options['fps'], spectrogram.shape[0])
+    return spectrogram, ground_truth
+
+
+def _get_spec_processor(_audio_options, madmom_spec):
+    audio_options = dict(_audio_options)
+
+    if 'spectrogram_type' in audio_options:
+        spectype = getattr(madmom_spec, audio_options['spectrogram_type'])
+        del audio_options['spectrogram_type']
+    else:
+        spectype = getattr(madmom_spec, 'LogarithmicFilteredSpectrogram')
+
+    if 'filterbank' in audio_options:
+        audio_options['filterbank'] = getattr(madmom_spec, audio_options['filterbank'])
+    else:
+        audio_options['filterbank'] = getattr(madmom_spec, 'LogarithmicFilterbank')
+
+    return spectype, audio_options
+
+
+def _midi_to_groundtruth(midifile, dt, n_frames):
+    pattern = midi.MIDIFile.from_file(midifile)
+    y = np.zeros((n_frames, 88)).astype(np.int64)
+    for onset, _pitch, duration, velocity, _channel in pattern.notes():
+        pitch = int(_pitch)
+        frame_start = int(np.round(onset / dt))
+        frame_end = int(np.round((onset + duration) / dt))
+        label = pitch - 21
+        y[frame_start:frame_end, label] = 1
+    return y
+
+
+def _float_feature(value):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+
+def _int64_feature(value):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+
+
+def preprocess_fold_train(fold, norm=True):
+    config = mpp.get_preprocessing_parameters(fold.value)
+
+    # load fold
+    filenames = open(config['train_fold'], 'r').readlines()
+    filenames = [f.strip() for f in filenames]
+
+    total_examples_processed = 0
+
+    for file in filenames:
+        writer = tf.python_io.TFRecordWriter(config['tfrecords_train_fold'] + file.split('/')[-1] + ".tfrecords")
+        spectrogram, ground_truth = _wav_to_spec_ground_truth(config['audio_path'], file, config['audio_config'])
+
+        # re-scale spectrogram to the range [0, 1]
+        if norm:
+            spectrogram = np.divide(spectrogram, np.max(spectrogram))
+
+        for frame in range(config['context_frames'], spectrogram.shape[0] - config['context_frames']):
+            # Create a feature
+            feature = {"label": _int64_feature(ground_truth[frame, :]),
+                       "spec": _float_feature(spectrogram[frame - config['context_frames']:frame + config['context_frames'] + 1, :].ravel())}
+
+            # Create an example protocol buffer
+            example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+            # Serialize to string and write on the file
+            writer.write(example.SerializeToString())
+            total_examples_processed = total_examples_processed + 1
+
+        writer.close()
+    print("Examples processed: " + str(total_examples_processed))
+    np.savez(config['tfrecords_train_fold'] + "total_examples_processed", total_examples_processed=total_examples_processed)
+
+
+def preprocess_fold_valid(fold, norm=True):
+    config = mpp.get_preprocessing_parameters(fold.value)
+
+    # load fold
+    filenames = open(config['valid_fold'], 'r').readlines()
+    filenames = [f.strip() for f in filenames]
+
+    total_examples_processed = 0
+
+    for file in filenames:
+        writer = tf.python_io.TFRecordWriter(config['tfrecords_valid_fold'] + file.split('/')[-1] + ".tfrecords")
+        spectrogram, ground_truth = _wav_to_spec_ground_truth(config['audio_path'], file, config['audio_config'])
+
+        # re-scale spectrogram to the range [0, 1]
+        if norm:
+            spectrogram = np.divide(spectrogram, np.max(spectrogram))
+
+        for frame in range(config['context_frames'], spectrogram.shape[0] - config['context_frames']):
+            # Create a feature
+            feature = {"label": _int64_feature(ground_truth[frame, :]),
+                       "spec": _float_feature(spectrogram[frame - config['context_frames']:frame + config['context_frames'] + 1, :].ravel())}
+
+            # Create an example protocol buffer
+            example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+            # Serialize to string and write on the file
+            writer.write(example.SerializeToString())
+            total_examples_processed = total_examples_processed + 1
+
+        writer.close()
+    print("Examples processed: " + str(total_examples_processed))
+    np.savez(config['tfrecords_valid_fold'] + "total_examples_processed", total_examples_processed=total_examples_processed)
+
+
+def preprocess_fold_test(fold, norm=True):
+    config = mpp.get_preprocessing_parameters(fold.value)
+
+    # load fold
+    filenames = open(config['test_fold'], 'r').readlines()
+    filenames = [f.strip() for f in filenames]
+
+    total_examples_processed = 0
+
+    for file in filenames:
+        writer = tf.python_io.TFRecordWriter(config['tfrecords_test_fold'] + file.split('/')[-1] + ".tfrecords")
+        spectrogram, ground_truth = _wav_to_spec_ground_truth(config['audio_path'], file, config['audio_config'])
+
+        # re-scale spectrogram to the range [0, 1]
+        if norm:
+            spectrogram = np.divide(spectrogram, np.max(spectrogram))
+
+        for frame in range(config['context_frames'], spectrogram.shape[0] - config['context_frames']):
+            # Create a feature
+            feature = {"label": _int64_feature(ground_truth[frame, :]),
+                       "spec": _float_feature(spectrogram[frame - config['context_frames']:frame + config['context_frames'] + 1, :].ravel())}
+
+            # Create an example protocol buffer
+            example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+            # Serialize to string and write on the file
+            writer.write(example.SerializeToString())
+            total_examples_processed = total_examples_processed + 1
+
+        writer.close()
+    print("Examples processed: " + str(total_examples_processed))
+    np.savez(config['tfrecords_test_fold'] + "total_examples_processed", total_examples_processed=total_examples_processed)
+
+
+
+def example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3, center_frame, left_offset_frame, right_offset_frame, num_classes, onset_notes_index, filename, weight_factor):
+    # flip spectrograms up to down for convenient representation of filters in tensorboard. Filters are presented as
+    # png files therefor the upper left corner is (0,0)
+    layered_spectrogram[:, :, 0] = np.flipud(
+        log_filt_1[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
+    layered_spectrogram[:, :, 1] = np.flipud(
+        log_filt_2[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
+    layered_spectrogram[:, :, 2] = np.flipud(
+        log_filt_3[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
+
+    label = np.zeros(num_classes, dtype=float)
+    if onset_notes_index is not None:
+        label[onset_notes_index] = 1.0 * weight_factor
+
+    # Create a feature
+    feature = {filename + "/label": _float_feature(label),
+               filename + "/spec": _float_feature(layered_spectrogram.ravel())}
+    # Create an example protocol buffer
+    example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+    return example
+
+
+def write_piece_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, sr=22050):
+    hop_size = librosa.time_to_samples(0.01, sr=sr)
+    frame_length_samples = [512, 1024, 2048]
+
+    midi_note_offset = 21
+
+    # offset from the center frame depending on the number of frames used
+    left_offset_frame = np.floor(num_frames/2.0).astype(int)
+    right_offset_frame = np.ceil(num_frames/2.0).astype(int)
+
+    spec_filter, log_frequencies = create_logarithmic_filterbank(sr=sr, longest_frame=frame_length_samples[2],
+                                                                 bands_per_octave=num_bands)
+    num_bins = np.shape(spec_filter)[1]
+
+    num_classes = 88
+
+    #examples_processed = 0
+
+
+
+    # what are your inputs, and what operation do you want to
+    # perform on each input. For example...
+    inputs = range(len(audio_list))
+
+
+
+
+
+    #for file_index in range(0, len(audio_list)):
+    def process_file(file_index):
+        examples_processed = 0
+        # open the TFRecords file
+        writer = tf.python_io.TFRecordWriter(str(file_index) + "_" + filename + ".tfrecords")
+
+        # load signal
+        sig = madmom.audio.signal.Signal(audio_list[file_index], sample_rate=sr, num_channels=1, norm=True,
+                                         dtype=np.float32)
+
+        # split signal into frames
+        framed_sig_1, framed_sig_2, framed_sig_3 = framed_signal(sig, frame_length_samples, hop_size=hop_size,
+                                                                 origin='right')
+
+        # apply STFT (fft_size=10000 for semitone_filterbank
+        stft_sig_1, stft_sig_2, stft_sig_3 = framed_signal_stft(framed_sig_1, framed_sig_2, framed_sig_3,
+                                                                fft_size=frame_length_samples[2]*2, circular_shift=True)
+
+        # transform to spectrogram
+        spec_sig_1, spec_sig_2, spec_sig_3 = framed_stft_spectrogram(stft_sig_1, stft_sig_2, stft_sig_3)
+
+        # apply filter
+        filt_sig_1, filt_sig_2, filt_sig_3 = framed_filter_spectrogram(spec_sig_1, spec_sig_2, spec_sig_3, spec_filter)
+
+        # apply log magnitude
+        log_filt_1, log_filt_2, log_filt_3 = framed_log_magnitude_spectrogram(filt_sig_1, filt_sig_2, filt_sig_3)
+
+        # load ground truth
+        labeled_intervals = loadtxt(label_list[file_index], skiprows=1, delimiter='\t')
+
+        # in case only one note exist in this example
+        if labeled_intervals.ndim == 1:
+            labeled_intervals = labeled_intervals.reshape(1, 3)
+
+        # find unique onsets
+        unique_onsets = np.unique(labeled_intervals[:, 0])
+        unique_onsets_frames = np.zeros(np.shape(unique_onsets))
+        for idx in range(0, len(unique_onsets)):
+            unique_onsets_frames[idx] = find_onset_frame(unique_onsets[idx], frame_length_samples[0], hop_size, sr)
+        onset_index = 0
+
+        # iterate over all onsets in current file
+        for frame_index in range(int(np.floor(num_frames)), int(np.shape(log_filt_1)[0]-np.ceil(num_frames))):
+
+            if frame_index == unique_onsets_frames[onset_index]:
+                onset_occurence = np.where(labeled_intervals[:, 0] == unique_onsets[onset_index])
+                onset_midi_notes = labeled_intervals[onset_occurence, 2]
+                onset_notes_index = onset_midi_notes.ravel().astype(int) - midi_note_offset
+                if onset_index < len(unique_onsets_frames)-1:
+                    onset_index = onset_index + 1
+            else:
+                onset_notes_index = None
+
+            # three layer spectrogram placeholder
+            layered_spectrogram = np.zeros((num_bins, num_frames, 3), np.float32)
+
+
+            # get slices from framed spec for this center frame
+            example = example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3,
+                                                frame_index, left_offset_frame, right_offset_frame,
+                                                num_classes, onset_notes_index, filename, 1.0)
+
+            # Serialize to string and write on the file
+            writer.write(example.SerializeToString())
+
+            examples_processed = examples_processed + 1
+
+        print(str(file_index+1) + " of " + str(len(audio_list)) + " music pieces processed")
+        writer.close()
+        #print(str(examples_processed) + " examples processed!")
+        return examples_processed
+
+    num_cores = multiprocessing.cpu_count()
+
+    #input_range = range(inputs)
+    #print(input_range)
+
+    #num_examples_per_file = Parallel(n_jobs=num_cores)(delayed(process_file)(i) for i in inputs)
+
+    with Pool(num_cores) as p:
+        num_examples_per_file = p.map(process_file, inputs)
+        print(np.sum(num_examples_per_file))
+        np.savez("num_examples_per_file" + filename, num_examples_per_file=num_examples_per_file)
 
 
 # this function finds the frame were the onset is nearest to the middle of the frame
@@ -374,136 +675,6 @@ def write_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, 
                     if np.mod(examples_processed, 100) == 0:
                         print(str(examples_processed) + " of " + str(num_examples) + " examples processed")
     writer.close()
-
-
-def write_piece_to_tfrecords(audio_list, label_list, filename, num_bands, num_frames, sr=22050):
-    hop_size = librosa.time_to_samples(0.01, sr=sr)
-    frame_length_samples = [512, 1024, 2048]
-
-    midi_note_offset = 21
-
-    # offset from the center frame depending on the number of frames used
-    left_offset_frame = np.floor(num_frames/2.0).astype(int)
-    right_offset_frame = np.ceil(num_frames/2.0).astype(int)
-
-    spec_filter, log_frequencies = create_logarithmic_filterbank(sr=sr, longest_frame=frame_length_samples[2],
-                                                                 bands_per_octave=num_bands)
-    num_bins = np.shape(spec_filter)[1]
-
-    num_classes = 88
-
-    #examples_processed = 0
-
-
-
-    # what are your inputs, and what operation do you want to
-    # perform on each input. For example...
-    inputs = range(len(audio_list))
-
-
-
-
-
-    #for file_index in range(0, len(audio_list)):
-    def process_file(file_index):
-        examples_processed = 0
-        # open the TFRecords file
-        writer = tf.python_io.TFRecordWriter(str(file_index) + "_" + filename + ".tfrecords")
-
-        # load signal
-        sig = madmom.audio.signal.Signal(audio_list[file_index], sample_rate=sr, num_channels=1, norm=True,
-                                         dtype=np.float32)
-
-        # split signal into frames
-        framed_sig_1, framed_sig_2, framed_sig_3 = framed_signal(sig, frame_length_samples, hop_size=hop_size,
-                                                                 origin='right')
-
-        # apply STFT (fft_size=10000 for semitone_filterbank
-        stft_sig_1, stft_sig_2, stft_sig_3 = framed_signal_stft(framed_sig_1, framed_sig_2, framed_sig_3,
-                                                                fft_size=frame_length_samples[2]*2, circular_shift=True)
-
-        # transform to spectrogram
-        spec_sig_1, spec_sig_2, spec_sig_3 = framed_stft_spectrogram(stft_sig_1, stft_sig_2, stft_sig_3)
-
-        # apply filter
-        filt_sig_1, filt_sig_2, filt_sig_3 = framed_filter_spectrogram(spec_sig_1, spec_sig_2, spec_sig_3, spec_filter)
-
-        # apply log magnitude
-        log_filt_1, log_filt_2, log_filt_3 = framed_log_magnitude_spectrogram(filt_sig_1, filt_sig_2, filt_sig_3)
-
-        # load ground truth
-        labeled_intervals = loadtxt(label_list[file_index], skiprows=1, delimiter='\t')
-
-        # in case only one note exist in this example
-        if labeled_intervals.ndim == 1:
-            labeled_intervals = labeled_intervals.reshape(1, 3)
-
-        # find unique onsets
-        unique_onsets = np.unique(labeled_intervals[:, 0])
-        unique_onsets_frames = np.zeros(np.shape(unique_onsets))
-        for idx in range(0, len(unique_onsets)):
-            unique_onsets_frames[idx] = find_onset_frame(unique_onsets[idx], frame_length_samples[0], hop_size, sr)
-        onset_index = 0
-
-        # iterate over all onsets in current file
-        for frame_index in range(int(np.floor(num_frames)), int(np.shape(log_filt_1)[0]-np.ceil(num_frames))):
-
-            if frame_index == unique_onsets_frames[onset_index]:
-                onset_occurence = np.where(labeled_intervals[:, 0] == unique_onsets[onset_index])
-                onset_midi_notes = labeled_intervals[onset_occurence, 2]
-                onset_notes_index = onset_midi_notes.ravel().astype(int) - midi_note_offset
-                if onset_index < len(unique_onsets_frames)-1:
-                    onset_index = onset_index + 1
-            else:
-                onset_notes_index = None
-
-            # three layer spectrogram placeholder
-            layered_spectrogram = np.zeros((num_bins, num_frames, 3), np.float32)
-
-
-            # get slices from framed spec for this center frame
-            example = example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3,
-                                                frame_index, left_offset_frame, right_offset_frame,
-                                                num_classes, onset_notes_index, filename, 1.0)
-
-            # Serialize to string and write on the file
-            writer.write(example.SerializeToString())
-
-            examples_processed = examples_processed + 1
-
-        print(str(file_index+1) + " of " + str(len(audio_list)) + " music pieces processed")
-        writer.close()
-        #print(str(examples_processed) + " examples processed!")
-        return examples_processed
-
-    num_cores = multiprocessing.cpu_count()
-
-    num_examples_per_file = Parallel(n_jobs=num_cores)(delayed(process_file)(i) for i in inputs)
-    print(np.sum(num_examples_per_file))
-    np.savez("num_examples_per_file" + filename, num_examples_per_file=num_examples_per_file)
-
-
-def example_slice_from_frames(layered_spectrogram, log_filt_1, log_filt_2, log_filt_3, center_frame, left_offset_frame, right_offset_frame, num_classes, onset_notes_index, filename, weight_factor):
-    # flip spectrograms up to down for convenient representation of filters in tensorboard. Filters are presented as
-    # png files therefor the upper left corner is (0,0)
-    layered_spectrogram[:, :, 0] = np.flipud(
-        log_filt_1[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
-    layered_spectrogram[:, :, 1] = np.flipud(
-        log_filt_2[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
-    layered_spectrogram[:, :, 2] = np.flipud(
-        log_filt_3[(center_frame - left_offset_frame):(center_frame + right_offset_frame), :].T)
-
-    label = np.zeros(num_classes, dtype=float)
-    if onset_notes_index is not None:
-        label[onset_notes_index] = 1.0 * weight_factor
-
-    # Create a feature
-    feature = {filename + "/label": _float_feature(label),
-               filename + "/spec": _float_feature(layered_spectrogram.ravel())}
-    # Create an example protocol buffer
-    example = tf.train.Example(features=tf.train.Features(feature=feature))
-
-    return example
 
 
 

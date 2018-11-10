@@ -13,15 +13,15 @@ num_val_pieces = 30
 num_test_pieces = 60
 
 # data folder
-#train_val_path_audio = '/Users/Jaedicke/MAPS/**/MUS/*.wav'
-#train_val_path_label = '/Users/Jaedicke/MAPS/**/MUS/*.txt'
-train_val_path_audio = 'D:/Users/cjaedicke/MAPS/**/MUS/*.wav'
-train_val_path_label = 'D:/Users/cjaedicke/MAPS/**/MUS/*.txt'
+train_val_path_audio = '/Users/Jaedicke/MAPS/**/MUS/*.wav'
+train_val_path_label = '/Users/Jaedicke/MAPS/**/MUS/*.txt'
+#train_val_path_audio = 'D:/Users/cjaedicke/MAPS/**/MUS/*.wav'
+#train_val_path_label = 'D:/Users/cjaedicke/MAPS/**/MUS/*.txt'
 
-#test_path_audio = '/Users/Jaedicke/MAPS_real_piano/**/MUS/*.wav'
-#test_path_label = '/Users/Jaedicke/MAPS_real_piano/**/MUS/*.txt'
-test_path_audio = 'D:/Users/cjaedicke/MAPS_real_piano/**/MUS/*.wav'
-test_path_label = 'D:/Users/cjaedicke/MAPS_real_piano/**/MUS/*.txt'
+test_path_audio = '/Users/Jaedicke/MAPS_real_piano/**/MUS/*.wav'
+test_path_label = '/Users/Jaedicke/MAPS_real_piano/**/MUS/*.txt'
+#test_path_audio = 'D:/Users/cjaedicke/MAPS_real_piano/**/MUS/*.wav'
+#test_path_label = 'D:/Users/cjaedicke/MAPS_real_piano/**/MUS/*.txt'
 
 # read all file paths from the folders
 train_val_audio_list = glob.glob(train_val_path_audio)
@@ -51,6 +51,8 @@ np.savez("shuffeled_file_addrs", audio_addrs=audio_addrs, label_addrs=label_addr
 # number of musical pieces
 num_files = len(audio_addrs)
 
+#filenames = open(foldname, 'r').readlines()
+#filenames = [f.strip() for f in filenames]
 
 # Divide the randomized train/validate data
 train_audio_addrs = audio_addrs[0:num_train_pieces]

@@ -4,16 +4,17 @@ from __future__ import print_function
 
 import matplotlib
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 import numpy as np
 
 matplotlib.use('TkAgg')
 _HEIGHT = 231
 _WIDTH = 5
-_NUM_CHANNELS = 3
+_NUM_CHANNELS = 1
 _NUM_CLASSES = 88
 _NUM_IMAGES = {
-    'train': 4163882,
-    'validation': 792567,
+    'train': 1081600, #4163882,
+    'validation': 153660, #792567,
 }
 
 
@@ -22,7 +23,7 @@ def conv_net_model_fn(features, labels, mode, params):
 
     learning_rate_fn = learning_rate_with_decay(
         batch_size=params['batch_size'], batch_denom=params['batch_size'],
-        num_images=_NUM_IMAGES['train'], boundary_epochs=[1, 2, 4],  # boundary_epochs=[100, 150, 200],
+        num_images=_NUM_IMAGES['train'], boundary_epochs=[5, 5, 5],  # boundary_epochs=[100, 150, 200],
         decay_rates=[1, 0.1, 0.01, 0.001])
 
     # We use a weight decay of 0.0002, which performs better
@@ -35,7 +36,7 @@ def conv_net_model_fn(features, labels, mode, params):
     # overfitting on the small data set. We therefore include all vars when
     # regularizing and computing loss during training.
     def loss_filter_fn(_):
-        return True
+        return False
 
     return conv_net_prep(
         features=features,
@@ -48,7 +49,7 @@ def conv_net_model_fn(features, labels, mode, params):
         data_format=params['data_format'],
         resnet_version=params['resnet_version'],
         loss_scale=params['loss_scale'],
-        loss_filter_fn=loss_filter_fn,
+        loss_filter_fn=None,#loss_filter_fn,
         dtype=params['dtype'],
         num_classes=params['num_classes']
     )
@@ -147,13 +148,14 @@ def conv_net_prep(features, labels, mode,
 
     if mode != tf.estimator.ModeKeys.PREDICT:
         # determine weights from labels encoding weights
-        #weights = tf.py_func(weights_from_labels, [labels], [tf.float64])[0]
+        #weights = tf.py_func(weights_from_labels, [labels], [tf.float64], stateful=False)[0]
         #weights = tf.cast(weights, dtype=dtype)
         # since labels also encode the weights, we have to transform them to a binary format for evaluation
-        #labels = tf.ceil(labels)
+        labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)
 
     logits = cnn_model(features, 0.99, mode == tf.estimator.ModeKeys.TRAIN)
+    #logits = conv_net_kelz(features)
 
     # This acts as a no-op if the logits are already in fp32 (provided logits are
     # not a SparseTensor). If dtype is of low precision, logits must be cast to
@@ -174,7 +176,8 @@ def conv_net_prep(features, labels, mode,
             #    'predict': tf.estimator.export.PredictOutput(predictions)
             #})
 
-
+    _EPSILON = tf.constant(1e-7, dtype=tf.float32)
+    logits = tf.clip_by_value(logits, _EPSILON, 1.0 - _EPSILON)
     # without weights
     cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
 
@@ -202,7 +205,8 @@ def conv_net_prep(features, labels, mode,
         [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
          if loss_filter_fn(v.name)])
     tf.summary.scalar('l2_loss', l2_loss)
-    loss = cross_entropy + l2_loss
+    #loss = cross_entropy + l2_loss
+    loss = cross_entropy
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
@@ -216,9 +220,11 @@ def conv_net_prep(features, labels, mode,
         #optimizer = tf.train.AdamOptimizer(learning_rate)
         optimizer = tf.train.MomentumOptimizer(
             learning_rate=learning_rate,
-            momentum=momentum
+            momentum=momentum,
+            use_nesterov=True
         )
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+
         if loss_scale != 1:
             # When computing fp16 gradients, often intermediate tensor values are
             # so small, they underflow to 0. To avoid this, we multiply the loss by
@@ -240,31 +246,38 @@ def conv_net_prep(features, labels, mode,
         train_op = None
 
     # metrics for evaluation
-    correct_prediction = tf.equal(predictions['classes'], labels)
-    accuracy2 = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    accuracy = tf.metrics.accuracy(labels, predictions['classes'])
-    tf.summary.scalar('accuracy2', accuracy2)
-    mean_iou = tf.metrics.mean_iou(labels, predictions['classes'], num_classes)
-    false_negatives = tf.metrics.false_negatives(labels, predictions['classes'])
-    false_positives = tf.metrics.false_positives(labels, predictions['classes'])
-    true_negatives = tf.metrics.true_negatives(labels, predictions['classes'])
-    true_positives = tf.metrics.true_positives(labels, predictions['classes'])
+    # correct_prediction = tf.equal(predictions['classes'], labels)
+    # accuracy2 = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    # a = tf.metrics.accuracy(labels, predictions['classes'])
+    # tf.summary.scalar('accuracy2', accuracy2)
+    # fn = tf.metrics.false_negatives(labels, predictions['classes'])
+    # fp = tf.metrics.false_positives(labels, predictions['classes'])
+    # tn = tf.metrics.true_negatives(labels, predictions['classes'])
+    # f = tf.metrics.true_positives(labels, predictions['classes'])
+    # p = tf.metrics.precision(labels, predictions['classes'])
+    # r = tf.metrics.recall(labels, predictions['classes'])
+
+    fn = tf.metrics.false_negatives(labels, predictions['classes'])
+    fp = tf.metrics.false_positives(labels, predictions['classes'])
+    tp = tf.metrics.true_positives(labels, predictions['classes'])
     precision = tf.metrics.precision(labels, predictions['classes'])
     recall = tf.metrics.recall(labels, predictions['classes'])
+    f = tf.multiply(tf.constant(2.0), tf.multiply(precision[0], recall[0]))
+    f = tf.divide(f, tf.add(precision[0], recall[0]))
+
+    tf.identity(fn[0], name="fn")
+    tf.identity(fp[0], name="fp")
+    tf.identity(tp[0], name="tp")
+    tf.identity(f, name="f1_score")
 
     # collect metrics
-    metrics = {'accuracy': accuracy,
-               'mean_iou': mean_iou,
-               'false_negatives': false_negatives,
-               'false_positives': false_positives,
-               'true_negatives': true_negatives,
-               'true_positives': true_positives,
+    metrics = {'false_negatives': fn,
+               'false_positives': fp,
+               'true_positives': tp,
                'precision': precision,
-               'recall': recall}
+               'recall': recall,
+               'f1_score': (f, tf.group(precision[1], recall[1]))}
 
-    # Create a tensor named train_accuracy for logging purposes
-    tf.identity(accuracy[0], name='train_accuracy')
-    tf.summary.scalar('train_accuracy', accuracy[0])
 
     return tf.estimator.EstimatorSpec(
         mode=mode,
@@ -275,15 +288,15 @@ def conv_net_prep(features, labels, mode,
 
 
 def cnn_model(input_layer, momentum, is_training):
-    """Model function for CNN."""
+    """Builds the ConvNet from Kelz 2016."""
 
     # Convolutional Layer #1
-    conv1 = tf.layers.conv2d(input_layer, 32, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal(), strides=(1, 1), padding='same', name='conv1')
+    conv1 = tf.layers.conv2d(input_layer, 32, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.glorot_uniform_initializer(), strides=(1, 1), padding='same', name='conv1')
     conv1 = tf.layers.batch_normalization(conv1, momentum=momentum, training=is_training, name='conv1_bn')
     print(conv1.shape)
 
     # Convolutional Layer #2
-    conv2 = tf.layers.conv2d(conv1, 32, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal(), strides=(1, 1), padding='valid', name='conv2')
+    conv2 = tf.layers.conv2d(conv1, 32, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.glorot_uniform_initializer(), strides=(1, 1), padding='valid', name='conv2')
     conv2 = tf.layers.batch_normalization(conv2, momentum=momentum, training=is_training, name='conv2_bn')
     print(conv2.shape)
 
@@ -299,7 +312,7 @@ def cnn_model(input_layer, momentum, is_training):
                                    name='dropout1')
 
     # Convolutional Layer #3
-    conv3 = tf.layers.conv2d(conv2_pool, 64, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal(), strides=(1, 1), padding='valid', name='conv3')
+    conv3 = tf.layers.conv2d(conv2_pool, 64, (3, 3), activation=tf.nn.relu, kernel_initializer=tf.glorot_uniform_initializer(), strides=(1, 1), padding='valid', name='conv3')
     conv3 = tf.layers.batch_normalization(conv3, momentum=momentum, training=is_training, name='conv3_bn')
     print(conv3.shape)
 
@@ -314,7 +327,7 @@ def cnn_model(input_layer, momentum, is_training):
     # dense layer
     conv3_pool = tf.reshape(conv3_pool, [-1, 56*1*64])
     print(conv3_pool.shape)
-    dense = tf.layers.dense(conv3_pool,  activation=tf.nn.relu, kernel_initializer=tf.initializers.he_normal(), units=512, name='dense')
+    dense = tf.layers.dense(conv3_pool,  activation=tf.nn.relu, kernel_initializer=tf.glorot_uniform_initializer(), units=512, name='dense')
     dense = tf.layers.batch_normalization(dense, momentum=momentum, training=is_training, name='dense_bn')
 
     dense = tf.layers.dropout(dense, rate=0.5, noise_shape=None, seed=None, training=is_training,
@@ -325,3 +338,53 @@ def cnn_model(input_layer, momentum, is_training):
     logits = tf.layers.dense(dense, units=88, name='logits')
 
     return logits
+
+
+def conv_net_kelz(inputs):
+  """Builds the ConvNet from Kelz 2016."""
+  with slim.arg_scope(
+      [slim.conv2d, slim.fully_connected],
+      activation_fn=tf.nn.relu,
+      weights_initializer=tf.contrib.layers.variance_scaling_initializer(
+          factor=2.0, mode='FAN_AVG', uniform=True)):
+    net = slim.conv2d(
+        inputs, 32, [3, 3], scope='conv1', normalizer_fn=slim.batch_norm)
+    print(net.shape)
+
+    net = slim.conv2d(
+        net, 32, [3, 3], scope='conv2', normalizer_fn=slim.batch_norm)
+    print(net.shape)
+    net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool2')
+    print(net.shape)
+    net = slim.dropout(net, 0.25, scope='dropout2')
+
+    net = slim.conv2d(
+        net, 64, [3, 3], scope='conv3', normalizer_fn=slim.batch_norm)
+    print(net.shape)
+    net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool3')
+
+    net = slim.dropout(net, 0.25, scope='dropout3')
+
+    # Flatten while preserving batch and time dimensions.
+    dims = tf.shape(net)
+    print(net.shape)
+    net = tf.reshape(net, (dims[0], 5,
+                           net.shape[2].value * net.shape[3].value), 'flatten4')
+    print(net.shape)
+    net = slim.fully_connected(net, 512, scope='fc5')
+    print(net.shape)
+    net = slim.dropout(net, 0.5, scope='dropout5')
+    net = tf.reshape(net, (dims[0], 5*512), 'flatten4')
+    net = slim.fully_connected(net, 88, scope='fc6')
+    print(net.shape)
+    return net
+
+
+def metrics_fn(predictions, labels, name=None):
+    p, p_op = tf.metrics.precision(labels, predictions)
+    r, r_op = tf.metrics.recall(labels, predictions)
+    f = tf.multiply(tf.constant(2.0), tf.multiply(p, r))
+    f = tf.divide(f, tf.add(p,r))
+    #p = tf.identity(p, name="precision")
+
+    return (p, p_op), (r, r_op), (f, tf.group(p_op,r_op))

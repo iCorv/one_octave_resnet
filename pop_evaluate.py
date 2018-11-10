@@ -111,8 +111,9 @@ props = data["props"]
 prefix = np.zeros((88, 4))
 props = np.append(prefix, props, axis=1)
 
+
 fps = 1/hop_size
-proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.13, combine=0.03, smooth=0.0, fps=fps)
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.13, combine=0.03, smooth=0.3, fps=fps)
 
 est_intervals_notes = proc(props.T)
 #est_intervals_notes = proc(act)
@@ -137,7 +138,7 @@ ground_truth = loadtxt(sorted_ground_truth_list[0], skiprows=1, delimiter='\t')
 # calculate targets
 onset_frames = find_onset_frame(ground_truth[:, 0], frame_length=frame_size, hop_size=librosa.time_to_samples(0.01, sr=sample_rate), sample_rate=sample_rate)
 pitch_per_frame = ground_truth[:, 2] - midi_range_low
-print(np.max(onset_frames))
+
 targets = piano_roll_rep(onset_frames=onset_frames, midi_pitches=pitch_per_frame.astype(int), piano_roll_shape=np.shape(props))
 
 tp, fp, tn, fn = eval_framewise(props, targets)
@@ -158,7 +159,7 @@ print("Accuracy: " + str(a))
 midi_range_bool = np.isin(ground_truth[:, 2], midi_range)
 
 midi_range_indices = np.where(midi_range_bool)
-print(np.size(midi_range_indices))
+print("number of notes in piece: " + str(np.size(midi_range_indices)))
 
 ref_intervals = np.squeeze(ground_truth[midi_range_indices, 0:2])
 ref_pitches = midi_to_hz(np.squeeze(ground_truth[midi_range_indices, 2]))

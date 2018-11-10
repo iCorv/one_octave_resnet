@@ -8,9 +8,12 @@ import pop_resnet
 import pop_input_data as dataset
 import os
 from official.utils.logs import logger
+from official.utils.logs import hooks_helper
 import numpy as np
 import pop_conv_net_kelz
 import glob
+
+tf.logging.set_verbosity(tf.logging.INFO)
 
 train_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL.csv"
 eval_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL_EVAL.csv"
@@ -24,8 +27,8 @@ train_dataset = "semitone_ISOL_UCHO_48_59_10113_examples.npz"
 eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
 
 
-train_dataset_tfrecord = glob.glob("maps_mus_train/*.tfrecords")
-val_dataset_tfrecord = glob.glob("maps_mus_val/*.tfrecords")
+train_dataset_tfrecord = "1081600_train_231x5.tfrecords" #glob.glob("maps_mus_train/*.tfrecords")
+val_dataset_tfrecord = "153660_val_231x5.tfrecords" #glob.glob("maps_mus_val/*.tfrecords")
 test_dataset_tfrecord = "MAPS_MUS-chpn_op7_1_ENSTDkAm_13718_231x5_test.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
@@ -37,9 +40,9 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-num_examples = 4163882
-num_val_examples = 792567
-batch_size = 256
+num_examples = 1081600 #4163882
+num_val_examples = 153660 #792567
+batch_size = 8
 steps_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 5
 total_train_steps = train_epochs * steps_per_epoch
@@ -66,16 +69,16 @@ def main(argv):
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
 
     estimator_config = tf.estimator.RunConfig(
-        save_checkpoints_steps=1000,  # Save checkpoints every 50 steps.
+        save_checkpoints_steps=500,  # Save checkpoints every 50 steps.
         keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_conv_net_kelz.conv_net_model_fn,
         #model_fn=pop_resnet.resnet_model_fn,
         #model_dir="/home/ubuntu/one_octave_resnet/model",
-        #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
+        model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/model/model",
-        model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
+        #model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],
@@ -91,10 +94,16 @@ def main(argv):
     benchmark_logger.log_run_info('resnet', 'MAPS', run_params,
                                   test_id=TEST_ID)
 
+    #tensors_to_log = {"precision": "precision/value", "recall": "recall/value", "f1_score": "f1_score", "fn": "fn", "fp": "fp",
+    #                  "tp": "tp"}
+    #logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=50)
+
+    #train_hooks = hooks_helper.get_logging_tensor_hook(every_n_iter=100, tensors_to_log=tensors_to_log)
+
     if train_and_val:
         train_spec = tf.estimator.TrainSpec(input_fn=lambda: dataset.tfrecord_train_input_fn(train_dataset_tfrecord,
                                                                                              batch_size=run_params['batch_size'],
-                                            num_epochs=run_params['train_epochs']), max_steps=total_train_steps)
+                                            num_epochs=run_params['train_epochs']), max_steps=total_train_steps)#, hooks=[train_hooks])
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                                                          batch_size=run_params['batch_size'],
                                                                                          num_epochs=1),
@@ -133,7 +142,7 @@ def main(argv):
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-06-11", props=props)
+        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-07-11", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 
