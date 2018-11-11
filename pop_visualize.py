@@ -28,7 +28,7 @@ def import_tfrecord(filepath):
 
     # Actual session to run the graph.
     with tf.Session() as sess:
-        for index in range(0, 400):
+        while True: #for index in range(0, 400):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
                 #print(spec_tensor.shape)
@@ -36,7 +36,7 @@ def import_tfrecord(filepath):
                 #print(np.shape(example_slice))
 
                 np_spec = np.append(np_spec, np.reshape(example_slice, (229, 1)), axis=1)
-                # rint(np.shape(np_spec))
+                # print(np.shape(np_spec))
 
                 # Show the labels
                 np_label = np.append(np_label, np.reshape(label_text, (88, 1)), axis=1)
@@ -48,10 +48,11 @@ def import_tfrecord(filepath):
 
         print(np.max(np_spec))
         print(np.min(np_spec))
-        ax1.pcolormesh(np_spec[:, 150:])
+        print(np.shape(np_spec))
+        ax1.pcolormesh(np_spec[:, :])
         ax1.set_title("spec_512")
 
-        ax2.pcolormesh(np_label[:, 150:])
+        ax2.pcolormesh(np_label[:, :])
         locs, l = plt.yticks()
         # plt.yticks(locs, np.arange(21, 108, 1))
         plt.grid(False)
@@ -83,7 +84,7 @@ def show_record(filepath):
                 #print(np.shape(example_slice))
 
                 np_spec = np.append(np_spec, np.reshape(example_slice, (231, 1, 3)), axis=1)
-                #rint(np.shape(np_spec))
+                print(np.shape(np_spec))
 
 
                 # Show the labels
@@ -115,4 +116,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/train/MAPS_MUS-alb_esp2_AkPnCGdD.tfrecords"])
+import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/MAPS_MUS-chpn_op66_ENSTDkAm.tfrecords"])

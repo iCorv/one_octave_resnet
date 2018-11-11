@@ -8,13 +8,13 @@ import tensorflow.contrib.slim as slim
 import numpy as np
 
 matplotlib.use('TkAgg')
-_HEIGHT = 231
-_WIDTH = 5
+_HEIGHT = 5
+_WIDTH = 229
 _NUM_CHANNELS = 1
 _NUM_CLASSES = 88
 _NUM_IMAGES = {
-    'train': 1081600, #4163882,
-    'validation': 153660, #792567,
+    'train': 1042876, #4163882,
+    'validation': 71435, #792567,
 }
 
 
@@ -36,7 +36,7 @@ def conv_net_model_fn(features, labels, mode, params):
     # overfitting on the small data set. We therefore include all vars when
     # regularizing and computing loss during training.
     def loss_filter_fn(_):
-        return False
+        return True
 
     return conv_net_prep(
         features=features,
@@ -49,7 +49,7 @@ def conv_net_model_fn(features, labels, mode, params):
         data_format=params['data_format'],
         resnet_version=params['resnet_version'],
         loss_scale=params['loss_scale'],
-        loss_filter_fn=None,#loss_filter_fn,
+        loss_filter_fn=loss_filter_fn,
         dtype=params['dtype'],
         num_classes=params['num_classes']
     )
@@ -151,7 +151,7 @@ def conv_net_prep(features, labels, mode,
         #weights = tf.py_func(weights_from_labels, [labels], [tf.float64], stateful=False)[0]
         #weights = tf.cast(weights, dtype=dtype)
         # since labels also encode the weights, we have to transform them to a binary format for evaluation
-        labels = tf.ceil(labels)
+        #labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)
 
     logits = cnn_model(features, 0.99, mode == tf.estimator.ModeKeys.TRAIN)
@@ -205,8 +205,8 @@ def conv_net_prep(features, labels, mode,
         [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
          if loss_filter_fn(v.name)])
     tf.summary.scalar('l2_loss', l2_loss)
-    #loss = cross_entropy + l2_loss
-    loss = cross_entropy
+    loss = cross_entropy + l2_loss
+    #loss = cross_entropy
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
@@ -304,7 +304,7 @@ def cnn_model(input_layer, momentum, is_training):
     tf.summary.image("conv2", tf.slice(conv2, [0, 0, 0, 0], [-1, _HEIGHT, _WIDTH, 1]), 1, collections=['train'])
 
     # Pooling layer #1 - down-sample by 2X over freq.
-    conv2_pool = tf.layers.max_pooling2d(conv2, (2, 1), strides=(2, 1), padding='valid', name='pool1')
+    conv2_pool = tf.layers.max_pooling2d(conv2, (1, 2), strides=(1, 2), padding='valid', name='pool1')
     print(conv2_pool.shape)
 
     # dropout layer
@@ -317,7 +317,7 @@ def cnn_model(input_layer, momentum, is_training):
     print(conv3.shape)
 
     # Pooling layer #2 - down-sample by 2X over freq.
-    conv3_pool = tf.layers.max_pooling2d(conv3, (2, 1), strides=(2, 1), padding='valid', name='pool2')
+    conv3_pool = tf.layers.max_pooling2d(conv3, (1, 2), strides=(1, 2), padding='valid', name='pool2')
     print(conv3_pool.shape)
 
     # dropout layer
@@ -325,7 +325,7 @@ def cnn_model(input_layer, momentum, is_training):
                                    name='dropout2')
 
     # dense layer
-    conv3_pool = tf.reshape(conv3_pool, [-1, 56*1*64])
+    conv3_pool = tf.reshape(conv3_pool, [-1, 64*1*55])
     print(conv3_pool.shape)
     dense = tf.layers.dense(conv3_pool,  activation=tf.nn.relu, kernel_initializer=tf.glorot_uniform_initializer(), units=512, name='dense')
     dense = tf.layers.batch_normalization(dense, momentum=momentum, training=is_training, name='dense_bn')

@@ -15,21 +15,9 @@ import glob
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-train_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL.csv"
-eval_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_C4toB4_TRIPEL_EVAL.csv"
-test_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/MUS_SEMI_FILT_C4toB4_TRIPEL_TEST.csv"
-predict_dataset_fp = "/Users/Jaedicke/Documents/MATLAB/spectrogramComputation/ISOL_SEMI_FILT_DUMMY.csv"
-
-train_dataset = "semitone_ISOL_UCHO_48_59_10113_examples.npz"
-
-#eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_1305.npz"
-#eval_dataset = "MAPS_MUS-alb_se3_AkPnBcht_5000.npz"
-eval_dataset = "semitone_MAPS_MUS-alb_se3_AkPnBcht_25050_examples.npz"
-
-
-train_dataset_tfrecord = "1081600_train_231x5.tfrecords" #glob.glob("maps_mus_train/*.tfrecords")
-val_dataset_tfrecord = "153660_val_231x5.tfrecords" #glob.glob("maps_mus_val/*.tfrecords")
-test_dataset_tfrecord = "MAPS_MUS-chpn_op7_1_ENSTDkAm_13718_231x5_test.tfrecords"
+train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/train/*.tfrecords")
+val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/*.tfrecords")
+test_dataset_tfrecord = "./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/MAPS_MUS-bor_ps6_ENSTDkCl.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
 
@@ -40,9 +28,9 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-num_examples = 1081600 #4163882
-num_val_examples = 153660 #792567
-batch_size = 8
+num_examples = 1042876 #4163882
+num_val_examples = 71435 #792567
+batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 5
 total_train_steps = train_epochs * steps_per_epoch
@@ -134,15 +122,20 @@ def main(argv):
         predictions = classifier.predict(input_fn=lambda: dataset.tfrecord_test_input_fn(filepath=test_dataset_tfrecord,
                                                                                          batch_size=1, num_epochs=1))
 
-        props = np.zeros((run_params['num_classes'], num_val_examples))
-        notes = np.zeros((run_params['num_classes'], num_val_examples))
+        # pythonic way to count elements in generator object?
+        num_test_frames = 11468
+        #num_test_frames = len(list(predictions)) #sum(1 for i in predictions)
+        print(num_test_frames)
+        props = np.zeros((run_params['num_classes'], num_test_frames))
+        notes = np.zeros((run_params['num_classes'], num_test_frames))
         index = 0
         for p in predictions:
             if index < num_val_examples:
+            #print(np.shape(p['probabilities'][:]))
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
             index = index + 1
-        np.savez("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-07-11", props=props)
+        np.savez("props_MAPS_MUS-bor_ps6_ENSTDkCl_2018-11-11", props=props)
         #np.savez("notes_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-18-10", notes=notes)
         print(index)
 

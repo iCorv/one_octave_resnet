@@ -100,20 +100,21 @@ hamming = np.hamming(5)
 def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
-sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.txt')
+sorted_ground_truth_list = glob.glob('../../MAPS/ENSTDkCl/MUS/MAPS_MUS-bor_ps6_ENSTDkCl.txt')
 #data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-23-10.npz")
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-05-11.npz")
+data = np.load("props_MAPS_MUS-bor_ps6_ENSTDkCl_2018-11-11.npz")
+
 
 #act = madmom.features.notes.RNNPianoNoteProcessor()('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.wav')
 
 #props = signal.convolve2d(data["props"], hamming, mode='same')
 props = data["props"]
-prefix = np.zeros((88, 4))
+prefix = np.zeros((88, 2))
 props = np.append(prefix, props, axis=1)
 
 
-fps = 1/hop_size
-proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.13, combine=0.03, smooth=0.3, fps=fps)
+fps = 100
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.0, fps=fps)
 
 est_intervals_notes = proc(props.T)
 #est_intervals_notes = proc(act)
@@ -186,13 +187,13 @@ metrics_with_pitch = tr.precision_recall_f1_overlap(ref_intervals, ref_pitches, 
                                                     strict=False,
                                                     beta=1.0)
 
-metrics_onset = tr.onset_precision_recall_f1(ref_intervals, est_intervals,
-                                             onset_tolerance=0.05, strict=False, beta=1.0)
+#metrics_onset = tr.onset_precision_recall_f1(ref_intervals, est_intervals,
+#                                             onset_tolerance=0.05, strict=False, beta=1.0)
 
 # matched_notes = tr.match_notes(ref_intervals, ref_pitches, est_intervals, est_pitches,
 #                                onset_tolerance=0.05, pitch_tolerance=50.0, offset_ratio=None,
 #                                offset_min_tolerance=0.05, strict=False)
 
-print(metrics_onset)
+#print(metrics_onset)
 print(metrics_with_pitch)
 #print(matched_notes)

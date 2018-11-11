@@ -55,17 +55,16 @@ def reduce_consecutive_ones_mat(mat, mat_length):
     return mat
 
 
-hamming = np.hamming(5)
-print("hamming: " + str(hamming.size))
-print(hamming)
 
 f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharey=True)
 
-data = np.load("props_MAPS_MUS-chpn_op7_1_ENSTDkAm_2018-05-11.npz")
+data = np.load("props_MAPS_MUS-bor_ps6_ENSTDkCl_2018-11-11.npz")
 props = data["props"]
 prefix = np.zeros((88, 7))
 props = np.append(prefix, props, axis=1)
 
+print(np.min(props))
+print(np.max(props))
 ax1.pcolormesh((props[:, 0:plot_frames]))
 ax1.set_title("Activation Function")
 locs, labels = plt.yticks()
@@ -77,7 +76,7 @@ plt.grid(True)
 
 
 fps = 1/hop_size_sec
-proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.1, fps=fps)
+proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.55, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.0, fps=fps)
 
 est_intervals_notes = proc(props.T)
 
@@ -100,7 +99,7 @@ ax2.set_title("Peak Picked Notes")
 #plt.show()
 
 
-sorted_ground_truth_list = glob.glob('/Users/Jaedicke/MAPS_real_piano/ENSTDkAm/MUS/MAPS_MUS-chpn_op7_1_ENSTDkAm.txt')
+sorted_ground_truth_list = glob.glob('../../MAPS/ENSTDkCl/MUS/MAPS_MUS-bor_ps6_ENSTDkCl.txt')
 # load ground truth
 ground_truth = loadtxt(sorted_ground_truth_list[0], skiprows=1, delimiter='\t')
 # find values within range
