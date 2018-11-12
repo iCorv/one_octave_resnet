@@ -8,7 +8,6 @@ import pop_resnet
 import pop_input_data as dataset
 import os
 from official.utils.logs import logger
-from official.utils.logs import hooks_helper
 import numpy as np
 import pop_conv_net_kelz
 import glob
@@ -29,8 +28,8 @@ train_flag = False
 eval_flag = False
 
 num_examples = 1042876 #4163882
-num_val_examples = 71435 #792567
-batch_size = 128
+num_val_examples = 792567
+batch_size = 8
 steps_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 5
 total_train_steps = train_epochs * steps_per_epoch

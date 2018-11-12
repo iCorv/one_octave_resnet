@@ -23,7 +23,7 @@ def conv_net_model_fn(features, labels, mode, params):
 
     learning_rate_fn = learning_rate_with_decay(
         batch_size=params['batch_size'], batch_denom=params['batch_size'],
-        num_images=_NUM_IMAGES['train'], boundary_epochs=[5, 5, 5],  # boundary_epochs=[100, 150, 200],
+        num_images=_NUM_IMAGES['train'], boundary_epochs=[10, 10, 10],  # boundary_epochs=[100, 150, 200],
         decay_rates=[1, 0.1, 0.01, 0.001])
 
     # We use a weight decay of 0.0002, which performs better
@@ -76,7 +76,7 @@ def learning_rate_with_decay(
       trained so far (global_step)- and returns the learning rate to be used
       for training the next batch.
     """
-    initial_learning_rate = 0.1 * batch_size / batch_denom
+    initial_learning_rate = 0.01 * batch_size / batch_denom
     batches_per_epoch = num_images / batch_size
 
     # Reduce the learning rate at certain epochs, for Example:
@@ -179,7 +179,7 @@ def conv_net_prep(features, labels, mode,
     _EPSILON = tf.constant(1e-7, dtype=tf.float32)
     logits = tf.clip_by_value(logits, _EPSILON, 1.0 - _EPSILON)
     # without weights
-    cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
+    loss = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
 
     # weights masking to emphasize positive examples
     #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
@@ -189,23 +189,23 @@ def conv_net_prep(features, labels, mode,
 
 
     # Create a tensor named cross_entropy for logging purposes.
-    tf.identity(cross_entropy, name='cross_entropy')
-    tf.summary.scalar('cross_entropy', cross_entropy)
+    #tf.identity(cross_entropy, name='cross_entropy')
+    #tf.summary.scalar('cross_entropy', cross_entropy)
 
     # If no loss_filter_fn is passed, assume we want the default behavior,
     # which is that batch_normalization variables are excluded from loss.
-    def exclude_batch_norm(name):
-        return 'batch_normalization' not in name
+    #def exclude_batch_norm(name):
+    #    return 'batch_normalization' not in name
 
-    loss_filter_fn = loss_filter_fn or exclude_batch_norm
+    #loss_filter_fn = loss_filter_fn or exclude_batch_norm
 
     # Add weight decay to the loss.
-    l2_loss = weight_decay * tf.add_n(
-        # loss is computed using fp32 for numerical stability.
-        [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
-         if loss_filter_fn(v.name)])
-    tf.summary.scalar('l2_loss', l2_loss)
-    loss = cross_entropy + l2_loss
+    #l2_loss = weight_decay * tf.add_n(
+    #    # loss is computed using fp32 for numerical stability.
+    #    [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
+    #     if loss_filter_fn(v.name)])
+    # tf.summary.scalar('l2_loss', l2_loss)
+    # loss = cross_entropy + l2_loss
     #loss = cross_entropy
 
     if mode == tf.estimator.ModeKeys.TRAIN:
