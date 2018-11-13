@@ -17,7 +17,7 @@ import numpy as np
 import madmom
 import tensorflow as tf
 import os
-import configurations.maps_preprocessing_parameter as mpp
+import configurations.pop_preprocessing_parameters as ppp
 import warnings
 from madmom.utils import midi
 from enum import Enum
@@ -31,6 +31,7 @@ class Fold(Enum):
     fold_3 = 2
     fold_4 = 3
     fold_benchmark = 4
+    fold_single_note = 5
 
 
 def wav_to_spec(base_dir, filename, _audio_options):
@@ -91,12 +92,12 @@ def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
-def preprocess_fold(fold, mode, norm=True):
+def preprocess_fold(fold, mode, norm=False):
     """Preprocess an entire fold as defined in the preprocessing parameters.
         fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
         mode - 'train', 'valid' or 'test' to address the correct config parameter
     """
-    config = mpp.get_preprocessing_parameters(fold.value)
+    config = ppp.get_preprocessing_parameters(fold.value)
     audio_config = config['audio_config']
 
     # load fold

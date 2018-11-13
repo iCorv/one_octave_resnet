@@ -3,7 +3,8 @@ def get_preprocessing_parameters(fold_num):
               'sigtia-configuration2-splits/fold_2',
               'sigtia-configuration2-splits/fold_3',
               'sigtia-configuration2-splits/fold_4',
-              'sigtia-configuration2-splits/fold_benchmark']
+              'sigtia-configuration2-splits/fold_benchmark',
+              'single-note-splits']
 
     split = splits[fold_num]
 

@@ -12,10 +12,11 @@ import numpy as np
 import pop_conv_net_kelz
 import glob
 
-tf.logging.set_verbosity(tf.logging.INFO)
 
-train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/train/*.tfrecords")
-val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/*.tfrecords")
+#train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/train/*.tfrecords")
+#val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/*.tfrecords")
+train_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/train/*.tfrecords")
+val_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/valid/*.tfrecords")
 test_dataset_tfrecord = "./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/MAPS_MUS-bor_ps6_ENSTDkCl.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
@@ -27,8 +28,8 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-num_examples = 1042876 #4163882
-num_val_examples = 792567
+num_examples = 482952 #1042876 #4163882
+num_val_examples = 87628 #792567
 batch_size = 8
 steps_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 5
@@ -81,12 +82,7 @@ def main(argv):
     benchmark_logger.log_run_info('resnet', 'MAPS', run_params,
                                   test_id=TEST_ID)
 
-    #tensors_to_log = {"precision": "precision/value", "recall": "recall/value", "f1_score": "f1_score", "fn": "fn", "fp": "fp",
-    #                  "tp": "tp"}
-    #logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=50)
-
-    #train_hooks = hooks_helper.get_logging_tensor_hook(every_n_iter=100, tensors_to_log=tensors_to_log)
-
+    # Train and validate in turns
     if train_and_val:
         train_spec = tf.estimator.TrainSpec(input_fn=lambda: dataset.tfrecord_train_input_fn(train_dataset_tfrecord,
                                                                                              batch_size=run_params['batch_size'],
@@ -116,13 +112,14 @@ def main(argv):
 
         print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
-    ######### predict
+    # Predict
     if predict_flag:
         predictions = classifier.predict(input_fn=lambda: dataset.tfrecord_test_input_fn(filepath=test_dataset_tfrecord,
                                                                                          batch_size=1, num_epochs=1))
 
-        # pythonic way to count elements in generator object?
+        # Problem: due to graph structure the value needs to be determined at compilation time?!
         num_test_frames = 11468
+        # pythonic way to count elements in generator object
         #num_test_frames = len(list(predictions)) #sum(1 for i in predictions)
         print(num_test_frames)
         props = np.zeros((run_params['num_classes'], num_test_frames))
