@@ -50,7 +50,7 @@ def import_tfrecord(filepath):
         print(np.min(np_spec))
         print(np.shape(np_spec))
         ax1.pcolormesh(np_spec[:, :])
-        ax1.set_title("spec_512")
+        ax1.set_title("spec_4096")
 
         ax2.pcolormesh(np_label[:, :])
         locs, l = plt.yticks()
@@ -116,4 +116,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/MAPS_MUS-chpn_op66_ENSTDkAm.tfrecords"])
+import_tfrecord(["./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S0_M100_AkPnStgb.tfrecords"])
