@@ -11,9 +11,10 @@ from math import sqrt
 def conv_net_model_fn(features, labels, mode, params):
     features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
     learning_rate_fn = learning_rate_with_decay(
-        initial_learning_rate=params['learning_rate'], batches_per_epoch=params['batches_per_epoch'],
-        boundary_epochs=[0.7, 2, 3],  # boundary_epochs=[100, 150, 200],
-        decay_rates=[0.0006, 0.0006, 0.0006, 0.0006])#decay_rates=[1, 0.1, 0.01, 0.001])
+        initial_learning_rate=params['learning_rate'],
+        batches_per_epoch=params['batches_per_epoch'],
+        boundary_epochs=params['boundary_epochs'],
+        decay_rates=params['decay_rates'])
 
     return conv_net_init(
         features=features,
