@@ -140,12 +140,12 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
 
     logits = tf.clip_by_value(logits, clip_norm, 1.0 - clip_norm)
     # without weights
-    loss = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
+    #loss = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
 
     # weights masking to emphasize positive examples
-    #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
-    #                                                          reduction=tf.losses.Reduction.NONE)
-    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
+    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
+                                                              reduction=tf.losses.Reduction.NONE)
+    loss = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=tf.add(labels, 1.0))
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()

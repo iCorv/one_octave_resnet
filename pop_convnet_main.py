@@ -37,8 +37,8 @@ def main(_):
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
 
     estimator_config = tf.estimator.RunConfig(
-        save_checkpoints_steps=500,  # Save checkpoints every 50 steps.
-        keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
+        save_checkpoints_secs=900,  # Save checkpoints every 50 steps.
+        keep_checkpoint_max=50,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_conv_net_kelz.conv_net_model_fn,
