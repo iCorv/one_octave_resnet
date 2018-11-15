@@ -19,6 +19,8 @@ import tensorflow as tf
 import os
 import configurations.pop_preprocessing_parameters as ppp
 import warnings
+from joblib import Parallel, delayed
+import multiprocessing
 from madmom.utils import midi
 from enum import Enum
 warnings.filterwarnings("ignore")
@@ -116,6 +118,34 @@ def preprocess_fold(fold, mode, norm=False):
     print("Examples processed: " + str(total_examples_processed))
     np.savez(config['tfrecords_' + mode + '_fold'] + "total_examples_processed",
              total_examples_processed=total_examples_processed)
+
+
+def preprocess_fold_parallel(fold, mode, norm=False):
+    """Parallel preprocess an entire fold as defined in the preprocessing parameters.
+        This seems only to work on Win with Anaconda!
+        fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
+        mode - 'train', 'valid' or 'test' to address the correct config parameter
+    """
+    config = ppp.get_preprocessing_parameters(fold.value)
+    audio_config = config['audio_config']
+
+    # load fold
+    filenames = open(config[mode+'_fold'], 'r').readlines()
+    filenames = [f.strip() for f in filenames]
+
+    def parallel_loop(file):
+        # split file path string at "/" and take the last split, since it's the actual filename
+        num_ex_processed = write_file_to_tfrecords(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
+                                                   ".tfrecords", config['audio_path'], file, audio_config, norm,
+                                                   config['context_frames'])
+        return num_ex_processed
+
+    num_cores = multiprocessing.cpu_count()
+
+    total_examples_processed = Parallel(n_jobs=num_cores)(delayed(parallel_loop)(file) for file in filenames)
+    print("Examples processed: " + str(np.sum(total_examples_processed)))
+    np.savez(config['tfrecords_' + mode + '_fold'] + "total_examples_processed",
+             total_examples_processed=np.sum(total_examples_processed))
 
 
 def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm, context_frames):
