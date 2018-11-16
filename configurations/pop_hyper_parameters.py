@@ -3,11 +3,11 @@ import tensorflow as tf
 
 DEFAULT_DTYPE = tf.float32
 
-num_examples = 4197453  # 482952
-num_val_examples = 749017  # 87628
+num_examples = 482952  # 4197453  # 482952
+num_val_examples = 87628  # 749017  # 87628
 batch_size = 8
 batches_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 80
+train_epochs = 40
 total_train_steps = train_epochs * batches_per_epoch
 
 
