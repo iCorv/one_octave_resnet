@@ -100,14 +100,8 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
     features = tf.cast(features, dtype)
 
     if mode != tf.estimator.ModeKeys.PREDICT:
-        # determine weights from labels encoding weights
-        #weights = tf.py_func(weights_from_labels, [labels], [tf.float64], stateful=False)[0]
-        #weights = tf.cast(weights, dtype=dtype)
-        # since labels also encode the weights, we have to transform them to a binary format for evaluation
-        #labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)
 
-    #logits = cnn_model(features, mode == tf.estimator.ModeKeys.TRAIN)
     logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN)
 
     # Visualize conv1 kernels
@@ -116,13 +110,6 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
         weights = tf.get_variable('weights')
         grid = put_kernels_on_grid(weights)
         tf.summary.image('conv1/kernels', grid, max_outputs=1)
-
-    # # Visualize conv1 kernels
-    # with tf.variable_scope('conv2'):
-    #     tf.get_variable_scope().reuse_variables()
-    #     weights = tf.get_variable('weights')
-    #     grid = put_kernels_on_grid(weights)
-    #     tf.summary.image('conv2/kernels', grid, max_outputs=1)
 
     # This acts as a no-op if the logits are already in fp32 (provided logits are
     # not a SparseTensor). If dtype is of low precision, logits must be cast to
@@ -140,17 +127,8 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
             mode=mode,
             predictions=predictions)
 
-    #logits = tf.clip_by_value(logits, clip_norm, 1.0 - clip_norm)
-    # without weights
-    #loss = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
-
     individual_loss = log_loss(labels, predictions['probabilities'])
     loss = tf.reduce_mean(individual_loss)
-
-    # weights masking to emphasize positive examples
-    #cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
-    #                                                          reduction=tf.losses.Reduction.NONE)
-    #loss = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=tf.add(tf.multiply(labels, 1.0), 0.2))
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
@@ -255,21 +233,21 @@ def conv_net_kelz(inputs, is_training):
 
 def log_loss(labels, predictions, epsilon=1e-7, scope=None, weights=None):
     """Calculate log losses.
-    Same as tf.losses.log_loss except that this returns the individual losses
-    instead of passing them into compute_weighted_loss and returning their
-    weighted mean. This is useful for eval jobs that report the mean loss. By
-    returning individual losses, that mean loss can be the same regardless of
-    batch size.
-    Args:
-    labels: The ground truth output tensor, same dimensions as 'predictions'.
-    predictions: The predicted outputs.
-    epsilon: A small increment to add to avoid taking a log of zero.
-    scope: The scope for the operations performed in computing the loss.
-    weights: Weights to apply to labels.
-    Returns:
-    A `Tensor` representing the loss values.
-    Raises:
-    ValueError: If the shape of `predictions` doesn't match that of `labels`.
+        Same as tf.losses.log_loss except that this returns the individual losses
+        instead of passing them into compute_weighted_loss and returning their
+        weighted mean. This is useful for eval jobs that report the mean loss. By
+        returning individual losses, that mean loss can be the same regardless of
+        batch size.
+        Args:
+            labels: The ground truth output tensor, same dimensions as 'predictions'.
+            predictions: The predicted outputs.
+            epsilon: A small increment to add to avoid taking a log of zero.
+            scope: The scope for the operations performed in computing the loss.
+            weights: Weights to apply to labels.
+        Returns:
+            A `Tensor` representing the loss values.
+        Raises:
+            ValueError: If the shape of `predictions` doesn't match that of `labels`.
     """
     with tf.name_scope(scope, "log_loss", (predictions, labels)) as scope:
         predictions = tf.to_float(predictions)
@@ -285,20 +263,20 @@ def log_loss(labels, predictions, epsilon=1e-7, scope=None, weights=None):
 
 def put_kernels_on_grid(kernel, pad=1):
 
-    '''Visualize conv. filters as an image (mostly for the 1st layer).
-    Arranges filters into a grid, with some paddings between adjacent filters.
-    Args:
-    kernel:            tensor of shape [Y, X, NumChannels, NumKernels]
-    pad:               number of black pixels around each filter (between them)
-    Return:
-    Tensor of shape [1, (Y+2*pad)*grid_Y, (X+2*pad)*grid_X, NumChannels].
-    '''
+    """Visualize conv. layer filters or output as an image.
+        Arranges filters into a grid, with some paddings between adjacent filters.
+        Args:
+            kernel: tensor of shape [Y, X, NumChannels, NumKernels]
+            pad: number of black pixels around each filter (between them)
+        Return:
+            Tensor of shape [1, (Y+2*pad)*grid_Y, (X+2*pad)*grid_X, NumChannels].
+    """
     # get shape of the grid. NumKernels == grid_Y * grid_X
     def factorization(n):
         for i in range(int(sqrt(float(n))), 0, -1):
             if n % i == 0:
                 if i == 1: print('Who would enter a prime number of filters')
-                return (i, int(n / i))
+                return i, int(n / i)
     (grid_Y, grid_X) = factorization(kernel.get_shape()[3].value)
     #print ('grid: %d = (%d, %d)' % (kernel.get_shape()[3].value, grid_Y, grid_X))
 
@@ -307,7 +285,7 @@ def put_kernels_on_grid(kernel, pad=1):
     kernel = (kernel - x_min) / (x_max - x_min)
 
     # pad X and Y
-    x = tf.pad(kernel, tf.constant( [[pad,pad],[pad, pad],[0,0],[0,0]] ), mode = 'CONSTANT')
+    x = tf.pad(kernel, tf.constant([[pad, pad], [pad, pad], [0, 0], [0, 0]]), mode='CONSTANT')
 
     # X and Y dimensions, w.r.t. padding
     Y = kernel.get_shape()[0] + 2 * pad
