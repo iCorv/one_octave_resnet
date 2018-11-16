@@ -108,7 +108,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
         labels = tf.cast(labels, dtype)
 
     #logits = cnn_model(features, mode == tf.estimator.ModeKeys.TRAIN)
-    logits = conv_net_kelz(features)
+    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN)
 
     # Visualize conv1 kernels
     with tf.variable_scope('conv1'):
