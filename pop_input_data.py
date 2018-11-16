@@ -298,28 +298,32 @@ def spec_norm_0_1(spec):
 
 def tfrecord_train_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
-    features = tf.parse_single_example(
+    example = tf.parse_single_example(
         serialized_example,
         features={"spec": tf.FixedLenFeature([num_features], tf.float32),
                   "label": tf.FixedLenFeature([88], tf.int64)})
-    spec = tf.cast(features['spec'], tf.float32)
+    features = tf.cast(example['spec'], tf.float32)
     # Reshape spec data into the original shape
-    spec = tf.reshape(spec, feature_shape)
-    labels = tf.cast(features["label"], tf.int64)
-    return spec, labels
+    features = tf.reshape(features, feature_shape)
+    label = tf.cast(example["label"], tf.int64)
+    return features, label
 
 
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     dataset = tf.data.TFRecordDataset(filepath)
-
+    #print(dataset)
     # Map the parser over dataset, and batch results by up to batch_size
 
-    dataset = dataset.shuffle(2048)
+    dataset = dataset.shuffle(100000)
     dataset = dataset.repeat(num_epochs)
+    #print(dataset)
     dataset = dataset.map(tfrecord_train_parser)
     dataset = dataset.batch(batch_size)
-
-    return dataset
+    dataset = dataset.prefetch(1)
+    #print(dataset)
+    #iterator = dataset.make_one_shot_iterator()
+    #next_element = iterator.get_next()
+    return dataset #next_element
 
 
 def tfrecord_val_input_fn(filepath, batch_size, num_epochs):

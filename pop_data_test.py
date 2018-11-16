@@ -9,17 +9,19 @@ import pop_input_data
 
 
 def import_tfrecord(filepath):
-    dataset = tf.data.TFRecordDataset(filepath)
-
-    # Make dataset iteratable.
-    iterator = dataset.make_one_shot_iterator()
-    next_example = iterator.get_next()
+    #dataset = tf.data.TFRecordDataset(filepath)
 
 
     # Extract features from single example
-    spec, labels = pop_input_data.tfrecord_train_parser(next_example)
+    #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
     #spec = tf.slice(spec, [0, 0, 1], [5, 231, 1])
+    dataset = pop_input_data.tfrecord_train_input_fn(filepath, 1, 1)
 
+    # Make dataset iteratable.
+    #iterator = dataset.make_one_shot_iterator()
+    #next_example = iterator.get_next()
+    spec = dataset[0]
+    labels = dataset[1]
 
     print(spec.shape)
     f, (ax1, ax2) = plt.subplots(2, 1, sharey=False)
@@ -31,8 +33,8 @@ def import_tfrecord(filepath):
         while True: #for index in range(0, 400):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
-                #print(spec_tensor.shape)
-                example_slice = np.array(spec_tensor, np.float32)[2, :]
+                print(spec_tensor.shape)
+                example_slice = np.array(np.squeeze(spec_tensor), np.float32)[1, :]
                 #print(np.shape(example_slice))
 
                 np_spec = np.append(np_spec, np.reshape(example_slice, (229, 1)), axis=1)
@@ -59,6 +61,63 @@ def import_tfrecord(filepath):
         plt.show()
 
 
+def import_single_example(filepath):
+    #dataset = tf.data.TFRecordDataset(filepath)
+
+
+    # Extract features from single example
+    #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
+    #spec = tf.slice(spec, [0, 0, 1], [5, 231, 1])
+    dataset = pop_input_data.tfrecord_train_input_fn(filepath, 8, 1)
+
+    # Make dataset iteratable.
+    iterator = dataset.make_one_shot_iterator()
+    next_example = iterator.get_next()
+    spec = next_example[0]
+    labels = next_example[1]
+
+    spec = tf.reshape(spec, [-1, 5, 229, 1])
+    print(spec.shape)
+    f, (ax1, ax2) = plt.subplots(2, 1, sharey=False)
+    np_spec = np.zeros((229, 1))
+    np_label_fix = np.zeros((88, 2))
+    label_mat = np.zeros((88, 1))
+
+    # Actual session to run the graph.
+    with tf.Session() as sess:
+        for index in range(0, 100):
+            try:
+                spec_tensor, label_text = sess.run([spec, labels])
+                #print(spec_tensor.shape)
+
+                example_slice = np.array(np.squeeze(spec_tensor[3,:,:,:]), np.float32)
+                #print(np.shape(example_slice))
+
+                #np_spec = example_slice.T #np.reshape(example_slice, (229, 5))
+                np_spec = np.append(np_spec, example_slice.T, axis=1)
+                # print(np.shape(np_spec))
+
+                # Show the labels
+                label_mat = np.append(label_mat, np.append(np.append(np_label_fix, np.reshape(label_text[3,:], (88, 1)), axis=1), np_label_fix, axis=1), axis=1)
+                # print(label_text)
+
+
+            except tf.errors.OutOfRangeError:
+                break
+
+        print(np.max(np_spec))
+        print(np.min(np_spec))
+        print(np.shape(np_spec))
+        ax1.pcolormesh(np_spec[:, 1:])
+        ax1.set_title("spec_4096")
+
+        ax2.pcolormesh(label_mat[:, 1:])
+        locs, l = plt.yticks()
+        # plt.yticks(locs, np.arange(21, 108, 1))
+        plt.grid(False)
+        plt.show()
+
+
 def show_record(filepath):
     dataset = tf.data.TFRecordDataset(filepath)
 
@@ -76,7 +135,7 @@ def show_record(filepath):
 
     # Actual session to run the graph.
     with tf.Session() as sess:
-        for index in range(0, 400):
+        for index in range(0, 5000):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
                 #print(spec_tensor.shape)
@@ -116,4 +175,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_tfrecord(["./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S0_M100_AkPnStgb.tfrecords"])
+import_single_example(["./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S1_M74_ENSTDkAm.tfrecords","./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S0_M100_AkPnStgb.tfrecords", "./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S0_M86_AkPnBsdf.tfrecords", "./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S1_M21_SptkBGAm.tfrecords"])
