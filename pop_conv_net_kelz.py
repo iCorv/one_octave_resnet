@@ -10,6 +10,8 @@ from math import sqrt
 
 def conv_net_model_fn(features, labels, mode, params):
     features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
+    print(features.shape)
+    print(labels.shape)
     learning_rate_fn = learning_rate_with_decay(
         initial_learning_rate=params['learning_rate'],
         batches_per_epoch=params['batches_per_epoch'],
@@ -201,7 +203,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
         eval_metric_ops=metrics)
 
 
-def conv_net_kelz(inputs):
+def conv_net_kelz(inputs, is_training):
     """Builds the ConvNet from Kelz 2016."""
     with slim.arg_scope(
           [slim.conv2d, slim.fully_connected],
@@ -211,43 +213,43 @@ def conv_net_kelz(inputs):
         net = slim.conv2d(
             inputs, 32, [3, 3], scope='conv1', normalizer_fn=slim.batch_norm, padding='SAME')
         conv1_output = tf.unstack(net, num=8, axis=0)
-        grid = put_kernels_on_grid(tf.expand_dims(conv1_output[0], 2))
+        grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv1_output[0], [1, 0, 2]), 2))
         tf.summary.image('conv1/output', grid, max_outputs=1)
-        print(net.shape)
+        #print(net.shape)
 
         net = slim.conv2d(
             net, 32, [3, 3], scope='conv2', normalizer_fn=slim.batch_norm, padding='VALID')
         conv2_output = tf.unstack(net, num=8, axis=0)
         grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], [1, 0, 2]), 2))
         tf.summary.image('conv2/output', grid, max_outputs=1)
-        print(net.shape)
+        #print(net.shape)
         net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool2')
-        print(net.shape)
-        net = slim.dropout(net, 0.25, scope='dropout2')
+        #print(net.shape)
+        net = slim.dropout(net, 0.25, is_training=is_training, scope='dropout2')
 
         net = slim.conv2d(
             net, 64, [3, 3], scope='conv3', normalizer_fn=slim.batch_norm, padding='VALID')
         conv3_output = tf.unstack(net, num=8, axis=0)
-        grid = put_kernels_on_grid(tf.expand_dims(conv3_output[0], 2))
+        grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], [1, 0, 2]), 2))
         tf.summary.image('conv3/output', grid, max_outputs=1)
-        print(net.shape)
+        #print(net.shape)
         net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool3')
 
-        net = slim.dropout(net, 0.25, scope='dropout3')
+        net = slim.dropout(net, 0.25, is_training=is_training, scope='dropout3')
 
         # Flatten
-        print(net.shape)
+        #print(net.shape)
         net = tf.reshape(net, (-1, 64*1*55), 'flatten4')
-        print(net.shape)
+        #print(net.shape)
         net = slim.fully_connected(net, 512, scope='fc5')
-        print(net.shape)
-        net = slim.dropout(net, 0.5, scope='dropout5')
+        #print(net.shape)
+        net = slim.dropout(net, 0.5, is_training=is_training, scope='dropout5')
         net = slim.fully_connected(net, 88, activation_fn=None, scope='fc6')
-        print(net.shape)
+        #print(net.shape)
         return net
 
 
-def put_kernels_on_grid (kernel, pad = 1):
+def put_kernels_on_grid(kernel, pad=1):
 
     '''Visualize conv. filters as an image (mostly for the 1st layer).
     Arranges filters into a grid, with some paddings between adjacent filters.
@@ -264,7 +266,7 @@ def put_kernels_on_grid (kernel, pad = 1):
                 if i == 1: print('Who would enter a prime number of filters')
                 return (i, int(n / i))
     (grid_Y, grid_X) = factorization(kernel.get_shape()[3].value)
-    print ('grid: %d = (%d, %d)' % (kernel.get_shape()[3].value, grid_Y, grid_X))
+    #print ('grid: %d = (%d, %d)' % (kernel.get_shape()[3].value, grid_Y, grid_X))
 
     x_min = tf.reduce_min(kernel)
     x_max = tf.reduce_max(kernel)
