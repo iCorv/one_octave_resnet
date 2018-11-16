@@ -319,7 +319,7 @@ def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     #print(dataset)
     dataset = dataset.map(tfrecord_train_parser)
     dataset = dataset.batch(batch_size)
-    dataset = dataset.prefetch(1)
+    dataset = dataset.prefetch(10)
     #print(dataset)
     #iterator = dataset.make_one_shot_iterator()
     #next_element = iterator.get_next()
@@ -334,6 +334,7 @@ def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
     dataset = dataset.repeat(num_epochs)
     dataset = dataset.map(tfrecord_train_parser)
     dataset = dataset.batch(batch_size)
+    dataset = dataset.prefetch(10)
 
     return dataset
 
