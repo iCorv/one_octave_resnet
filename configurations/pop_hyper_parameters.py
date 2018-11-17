@@ -5,9 +5,9 @@ DEFAULT_DTYPE = tf.float32
 
 num_examples = 4197453  # 4197453  # 482952
 num_val_examples = 749017  # 749017  # 87628
-batch_size = 8
+batch_size = 16
 batches_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 50
+train_epochs = 25
 total_train_steps = train_epochs * batches_per_epoch
 
 
@@ -19,7 +19,7 @@ def get_hyper_parameters(net):
                   # initial learning rate
                   'learning_rate': 0.1,
                   # when to change learning rate
-                  'boundary_epochs': [10, 20, 30, 40],
+                  'boundary_epochs': [5, 10, 15, 20],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
                   'decay_rates': [1., 0.5, 0.5*0.5, 0.5*0.5*0.5, 0.5*0.5*0.5*0.5],
                   'momentum': 0.9,
