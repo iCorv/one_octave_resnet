@@ -100,7 +100,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
     """
 
     # Generate a summary node for the images
-    tf.summary.image('images', features, max_outputs=6)
+    #tf.summary.image('images', features, max_outputs=6)
 
     features = tf.cast(features, dtype)
 
