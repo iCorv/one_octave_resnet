@@ -62,7 +62,7 @@ def main(_):
             input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
-            steps=hparams['eval_steps'], throttle_secs=200)
+            steps=hparams['eval_steps'], throttle_secs=600)
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
     # Train the Model.
