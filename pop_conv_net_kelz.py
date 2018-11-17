@@ -9,7 +9,11 @@ from math import sqrt
 
 
 def conv_net_model_fn(features, labels, mode, params):
-    features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
+    if params['data_format'] == 'NCHW':
+        features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
+    else:
+        features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
+
     print(features.shape)
     print(labels.shape)
     learning_rate_fn = learning_rate_with_decay(
@@ -25,6 +29,7 @@ def conv_net_model_fn(features, labels, mode, params):
         learning_rate_fn=learning_rate_fn,
         momentum=params['momentum'],
         clip_norm=params['clip_norm'],
+        data_format=params['data_format'],
         dtype=params['dtype']
     )
 
@@ -68,7 +73,7 @@ def weights_from_labels(labels):
     return np.where(weights == 0.0, 0.25, weights)
 
 
-def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm, dtype=tf.float32):
+def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm, data_format, dtype=tf.float32):
     """Shared functionality for different model_fns.
 
     Initializes the ConvNet representing the model layers
@@ -102,7 +107,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN)
+    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format)
 
     # Visualize conv1 kernels
     with tf.variable_scope('conv1'):
@@ -127,7 +132,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
             mode=mode,
             predictions=predictions)
 
-    individual_loss = log_loss(labels, predictions['probabilities'])
+    individual_loss = log_loss(labels, predictions['probabilities'], epsilon=clip_norm)
     loss = tf.reduce_mean(individual_loss)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
@@ -184,50 +189,54 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
         eval_metric_ops=metrics)
 
 
-def conv_net_kelz(inputs, is_training):
+def conv_net_kelz(inputs, is_training, data_format='NHWC'):
     """Builds the ConvNet from Kelz 2016."""
+    if data_format == 'NCHW':
+        transpose_shape = [2, 1, 0]
+    else:
+        transpose_shape = [1, 0, 2]
     with slim.arg_scope(
           [slim.conv2d, slim.fully_connected],
           activation_fn=tf.nn.relu,
           weights_initializer=tf.contrib.layers.variance_scaling_initializer(
               factor=2.0, mode='FAN_AVG', uniform=True)):
-        with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=is_training):
+        with slim.arg_scope([slim.batch_norm], is_training=is_training, data_format=data_format):
             net = slim.conv2d(
-                inputs, 32, [3, 3], scope='conv1', normalizer_fn=slim.batch_norm, padding='SAME')
+                inputs, 32, [3, 3], scope='conv1', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
             conv1_output = tf.unstack(net, num=8, axis=0)
-            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv1_output[0], [1, 0, 2]), 2))
+            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv1_output[0], transpose_shape), 2))
             tf.summary.image('conv1/output', grid, max_outputs=1)
-            #print(net.shape)
+            print(net.shape)
 
             net = slim.conv2d(
-                net, 32, [3, 3], scope='conv2', normalizer_fn=slim.batch_norm, padding='VALID')
+                net, 32, [3, 3], scope='conv2', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
             conv2_output = tf.unstack(net, num=8, axis=0)
-            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], [1, 0, 2]), 2))
+            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], transpose_shape), 2))
             tf.summary.image('conv2/output', grid, max_outputs=1)
-            #print(net.shape)
-            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool2')
-            #print(net.shape)
-            net = slim.dropout(net, 0.25, scope='dropout2')
+            print(net.shape)
+            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool2', data_format=data_format)
+            print(net.shape)
+            net = slim.dropout(net, 0.25, scope='dropout2', is_training=is_training)
 
             net = slim.conv2d(
-                net, 64, [3, 3], scope='conv3', normalizer_fn=slim.batch_norm, padding='VALID')
+                net, 64, [3, 3], scope='conv3', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
             conv3_output = tf.unstack(net, num=8, axis=0)
-            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], [1, 0, 2]), 2))
+            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             tf.summary.image('conv3/output', grid, max_outputs=1)
-            #print(net.shape)
-            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool3')
+            print(net.shape)
+            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool3', data_format=data_format)
 
-            net = slim.dropout(net, 0.25, scope='dropout3')
+            net = slim.dropout(net, 0.25, scope='dropout3', is_training=is_training)
 
             # Flatten
-            #print(net.shape)
+            print(net.shape)
             net = tf.reshape(net, (-1, 64*1*55), 'flatten4')
-            #print(net.shape)
+            print(net.shape)
             net = slim.fully_connected(net, 512, scope='fc5')
-            #print(net.shape)
-            net = slim.dropout(net, 0.5, scope='dropout5')
+            print(net.shape)
+            net = slim.dropout(net, 0.5, scope='dropout5', is_training=is_training)
             net = slim.fully_connected(net, 88, activation_fn=None, scope='fc6')
-            #print(net.shape)
+            print(net.shape)
             return net
 
 

@@ -312,19 +312,15 @@ def tfrecord_train_parser(serialized_example):
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     with tf.device('/cpu:0'):
         dataset = tf.data.TFRecordDataset(filepath)
-        #print(dataset)
-        # Map the parser over dataset, and batch results by up to batch_size
 
+        # Map the parser over dataset, and batch results by up to batch_size
         dataset = dataset.shuffle(100000)
         dataset = dataset.repeat(num_epochs)
-        #print(dataset)
         dataset = dataset.map(tfrecord_train_parser)
         dataset = dataset.batch(batch_size)
         dataset = dataset.prefetch(10)
-        #print(dataset)
-        #iterator = dataset.make_one_shot_iterator()
-        #next_element = iterator.get_next()
-        return dataset #next_element
+
+        return dataset
 
 
 def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
