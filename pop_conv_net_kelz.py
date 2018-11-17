@@ -30,6 +30,7 @@ def conv_net_model_fn(features, labels, mode, params):
         momentum=params['momentum'],
         clip_norm=params['clip_norm'],
         data_format=params['data_format'],
+        batch_size=params['batch_size'],
         dtype=params['dtype']
     )
 
@@ -73,7 +74,7 @@ def weights_from_labels(labels):
     return np.where(weights == 0.0, 0.25, weights)
 
 
-def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm, data_format, dtype=tf.float32):
+def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm, data_format, batch_size, dtype=tf.float32):
     """Shared functionality for different model_fns.
 
     Initializes the ConvNet representing the model layers
@@ -107,7 +108,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format)
+    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size)
 
     # Visualize conv1 kernels
     with tf.variable_scope('conv1'):
@@ -189,7 +190,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
         eval_metric_ops=metrics)
 
 
-def conv_net_kelz(inputs, is_training, data_format='NHWC'):
+def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8):
     """Builds the ConvNet from Kelz 2016."""
     if data_format == 'NCHW':
         transpose_shape = [2, 1, 0]
@@ -203,14 +204,14 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC'):
         with slim.arg_scope([slim.batch_norm], is_training=is_training, data_format=data_format):
             net = slim.conv2d(
                 inputs, 32, [3, 3], scope='conv1', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
-            conv1_output = tf.unstack(net, num=8, axis=0)
+            conv1_output = tf.unstack(net, num=batch_size, axis=0)
             grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv1_output[0], transpose_shape), 2))
             tf.summary.image('conv1/output', grid, max_outputs=1)
             print(net.shape)
 
             net = slim.conv2d(
                 net, 32, [3, 3], scope='conv2', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
-            conv2_output = tf.unstack(net, num=8, axis=0)
+            conv2_output = tf.unstack(net, num=batch_size, axis=0)
             grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], transpose_shape), 2))
             tf.summary.image('conv2/output', grid, max_outputs=1)
             print(net.shape)
@@ -220,7 +221,7 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC'):
 
             net = slim.conv2d(
                 net, 64, [3, 3], scope='conv3', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
-            conv3_output = tf.unstack(net, num=8, axis=0)
+            conv3_output = tf.unstack(net, num=batch_size, axis=0)
             grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             tf.summary.image('conv3/output', grid, max_outputs=1)
             print(net.shape)
