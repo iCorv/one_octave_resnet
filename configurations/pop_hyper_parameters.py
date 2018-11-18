@@ -34,6 +34,7 @@ def get_hyper_parameters(net):
                   'batches_per_epoch': batches_per_epoch,
                   'train_steps': total_train_steps,
                   'eval_steps': int(round(num_val_examples/batch_size)),
+                  'test_steps': int(round(num_test_examples/batch_size)),
                   'data_format': 'NCHW', # NHWC (channels last, faster on CPU) or NCHW (channels first, faster on GPU)
                   'train_epochs': train_epochs}
     elif net == 'ResNet':
