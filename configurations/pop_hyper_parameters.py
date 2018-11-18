@@ -5,6 +5,7 @@ DEFAULT_DTYPE = tf.float32
 
 num_examples = 4197453  # 4197453  # 482952
 num_val_examples = 749017  # 749017  # 87628
+num_test_examples = 1570005
 batch_size = 16
 batches_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 25
@@ -29,6 +30,7 @@ def get_hyper_parameters(net):
                   'num_classes': 88,
                   'num_examples': num_examples,
                   'num_val_examples': num_val_examples,
+                  'num_test_examples': num_test_examples,
                   'batches_per_epoch': batches_per_epoch,
                   'train_steps': total_train_steps,
                   'eval_steps': int(round(num_val_examples/batch_size)),
