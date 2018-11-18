@@ -80,9 +80,9 @@ def main(_):
             input_fn=lambda: dataset.tfrecord_val_input_fn(test_dataset_tfrecord,
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
-            steps=hparams['eval_steps'])
+            steps=hparams['test_steps'])
         benchmark_logger.log_evaluation_result(eval_result)
-        print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+
 
     # Predict
     if predict_flag:
