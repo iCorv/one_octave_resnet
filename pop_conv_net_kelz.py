@@ -14,8 +14,6 @@ def conv_net_model_fn(features, labels, mode, params):
     else:
         features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
 
-    print(features.shape)
-    print(labels.shape)
     learning_rate_fn = learning_rate_with_decay(
         initial_learning_rate=params['learning_rate'],
         batches_per_epoch=params['batches_per_epoch'],
