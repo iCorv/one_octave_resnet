@@ -30,7 +30,7 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-hparams = php.get_hyper_parameters('ConvNet')
+hparams = php.get_hyper_parameters('ResNet')
 
 
 def main(argv):
