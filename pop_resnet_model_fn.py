@@ -109,7 +109,7 @@ def resnet_model_fn(features, labels, mode, model_class,
     """
 
     # Generate a summary node for the images
-    tf.summary.image('images', features, max_outputs=6)
+    #tf.summary.image('images', features, max_outputs=6)
 
     features = tf.cast(features, dtype)
     #if mode != tf.estimator.ModeKeys.PREDICT:
