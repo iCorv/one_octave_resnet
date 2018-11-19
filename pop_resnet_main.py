@@ -9,7 +9,7 @@ import pop_input_data as dataset
 import os
 from official.utils.logs import logger
 import numpy as np
-import pop_conv_net_kelz
+import configurations.pop_hyper_parameters as php
 import glob
 
 
@@ -30,27 +30,7 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-num_examples = 4197453 #1042876 #4163882
-num_val_examples = 749017 #792567
-batch_size = 128
-steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 40
-total_train_steps = train_epochs * steps_per_epoch
-
-run_params = {
-    'batch_size': batch_size,
-    'dtype': DEFAULT_DTYPE,
-    'resnet_size': 18,
-    'resnet_version': 2,
-    'num_classes': 88,
-    'weight_decay': 2e-4,
-    'train_steps': total_train_steps, # 1000
-    'eval_steps': int(round(num_val_examples/batch_size)), # 1305, #25050, # 2000
-    'data_format': 'channels_first',
-    'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
-    'train_epochs': train_epochs
-}
-
+hparams = php.get_hyper_parameters('ConvNet')
 
 
 def main(argv):
@@ -65,53 +45,41 @@ def main(argv):
     classifier = tf.estimator.Estimator(
         model_fn=pop_resnet.resnet_model_fn,
         #model_dir="/home/ubuntu/one_octave_resnet/model",
-        #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
-        #model_dir="/Users/Jaedicke/tensorflow/model/model",
-        model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
+        model_dir="./model",
         config=estimator_config,
-        params={'weight_decay': run_params['weight_decay'],
-                'resnet_size': run_params['resnet_size'],
-                'data_format': run_params['data_format'],
-                'batch_size': run_params['batch_size'],
-                'resnet_version': run_params['resnet_version'],
-                'loss_scale': run_params['loss_scale'],
-                'dtype': run_params['dtype'],
-                'num_classes': run_params['num_classes']
-                })
+        params=hparams)
 
     benchmark_logger = logger.get_benchmark_logger()
-    benchmark_logger.log_run_info('resnet', 'MAPS', run_params,
+    benchmark_logger.log_run_info('resnet', 'MAPS', hparams,
                                   test_id=TEST_ID)
 
     # Train and validate in turns
     if train_and_val:
         train_spec = tf.estimator.TrainSpec(input_fn=lambda: dataset.tfrecord_train_input_fn(train_dataset_tfrecord,
-                                                                                             batch_size=run_params['batch_size'],
-                                            num_epochs=run_params['train_epochs']), max_steps=total_train_steps)#, hooks=[train_hooks])
+                                                                                             batch_size=hparams['batch_size'],
+                                            num_epochs=hparams['train_epochs']), max_steps=hparams['train_steps'])#, hooks=[train_hooks])
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
-                                                                                         batch_size=run_params['batch_size'],
+                                                                                         batch_size=hparams['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'], throttle_secs=600)
+                                          steps=hparams['eval_steps'], throttle_secs=600)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
     # Train the Model.
     if train_flag:
         classifier.train(input_fn=lambda: dataset.tfrecord_train_input_fn(train_dataset_tfrecord,
-                                                                          batch_size=run_params['batch_size'],
-                                                                          num_epochs=run_params['train_epochs']),
-                         steps=run_params['train_steps'])
+                                                                          batch_size=hparams['batch_size'],
+                                                                          num_epochs=hparams['train_epochs']),
+                         steps=hparams['train_steps'])
 
     # Evaluate the model.
     if eval_flag:
         eval_result = classifier.evaluate(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
-                                                                                         batch_size=run_params['batch_size'],
+                                                                                         batch_size=hparams['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'])
+                                          steps=hparams['test_steps'])
 
         benchmark_logger.log_evaluation_result(eval_result)
-
-        print('\nEval set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
     # Predict
     if predict_flag:
@@ -123,11 +91,11 @@ def main(argv):
         # pythonic way to count elements in generator object
         #num_test_frames = len(list(predictions)) #sum(1 for i in predictions)
         print(num_test_frames)
-        props = np.zeros((run_params['num_classes'], num_test_frames))
-        notes = np.zeros((run_params['num_classes'], num_test_frames))
+        props = np.zeros((hparams['num_classes'], num_test_frames))
+        notes = np.zeros((hparams['num_classes'], num_test_frames))
         index = 0
         for p in predictions:
-            if index < num_val_examples:
+            if index < hparams['num_test_examples']:
             #print(np.shape(p['probabilities'][:]))
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]

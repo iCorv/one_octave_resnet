@@ -6,25 +6,15 @@ import pop_resnet_model_fn
 import tensorflow as tf
 
 
-_HEIGHT = 229
-_WIDTH = 5
-_NUM_CHANNELS = 1
-_NUM_CLASSES = 88
-_NUM_IMAGES = {
-    'train': 4197453,
-    'validation': 749017,
-}
-
-
 class ResNet(resnet_model.Model):
     """Model class
 
     resnet_size should be either 18, 34, 50, 101, 152, 200
     """
 
-    def __init__(self, resnet_size, data_format=None, num_classes=_NUM_CLASSES,
+    def __init__(self, resnet_size, num_classes,
                  resnet_version=resnet_model.DEFAULT_VERSION,
-                 dtype=resnet_model.DEFAULT_DTYPE):
+                 dtype=resnet_model.DEFAULT_DTYPE, data_format=None):
         """
 
         Args:
@@ -92,18 +82,14 @@ def _get_block_sizes(resnet_size):
 
 def resnet_model_fn(features, labels, mode, params):
     if params['data_format'] == 'channels_first':
-        features = tf.reshape(features, [-1, _NUM_CHANNELS, _WIDTH, _HEIGHT])
+        features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
     else:
-        features = tf.reshape(features, [-1, _WIDTH, _HEIGHT, _NUM_CHANNELS])
+        features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
 
     learning_rate_fn = pop_resnet_model_fn.learning_rate_with_decay(
         batch_size=params['batch_size'], batch_denom=params['batch_size'],
-        num_images=_NUM_IMAGES['train'], boundary_epochs=[10, 20, 30],  # boundary_epochs=[100, 150, 200],
-        decay_rates=[1, 0.5, 0.5*0.5, 0.5*0.5*0.5])
-
-    # We use a weight decay of 0.0002, which performs better
-    # than the 0.0001 that was originally suggested.
-    weight_decay = 2e-4
+        num_examples=params['num_examples'], boundary_epochs=params['boundary_epochs'],
+        decay_rates=['decay_rates'])
 
     # Empirical testing showed that including batch_normalization variables
     # in the calculation of regularized loss helped validation accuracy
@@ -119,9 +105,9 @@ def resnet_model_fn(features, labels, mode, params):
         mode=mode,
         model_class=ResNet,
         resnet_size=params['resnet_size'],
-        weight_decay=weight_decay,
+        weight_decay=params['weight_decay'],
         learning_rate_fn=learning_rate_fn,
-        momentum=0.9,
+        momentum=params['momentum'],
         data_format=params['data_format'],
         resnet_version=params['resnet_version'],
         loss_scale=params['loss_scale'],
