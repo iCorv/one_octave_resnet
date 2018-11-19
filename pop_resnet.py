@@ -87,9 +87,10 @@ def resnet_model_fn(features, labels, mode, params):
         features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
 
     learning_rate_fn = pop_resnet_model_fn.learning_rate_with_decay(
-        batch_size=params['batch_size'], batch_denom=params['batch_size'],
-        num_examples=params['num_examples'], boundary_epochs=params['boundary_epochs'],
-        decay_rates=['decay_rates'])
+        initial_learning_rate=params['learning_rate'],
+        batches_per_epoch=params['batches_per_epoch'],
+        boundary_epochs=params['boundary_epochs'],
+        decay_rates=params['decay_rates'])
 
     # Empirical testing showed that including batch_normalization variables
     # in the calculation of regularized loss helped validation accuracy
