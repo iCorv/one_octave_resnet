@@ -8,7 +8,7 @@ num_val_examples = 749017  # 749017  # 87628
 num_test_examples = 1570005
 batch_size = 128
 batches_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 40
+train_epochs = 50
 total_train_steps = train_epochs * batches_per_epoch
 
 
