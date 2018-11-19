@@ -33,7 +33,7 @@ eval_flag = False
 hparams = php.get_hyper_parameters('ResNet')
 
 
-def main(argv):
+def main(_):
 
     # Using the Winograd non-fused algorithms provides a small performance boost.
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'

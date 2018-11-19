@@ -178,11 +178,11 @@ def resnet_model_fn(features, labels, mode, model_class,
         tf.identity(learning_rate, name='learning_rate')
         tf.summary.scalar('learning_rate', learning_rate)
 
-        #optimizer = tf.train.AdamOptimizer(learning_rate)
-        optimizer = tf.train.MomentumOptimizer(
-            learning_rate=learning_rate,
-            momentum=momentum
-        )
+        optimizer = tf.train.AdamOptimizer(0.001)
+        #optimizer = tf.train.MomentumOptimizer(
+        #    learning_rate=learning_rate,
+        #    momentum=momentum
+        #)
 
         if loss_scale != 1:
             # When computing fp16 gradients, often intermediate tensor values are
