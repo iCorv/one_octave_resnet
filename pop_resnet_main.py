@@ -59,8 +59,8 @@ def main(argv):
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
 
     estimator_config = tf.estimator.RunConfig(
-        save_checkpoints_steps=500,  # Save checkpoints every 50 steps.
-        keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
+        save_checkpoints_secs=600,  # Save checkpoints every 50 steps.
+        keep_checkpoint_max=50,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_resnet.resnet_model_fn,
@@ -71,7 +71,7 @@ def main(argv):
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],
-                'data_format': "channels_last",
+                'data_format': run_params['data_format'],
                 'batch_size': run_params['batch_size'],
                 'resnet_version': run_params['resnet_version'],
                 'loss_scale': run_params['loss_scale'],
@@ -91,7 +91,7 @@ def main(argv):
         eval_spec = tf.estimator.EvalSpec(input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                                                          batch_size=run_params['batch_size'],
                                                                                          num_epochs=1),
-                                          steps=run_params['eval_steps'], throttle_secs=300)
+                                          steps=run_params['eval_steps'], throttle_secs=600)
 
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
