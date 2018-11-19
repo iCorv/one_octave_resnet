@@ -36,7 +36,7 @@ def learning_rate_with_decay(
       trained so far (global_step)- and returns the learning rate to be used
       for training the next batch.
     """
-    initial_learning_rate = 0.01 * batch_size / batch_denom
+    initial_learning_rate = 0.1 * batch_size / batch_denom
     batches_per_epoch = num_images / batch_size
 
     # Reduce the learning rate at certain epochs, for Example:
@@ -120,8 +120,8 @@ def resnet_model_fn(features, labels, mode, model_class,
 
     if mode != tf.estimator.ModeKeys.PREDICT:
         # determine weights from labels encoding weights
-        weights = tf.py_func(weights_from_labels, [labels], [tf.float64])[0]
-        weights = tf.cast(weights, dtype=dtype)
+        #weights = tf.py_func(weights_from_labels, [labels], [tf.float64])[0]
+        #weights = tf.cast(weights, dtype=dtype)
         # since labels also encode the weights, we have to transform them to a binary format for evaluation
         #labels = tf.ceil(labels)
         labels = tf.cast(labels, dtype)
@@ -154,18 +154,8 @@ def resnet_model_fn(features, labels, mode, model_class,
     #cross_entropy = tf.losses.sparse_softmax_cross_entropy(
     #    logits=logits, labels=labels)
 
-    # without weights
-    #cross_entropy = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels)
-
-    # weights masking to emphasize positive examples
-    cross_entropy_per_class = tf.losses.sigmoid_cross_entropy(logits=logits, multi_class_labels=labels,
-                                                              reduction=tf.losses.Reduction.NONE)
-    #weights = tf.py_func(weights_from_labels, [labels], [tf.float32])[0]
-    cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class, weights=weights)
-
-    # weigting precision vs recall
-    #cross_entropy_per_class = tf.nn.weighted_cross_entropy_with_logits(targets=labels, logits=logits, pos_weight=1)
-    #cross_entropy = tf.losses.compute_weighted_loss(cross_entropy_per_class)
+    individual_loss = log_loss(labels, predictions['probabilities'])
+    cross_entropy = tf.reduce_mean(individual_loss)
 
 
     # Create a tensor named cross_entropy for logging purposes.
@@ -221,32 +211,27 @@ def resnet_model_fn(features, labels, mode, model_class,
     else:
         train_op = None
 
-    # metrics for evaluation
-    correct_prediction = tf.equal(predictions['classes'], labels)
-    accuracy2 = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    accuracy = tf.metrics.accuracy(labels, predictions['classes'])
-    tf.summary.scalar('accuracy2', accuracy2)
-    mean_iou = tf.metrics.mean_iou(labels, predictions['classes'], num_classes)
-    false_negatives = tf.metrics.false_negatives(labels, predictions['classes'])
-    false_positives = tf.metrics.false_positives(labels, predictions['classes'])
-    true_negatives = tf.metrics.true_negatives(labels, predictions['classes'])
-    true_positives = tf.metrics.true_positives(labels, predictions['classes'])
+    fn = tf.metrics.false_negatives(labels, predictions['classes'])
+    fp = tf.metrics.false_positives(labels, predictions['classes'])
+    tp = tf.metrics.true_positives(labels, predictions['classes'])
     precision = tf.metrics.precision(labels, predictions['classes'])
     recall = tf.metrics.recall(labels, predictions['classes'])
+    # this is the Kelz et. al. def of frame wise metric F1
+    f = tf.multiply(tf.constant(2.0), tf.multiply(precision[0], recall[0]))
+    f = tf.divide(f, tf.add(precision[0], recall[0]))
+
+    tf.identity(fn[0], name="fn")
+    tf.identity(fp[0], name="fp")
+    tf.identity(tp[0], name="tp")
+    tf.identity(f, name="f1_score")
 
     # collect metrics
-    metrics = {'accuracy': accuracy,
-               'mean_iou': mean_iou,
-               'false_negatives': false_negatives,
-               'false_positives': false_positives,
-               'true_negatives': true_negatives,
-               'true_positives': true_positives,
+    metrics = {'false_negatives': fn,
+               'false_positives': fp,
+               'true_positives': tp,
                'precision': precision,
-               'recall': recall}
-
-    # Create a tensor named train_accuracy for logging purposes
-    tf.identity(accuracy[0], name='train_accuracy')
-    tf.summary.scalar('train_accuracy', accuracy[0])
+               'recall': recall,
+               'f1_score': (f, tf.group(precision[1], recall[1]))}
 
     return tf.estimator.EstimatorSpec(
         mode=mode,
@@ -254,3 +239,34 @@ def resnet_model_fn(features, labels, mode, model_class,
         loss=loss,
         train_op=train_op,
         eval_metric_ops=metrics)
+
+
+
+def log_loss(labels, predictions, epsilon=1e-7, scope=None, weights=None):
+    """Calculate log losses.
+        Same as tf.losses.log_loss except that this returns the individual losses
+        instead of passing them into compute_weighted_loss and returning their
+        weighted mean. This is useful for eval jobs that report the mean loss. By
+        returning individual losses, that mean loss can be the same regardless of
+        batch size.
+        Args:
+            labels: The ground truth output tensor, same dimensions as 'predictions'.
+            predictions: The predicted outputs.
+            epsilon: A small increment to add to avoid taking a log of zero.
+            scope: The scope for the operations performed in computing the loss.
+            weights: Weights to apply to labels.
+        Returns:
+            A `Tensor` representing the loss values.
+        Raises:
+            ValueError: If the shape of `predictions` doesn't match that of `labels`.
+    """
+    with tf.name_scope(scope, "log_loss", (predictions, labels)) as scope:
+        predictions = tf.to_float(predictions)
+        labels = tf.to_float(labels)
+        predictions.get_shape().assert_is_compatible_with(labels.get_shape())
+        losses = -tf.multiply(labels, tf.log(predictions + epsilon)) - tf.multiply(
+            (1 - labels), tf.log(1 - predictions + epsilon))
+        if weights is not None:
+            losses = tf.multiply(losses, weights)
+
+        return losses

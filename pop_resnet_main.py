@@ -13,11 +13,13 @@ import pop_conv_net_kelz
 import glob
 
 
-#train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/train/*.tfrecords")
-#val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/*.tfrecords")
-train_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/train/*.tfrecords")
-val_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/valid/*.tfrecords")
-test_dataset_tfrecord = "./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/MAPS_MUS-bor_ps6_ENSTDkCl.tfrecords"
+train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
+val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
+test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
+#train_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/train/*.tfrecords")
+#val_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/valid/*.tfrecords")
+#test_dataset_tfrecord = "./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/" \
+#                        "MAPS_MUS-bor_ps6_ENSTDkCl.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
 
@@ -28,11 +30,11 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-num_examples = 482952 #1042876 #4163882
-num_val_examples = 87628 #792567
-batch_size = 8
+num_examples = 4197453 #1042876 #4163882
+num_val_examples = 749017 #792567
+batch_size = 128
 steps_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 5
+train_epochs = 40
 total_train_steps = train_epochs * steps_per_epoch
 
 run_params = {
@@ -44,7 +46,7 @@ run_params = {
     'weight_decay': 2e-4,
     'train_steps': total_train_steps, # 1000
     'eval_steps': int(round(num_val_examples/batch_size)), # 1305, #25050, # 2000
-    'data_format': 'channels_last',
+    'data_format': 'channels_first',
     'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
     'train_epochs': train_epochs
 }
@@ -61,12 +63,11 @@ def main(argv):
         keep_checkpoint_max=2,  # Retain the 10 most recent checkpoints.
     )
     classifier = tf.estimator.Estimator(
-        model_fn=pop_conv_net_kelz.conv_net_model_fn,
-        #model_fn=pop_resnet.resnet_model_fn,
+        model_fn=pop_resnet.resnet_model_fn,
         #model_dir="/home/ubuntu/one_octave_resnet/model",
-        model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
+        #model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
         #model_dir="/Users/Jaedicke/tensorflow/model/model",
-        #model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
+        model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params={'weight_decay': run_params['weight_decay'],
                 'resnet_size': run_params['resnet_size'],

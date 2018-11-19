@@ -6,13 +6,13 @@ import pop_resnet_model_fn
 import tensorflow as tf
 
 
-_HEIGHT = 231
+_HEIGHT = 229
 _WIDTH = 5
-_NUM_CHANNELS = 3
+_NUM_CHANNELS = 1
 _NUM_CLASSES = 88
 _NUM_IMAGES = {
-    'train': 212546,
-    'validation': 34506,
+    'train': 4197453,
+    'validation': 749017,
 }
 
 
@@ -91,12 +91,15 @@ def _get_block_sizes(resnet_size):
 
 
 def resnet_model_fn(features, labels, mode, params):
-    features = tf.reshape(features, [-1, _HEIGHT, _WIDTH, _NUM_CHANNELS])
+    if params['data_format'] == 'channels_first':
+        features = tf.reshape(features, [-1, _NUM_CHANNELS, _WIDTH, _HEIGHT])
+    else:
+        features = tf.reshape(features, [-1, _WIDTH, _HEIGHT, _NUM_CHANNELS])
 
     learning_rate_fn = pop_resnet_model_fn.learning_rate_with_decay(
         batch_size=params['batch_size'], batch_denom=params['batch_size'],
-        num_images=_NUM_IMAGES['train'], boundary_epochs=[1, 2, 3],  # boundary_epochs=[100, 150, 200],
-        decay_rates=[1, 0.1, 0.01, 0.001])
+        num_images=_NUM_IMAGES['train'], boundary_epochs=[10, 20, 30],  # boundary_epochs=[100, 150, 200],
+        decay_rates=[1, 0.5, 0.5*0.5, 0.5*0.5*0.5])
 
     # We use a weight decay of 0.0002, which performs better
     # than the 0.0001 that was originally suggested.
