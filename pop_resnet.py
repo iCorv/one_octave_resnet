@@ -81,10 +81,13 @@ def _get_block_sizes(resnet_size):
 
 
 def resnet_model_fn(features, labels, mode, params):
-    if params['data_format'] == 'channels_first':
-        features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
-    else:
-        features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
+    # if params['data_format'] == 'channels_first':
+    #     # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
+    #     # This provides a large performance boost on GPU. See
+    #     # https://www.tensorflow.org/performance/performance_guide#data_formats
+    #     features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
+    # else:
+    features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
 
     learning_rate_fn = pop_resnet_model_fn.learning_rate_with_decay(
         initial_learning_rate=params['learning_rate'],

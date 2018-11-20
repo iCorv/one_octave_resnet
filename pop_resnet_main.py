@@ -30,7 +30,7 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-hparams = php.get_hyper_parameters('ResNet')
+hparams = php.get_hyper_parameters('ResNet_range_test')
 
 
 def main(_):
