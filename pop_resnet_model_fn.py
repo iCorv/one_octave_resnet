@@ -43,6 +43,37 @@ def learning_rate_with_decay(
 
     return learning_rate_fn
 
+
+def momentum_with_decay(
+        initial_momentum, batches_per_epoch, boundary_epochs, decay_rates):
+    """Get a learning rate that decays step-wise as training progresses.
+
+    Args:
+      initial_momentum: The start momentum.
+      batches_per_epoch: number of batches per epoch, sometimes called steps
+      per epoch.
+      boundary_epochs: list of ints representing the epochs at which we
+        decay the learning rate.
+      decay_rates: list of floats representing the decay rates to be used
+        for scaling the learning rate. It should have one more element
+        than `boundary_epochs`, and all elements should have the same type.
+
+    Returns:
+      Returns a function that takes a single argument - the number of batches
+      trained so far (global_step)- and returns the learning rate to be used
+      for training the next batch.
+    """
+
+    # Reduce the learning rate at certain epochs, for Example:
+    boundaries = [int(batches_per_epoch * epoch) for epoch in boundary_epochs]
+    vals = [initial_momentum * decay for decay in decay_rates]
+
+    def momentum_fn(global_step):
+        global_step = tf.cast(global_step, tf.int32)
+        return tf.train.piecewise_constant(global_step, boundaries, vals)
+
+    return momentum_fn
+
 # def weights_from_labels(labels):
 #     dist = np.array([0.4868, 0.6065, 0.7261, 0.8353, 0.9231, 0.9802, 1.0000,
 #                      0.9802, 0.9231, 0.8353, 0.7261, 0.6065, 0.4868])
@@ -60,7 +91,7 @@ def weights_from_labels(labels):
 
 
 def resnet_model_fn(features, labels, mode, model_class,
-                    resnet_size, weight_decay, learning_rate_fn, momentum,
+                    resnet_size, weight_decay, learning_rate_fn, momentum_fn,
                     data_format, resnet_version, loss_scale, num_classes,
                     loss_filter_fn=None, dtype=resnet_model.DEFAULT_DTYPE):
     """Shared functionality for different resnet model_fns.
@@ -173,10 +204,14 @@ def resnet_model_fn(features, labels, mode, model_class,
         global_step = tf.train.get_or_create_global_step()
 
         learning_rate = learning_rate_fn(global_step)
+        momentum = momentum_fn(global_step)
 
         # Create a tensor named learning_rate for logging purposes
         tf.identity(learning_rate, name='learning_rate')
         tf.summary.scalar('learning_rate', learning_rate)
+        # Create a tensor named momentum for logging purposes
+        tf.identity(momentum, name='momentum')
+        tf.summary.scalar('momentum', momentum)
 
         #optimizer = tf.train.AdamOptimizer(0.001)
         optimizer = tf.train.MomentumOptimizer(

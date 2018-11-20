@@ -23,12 +23,18 @@ def conv_net_model_fn(features, labels, mode, params):
         boundary_epochs=params['boundary_epochs'],
         decay_rates=params['decay_rates'])
 
+    momentum_fn = momentum_with_decay(
+        initial_momentum=params['momentum'],
+        batches_per_epoch=params['batches_per_epoch'],
+        boundary_epochs=params['boundary_epochs'],
+        decay_rates=params['decay_rates_momentum'])
+
     return conv_net_init(
         features=features,
         labels=labels,
         mode=mode,
         learning_rate_fn=learning_rate_fn,
-        momentum=params['momentum'],
+        momentum_fn=momentum_fn,
         clip_norm=params['clip_norm'],
         data_format=params['data_format'],
         batch_size=params['batch_size'],
@@ -67,6 +73,37 @@ def learning_rate_with_decay(
     return learning_rate_fn
 
 
+def momentum_with_decay(
+        initial_momentum, batches_per_epoch, boundary_epochs, decay_rates):
+    """Get a learning rate that decays step-wise as training progresses.
+
+    Args:
+      initial_momentum: The start momentum.
+      batches_per_epoch: number of batches per epoch, sometimes called steps
+      per epoch.
+      boundary_epochs: list of ints representing the epochs at which we
+        decay the learning rate.
+      decay_rates: list of floats representing the decay rates to be used
+        for scaling the learning rate. It should have one more element
+        than `boundary_epochs`, and all elements should have the same type.
+
+    Returns:
+      Returns a function that takes a single argument - the number of batches
+      trained so far (global_step)- and returns the learning rate to be used
+      for training the next batch.
+    """
+
+    # Reduce the learning rate at certain epochs, for Example:
+    boundaries = [int(batches_per_epoch * epoch) for epoch in boundary_epochs]
+    vals = [initial_momentum * decay for decay in decay_rates]
+
+    def momentum_fn(global_step):
+        global_step = tf.cast(global_step, tf.int32)
+        return tf.train.piecewise_constant(global_step, boundaries, vals)
+
+    return momentum_fn
+
+
 def weights_from_labels(labels):
     labeled_examples = np.where(labels == 1.0)
     weights = np.zeros(np.shape(labels))
@@ -75,7 +112,7 @@ def weights_from_labels(labels):
     return np.where(weights == 0.0, 0.25, weights)
 
 
-def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm, data_format, batch_size, dtype=tf.float32):
+def conv_net_init(features, labels, mode, learning_rate_fn, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32):
     """Shared functionality for different model_fns.
 
     Initializes the ConvNet representing the model layers
@@ -141,10 +178,14 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum, clip_norm,
         global_step = tf.train.get_or_create_global_step()
 
         learning_rate = learning_rate_fn(global_step)
+        momentum = momentum_fn(global_step)
 
         # Create a tensor named learning_rate for logging purposes
         tf.identity(learning_rate, name='learning_rate')
         tf.summary.scalar('learning_rate', learning_rate)
+        # Create a tensor named momentum for logging purposes
+        tf.identity(momentum, name='momentum')
+        tf.summary.scalar('momentum', momentum)
 
         #optimizer = tf.train.AdamOptimizer(learning_rate)
         optimizer = tf.train.MomentumOptimizer(

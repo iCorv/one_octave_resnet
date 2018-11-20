@@ -95,6 +95,12 @@ def resnet_model_fn(features, labels, mode, params):
         boundary_epochs=params['boundary_epochs'],
         decay_rates=params['decay_rates'])
 
+    momentum_fn = pop_resnet_model_fn.momentum_with_decay(
+        initial_momentum=params['momentum'],
+        batches_per_epoch=params['batches_per_epoch'],
+        boundary_epochs=params['boundary_epochs'],
+        decay_rates=params['decay_rates_momentum'])
+
     # Empirical testing showed that including batch_normalization variables
     # in the calculation of regularized loss helped validation accuracy
     # for the CIFAR-10 dataset, perhaps because the regularization prevents
@@ -111,7 +117,7 @@ def resnet_model_fn(features, labels, mode, params):
         resnet_size=params['resnet_size'],
         weight_decay=params['weight_decay'],
         learning_rate_fn=learning_rate_fn,
-        momentum=params['momentum'],
+        momentum_fn=momentum_fn,
         data_format=params['data_format'],
         resnet_version=params['resnet_version'],
         loss_scale=params['loss_scale'],
