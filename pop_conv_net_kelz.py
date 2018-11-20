@@ -17,17 +17,21 @@ def conv_net_model_fn(features, labels, mode, params):
     else:
         features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
 
-    learning_rate_fn = learning_rate_with_decay(
-        initial_learning_rate=params['learning_rate'],
-        batches_per_epoch=params['batches_per_epoch'],
-        boundary_epochs=params['boundary_epochs'],
-        decay_rates=params['decay_rates'])
+    # learning_rate_fn = learning_rate_with_decay(
+    #     initial_learning_rate=params['learning_rate'],
+    #     batches_per_epoch=params['batches_per_epoch'],
+    #     boundary_epochs=params['boundary_epochs'],
+    #     decay_rates=params['decay_rates'])
+    #
+    # momentum_fn = momentum_with_decay(
+    #     initial_momentum=params['momentum'],
+    #     batches_per_epoch=params['batches_per_epoch'],
+    #     boundary_epochs=params['boundary_epochs'],
+    #     decay_rates=params['decay_rates_momentum'])
 
-    momentum_fn = momentum_with_decay(
-        initial_momentum=params['momentum'],
-        batches_per_epoch=params['batches_per_epoch'],
-        boundary_epochs=params['boundary_epochs'],
-        decay_rates=params['decay_rates_momentum'])
+    learning_rate_fn = cycle_fn(params['learning_rate_cycle'], params['batches_per_epoch'], params['boundary_epochs'])
+
+    momentum_fn = cycle_fn(params['momentum_cycle'], params['batches_per_epoch'], params['boundary_epochs'])
 
     # Empirical testing showed that including batch_normalization variables
     # in the calculation of regularized loss helped validation accuracy
@@ -50,6 +54,37 @@ def conv_net_model_fn(features, labels, mode, params):
         batch_size=params['batch_size'],
         dtype=params['dtype']
     )
+
+
+def cycle_fn(
+        cycle_factor, batches_per_epoch, boundary_epochs):
+    """Get a learning rate that decays step-wise as training progresses.
+
+    Args:
+      initial_learning_rate: The start learning rate.
+      batches_per_epoch: number of batches per epoch, sometimes called steps
+      per epoch.
+      boundary_epochs: list of ints representing the epochs at which we
+        decay the learning rate.
+      decay_rates: list of floats representing the decay rates to be used
+        for scaling the learning rate. It should have one more element
+        than `boundary_epochs`, and all elements should have the same type.
+
+    Returns:
+      Returns a function that takes a single argument - the number of batches
+      trained so far (global_step)- and returns the learning rate to be used
+      for training the next batch.
+    """
+
+    # Reduce the learning rate at certain epochs, for Example:
+    boundaries = [int(batches_per_epoch * epoch) for epoch in boundary_epochs]
+    vals = [learning_rate for learning_rate in cycle_factor]
+
+    def cycle_rate_fn(global_step):
+        global_step = tf.cast(global_step, tf.int32)
+        return tf.train.piecewise_constant(global_step, boundaries, vals)
+
+    return cycle_rate_fn
 
 
 def learning_rate_with_decay(
