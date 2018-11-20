@@ -43,7 +43,7 @@ def get_hyper_parameters(net):
                   'dtype': DEFAULT_DTYPE,
                   'clip_norm': 1e-7,
                   # initial learning rate
-                  'learning_rate': 1.0,
+                  'learning_rate': 3.0,
                   # when to change learning rate
                   'boundary_epochs': [3, 10, 20, 30],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)

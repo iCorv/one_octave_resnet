@@ -43,7 +43,7 @@ class ResNet(resnet_model.Model):
             first_pool_size=None,
             first_pool_stride=None,
             block_sizes=_get_block_sizes(resnet_size),
-            block_strides=[1, 1, 1, 1],
+            block_strides=[1, 1, 2, 2],
             resnet_version=resnet_version,
             data_format=data_format,
             dtype=dtype
