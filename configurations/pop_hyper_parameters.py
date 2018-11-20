@@ -9,7 +9,7 @@ num_val_examples = 749017  # 749017  # 87628
 num_test_examples = 1570005
 batch_size = 128
 batches_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 10
+train_epochs = 15
 total_train_steps = train_epochs * batches_per_epoch
 
 
@@ -23,7 +23,7 @@ def get_hyper_parameters(net):
                   # when to change learning rate
                   'boundary_epochs': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
-                  'decay_rates': [10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 1, 10e-1, 10e-2, 10e-3, 10e-4, 10e-5],
+                  'decay_rates': [10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 1, 10e-1, 10e-2, 10e-3, 10e-4, 10e-3],
                   'momentum': 1.0,
                   'decay_rates_momentum': [0.95, 0.93, 0.91, 0.89, 0.87, 0.85, 0.87, 0.89, 0.91, 0.93, 0.95],
                   'frames': 5,
