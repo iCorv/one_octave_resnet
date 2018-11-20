@@ -34,8 +34,8 @@ def get_hyper_parameters(net):
                   # when to change learning rate
                   'boundary_epochs': [epoch for epoch in frange(0, train_epochs, train_epochs/60)][0:60],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
-                  'learning_rate_cycle': [learning_rate for learning_rate in frange(10e-5, 1, (1 - 10e-5) / (30 + 2))][
-                                         0:30] + [learning_rate for learning_rate in frange(1, 10e-5, (1 - 10e-5) / (30 + 2))][
+                  'learning_rate_cycle': [learning_rate for learning_rate in frange(10e-5, 1., (1. - 10e-5) / (30. + 2.))][
+                                         0:30] + [learning_rate for learning_rate in frange(1., 10e-5, (1. - 10e-5) / (30. + 2.))][
                                          0:31],
                   'decay_rates': [10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 1, 10e-1, 10e-2, 10e-3, 10e-4, 10e-3],
                   'momentum': 1.0,
