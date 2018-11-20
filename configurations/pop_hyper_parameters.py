@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 
 
 DEFAULT_DTYPE = tf.float32
@@ -9,7 +8,7 @@ num_val_examples = 749017  # 749017  # 87628
 num_test_examples = 1570005
 batch_size = 128
 batches_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 1
+train_epochs = 20
 total_train_steps = train_epochs * batches_per_epoch
 
 
@@ -33,11 +32,14 @@ def get_hyper_parameters(net):
                   # initial learning rate
                   'learning_rate': 1.0,
                   # when to change learning rate
-                  'boundary_epochs': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                  'boundary_epochs': [epoch for epoch in frange(0, train_epochs, train_epochs/60)][0:60],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
+                  'learning_rate_cycle': [learning_rate for learning_rate in frange(10e-5, 1, (1 - 10e-5) / (30 + 2))][
+                                         0:30] + [learning_rate for learning_rate in frange(1, 10e-5, (1 - 10e-5) / (30 + 2))][
+                                         0:31],
                   'decay_rates': [10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 1, 10e-1, 10e-2, 10e-3, 10e-4, 10e-3],
                   'momentum': 1.0,
-                  'decay_rates_momentum': [0.95, 0.93, 0.91, 0.89, 0.87, 0.85, 0.87, 0.89, 0.91, 0.93, 0.95],
+                  'decay_rates_momentum': [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+2))][0:30] + [momentum for momentum in frange(0.85, 0.95, (0.95-0.85)/(30+2))][0:31],
                   'frames': 5,
                   'freq_bins': 229,
                   'num_channels': 1,
