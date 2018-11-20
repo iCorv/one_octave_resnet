@@ -45,9 +45,9 @@ def get_hyper_parameters(net):
                   # initial learning rate
                   'learning_rate': 1.0,
                   # when to change learning rate
-                  'boundary_epochs': np.arange(0, 1, 1/batches_per_epoch),
+                  'boundary_epochs': [3, 10, 20, 30],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
-                  'decay_rates':  np.arange(10e-5, 10, (10-10e-5)/(batches_per_epoch+1)),
+                  'decay_rates':  [1., 0.1, 0.1 * 0.5, 0.1 * 0.5 * 0.5, 0.1 * 0.5 * 0.5 * 0.5],
                   'momentum': 0.9,
                   'frames': 5,
                   'freq_bins': 229,
@@ -66,7 +66,8 @@ def get_hyper_parameters(net):
                   'resnet_size': 18,
                   'resnet_version': 2,
                   'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
-                  'data_format': 'channels_first',  # channels_last (channels last, faster on CPU) or channels_first (channels first, faster on GPU)
+                  # channels_last (channels last, faster on CPU) or channels_first (channels first, faster on GPU)
+                  'data_format': 'channels_first',
                   'train_epochs': train_epochs}
     elif net == 'ResNet_range_test':
         config = {'batch_size': batch_size,
@@ -75,9 +76,9 @@ def get_hyper_parameters(net):
                   # initial learning rate
                   'learning_rate': 1.0,
                   # when to change learning rate
-                  'boundary_epochs': [3, 10, 20, 30],
+                  'boundary_epochs': np.arange(0, 1, 1/batches_per_epoch),
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
-                  'decay_rates': [1., 0.1, 0.1 * 0.5, 0.1 * 0.5 * 0.5, 0.1 * 0.5 * 0.5 * 0.5],
+                  'decay_rates': np.arange(10e-5, 10, (10-10e-5)/(batches_per_epoch+1)),
                   'momentum': 0.9,
                   'frames': 5,
                   'freq_bins': 229,
@@ -96,8 +97,8 @@ def get_hyper_parameters(net):
                   'resnet_size': 18,
                   'resnet_version': 2,
                   'loss_scale': 128 if DEFAULT_DTYPE == tf.float16 else 1,
-                  'data_format': 'channels_first',
                   # channels_last (channels last, faster on CPU) or channels_first (channels first, faster on GPU)
+                  'data_format': 'channels_first',
                   'train_epochs': train_epochs}
     else:
         config = {}
