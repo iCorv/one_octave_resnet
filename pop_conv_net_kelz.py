@@ -29,11 +29,21 @@ def conv_net_model_fn(features, labels, mode, params):
         boundary_epochs=params['boundary_epochs'],
         decay_rates=params['decay_rates_momentum'])
 
+    # Empirical testing showed that including batch_normalization variables
+    # in the calculation of regularized loss helped validation accuracy
+    # for the CIFAR-10 dataset, perhaps because the regularization prevents
+    # overfitting on the small data set. We therefore include all vars when
+    # regularizing and computing loss during training.
+    def loss_filter_fn(_):
+        return True
+
     return conv_net_init(
         features=features,
         labels=labels,
         mode=mode,
         learning_rate_fn=learning_rate_fn,
+        loss_filter_fn=loss_filter_fn,
+        weight_decay=params['weight_decay'],
         momentum_fn=momentum_fn,
         clip_norm=params['clip_norm'],
         data_format=params['data_format'],
@@ -112,7 +122,7 @@ def weights_from_labels(labels):
     return np.where(weights == 0.0, 0.25, weights)
 
 
-def conv_net_init(features, labels, mode, learning_rate_fn, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32):
+def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weight_decay, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32):
     """Shared functionality for different model_fns.
 
     Initializes the ConvNet representing the model layers
@@ -172,7 +182,22 @@ def conv_net_init(features, labels, mode, learning_rate_fn, momentum_fn, clip_no
             predictions=predictions)
 
     individual_loss = log_loss(labels, predictions['probabilities'], epsilon=clip_norm)
-    loss = tf.reduce_mean(individual_loss)
+    cross_entropy = tf.reduce_mean(individual_loss)
+
+    # If no loss_filter_fn is passed, assume we want the default behavior,
+    # which is that batch_normalization variables are excluded from loss.
+    def exclude_batch_norm(name):
+        return 'batch_normalization' not in name
+
+    loss_filter_fn = loss_filter_fn or exclude_batch_norm
+
+    # Add weight decay to the loss.
+    l2_loss = weight_decay * tf.add_n(
+        # loss is computed using fp32 for numerical stability.
+        [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
+         if loss_filter_fn(v.name)])
+    tf.summary.scalar('l2_loss', l2_loss)
+    loss = cross_entropy + l2_loss
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
