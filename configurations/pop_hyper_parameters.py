@@ -91,11 +91,11 @@ def get_hyper_parameters(net):
                   # initial learning rate
                   'learning_rate': 1.0,
                   # when to change learning rate
-                  'boundary_epochs': [epoch for epoch in frange(0, 1, 1/(0.5*30))],
+                  'boundary_epochs': [epoch for epoch in frange(0, 1, 1/30)],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
-                  'learning_rate_cycle': [learning_rate for learning_rate in frange(10e-5, 10, (10-10e-5)/(0.5*30+1))],
+                  'learning_rate_cycle': [learning_rate for learning_rate in frange(10e-5, 2, (10-10e-5)/(30+1))],
                   'momentum': 1.0,
-                  'momentum_cycle': [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(0.5*30+1))],
+                  'momentum_cycle': [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+1))],
                   'frames': 5,
                   'freq_bins': 229,
                   'num_channels': 1,
