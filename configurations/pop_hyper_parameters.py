@@ -91,7 +91,7 @@ def get_hyper_parameters(net):
                   # initial learning rate
                   'learning_rate': 1.0,
                   # when to change learning rate
-                  'boundary_epochs': [epoch for epoch in frange(0, 1, 1/30)],
+                  'boundary_epochs': [epoch for epoch in frange(0, 1, 1/29)],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
                   'learning_rate_cycle': [learning_rate for learning_rate in frange(10e-5, 2, (10-10e-5)/(30+1))],
                   'momentum': 1.0,
