@@ -50,7 +50,7 @@ def main(_):
         params=hparams)
 
     benchmark_logger = logger.get_benchmark_logger()
-    benchmark_logger.log_run_info('ConvNet', 'MAPS', hparams, test_id=TEST_ID)
+    #benchmark_logger.log_run_info('ConvNet', 'MAPS', hparams, test_id=TEST_ID)
 
     # Train and validate in turns
     if train_and_val:

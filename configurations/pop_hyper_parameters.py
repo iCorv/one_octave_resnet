@@ -95,7 +95,7 @@ def get_hyper_parameters(net):
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
                   'learning_rate_cycle': [learning_rate for learning_rate in frange(10e-5, 10, (10-10e-5)/(batches_per_epoch+1))],
                   'momentum': 1.0,
-                  'decay_rates_momentum': [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(batches_per_epoch+1))],
+                  'momentum_cycle': [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(batches_per_epoch+1))],
                   'frames': 5,
                   'freq_bins': 229,
                   'num_channels': 1,
