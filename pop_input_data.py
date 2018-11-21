@@ -316,9 +316,9 @@ def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
         # Map the parser over dataset, and batch results by up to batch_size
         dataset = dataset.shuffle(100000)
         dataset = dataset.repeat(num_epochs)
-        dataset = dataset.map(tfrecord_train_parser)
+        dataset = dataset.map(tfrecord_train_parser, num_parallel_calls=4)
         dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(10)
+        dataset = dataset.prefetch(batch_size)
 
         return dataset
 
@@ -330,9 +330,9 @@ def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
         # Map the parser over dataset, and batch results by up to batch_size
         dataset = dataset.shuffle(2048)
         dataset = dataset.repeat(num_epochs)
-        dataset = dataset.map(tfrecord_train_parser)
+        dataset = dataset.map(tfrecord_train_parser, num_parallel_calls=4)
         dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(10)
+        dataset = dataset.prefetch(batch_size)
 
         return dataset
 
@@ -343,7 +343,7 @@ def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
 
         # Map the parser over dataset, and batch results by up to batch_size
         dataset = dataset.repeat(num_epochs)
-        dataset = dataset.map(tfrecord_train_parser)
+        dataset = dataset.map(tfrecord_train_parser, num_parallel_calls=4)
         dataset = dataset.batch(batch_size)
 
         return dataset
