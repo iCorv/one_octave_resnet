@@ -321,7 +321,7 @@ def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_train_parser, batch_size))
     # dataset = dataset.map(tfrecord_train_parser)
     # dataset = dataset.batch(batch_size)
-    dataset = dataset.prefetch(batch_size)
+    dataset = dataset.prefetch(1)
 
     return dataset
 
@@ -336,7 +336,7 @@ def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
     # dataset = dataset.batch(batch_size)
     dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(100000, num_epochs))
     dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_train_parser, batch_size))
-    dataset = dataset.prefetch(batch_size)
+    dataset = dataset.prefetch(1)
 
     return dataset
 
