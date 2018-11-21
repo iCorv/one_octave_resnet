@@ -314,11 +314,11 @@ def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
         dataset = tf.data.TFRecordDataset(filepath)
 
         # Map the parser over dataset, and batch results by up to batch_size
-        dataset = dataset.shuffle(100000)
+        dataset = dataset.shuffle(10000)
         dataset = dataset.repeat(num_epochs)
         dataset = dataset.map(tfrecord_train_parser)
         dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(1)
+        dataset = dataset.prefetch(batch_size)
 
         return dataset
 
