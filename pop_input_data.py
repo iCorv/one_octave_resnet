@@ -310,42 +310,43 @@ def tfrecord_train_parser(serialized_example):
 
 
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
-    with tf.device('/cpu:0'):
-        dataset = tf.data.TFRecordDataset(filepath)
+    # estimators optimize to cpu input pipeline on their own
+    # with tf.device('/cpu:0'):
+    dataset = tf.data.TFRecordDataset(filepath)
 
-        # Map the parser over dataset, and batch results by up to batch_size
-        #dataset = dataset.shuffle(100000)
-        #dataset = dataset.repeat(num_epochs)
-        dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(100000, num_epochs))
-        dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_train_parser, batch_size))
-        #dataset = dataset.map(tfrecord_train_parser)
-        #dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(batch_size)
+    # Map the parser over dataset, and batch results by up to batch_size
+    # dataset = dataset.shuffle(100000)
+    # dataset = dataset.repeat(num_epochs)
+    dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(100000, num_epochs))
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_train_parser, batch_size))
+    # dataset = dataset.map(tfrecord_train_parser)
+    # dataset = dataset.batch(batch_size)
+    dataset = dataset.prefetch(batch_size)
 
-        return dataset
+    return dataset
 
 
 def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
-    with tf.device('/cpu:0'):
-        dataset = tf.data.TFRecordDataset(filepath)
+    dataset = tf.data.TFRecordDataset(filepath)
 
-        # Map the parser over dataset, and batch results by up to batch_size
-        dataset = dataset.shuffle(100000)
-        dataset = dataset.repeat(num_epochs)
-        dataset = dataset.map(tfrecord_train_parser)
-        dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(batch_size)
+    # Map the parser over dataset, and batch results by up to batch_size
+    # dataset = dataset.shuffle(100000)
+    # dataset = dataset.repeat(num_epochs)
+    # dataset = dataset.map(tfrecord_train_parser)
+    # dataset = dataset.batch(batch_size)
+    dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(100000, num_epochs))
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_train_parser, batch_size))
+    dataset = dataset.prefetch(batch_size)
 
-        return dataset
+    return dataset
 
 
 def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
-    with tf.device('/cpu:0'):
-        dataset = tf.data.TFRecordDataset(filepath)
+    dataset = tf.data.TFRecordDataset(filepath)
 
-        # Map the parser over dataset, and batch results by up to batch_size
-        dataset = dataset.repeat(num_epochs)
-        dataset = dataset.map(tfrecord_train_parser, num_parallel_calls=4)
-        dataset = dataset.batch(batch_size)
+    # Map the parser over dataset, and batch results by up to batch_size
+    dataset = dataset.repeat(num_epochs)
+    dataset = dataset.map(tfrecord_train_parser)
+    dataset = dataset.batch(batch_size)
 
-        return dataset
+    return dataset
