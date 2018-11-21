@@ -38,8 +38,8 @@ def conv_net_model_fn(features, labels, mode, params):
     # for the CIFAR-10 dataset, perhaps because the regularization prevents
     # overfitting on the small data set. We therefore include all vars when
     # regularizing and computing loss during training.
-    def loss_filter_fn(_):
-        return True
+    def loss_filter_fn(name):
+        return 'conv' in name
 
     return conv_net_init(
         features=features,
@@ -219,20 +219,20 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     individual_loss = log_loss(labels, predictions['probabilities'], epsilon=clip_norm)
     cross_entropy = tf.reduce_mean(individual_loss)
 
-    # If no loss_filter_fn is passed, assume we want the default behavior,
-    # which is that batch_normalization variables are excluded from loss.
-    def exclude_batch_norm(name):
-        return 'batch_normalization' not in name
-
-    loss_filter_fn = loss_filter_fn or exclude_batch_norm
+    loss_filter_fn = loss_filter_fn
 
     # Add weight decay to the loss.
     l2_loss = weight_decay * tf.add_n(
         # loss is computed using fp32 for numerical stability.
         [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
          if loss_filter_fn(v.name)])
+    l1_loss = tf.add_n(
+        # loss is computed using fp32 for numerical stability.
+        [slim.losses.l1_loss(tf.cast(v, tf.float32), weight_decay, scope='l1_loss') for v in tf.trainable_variables()
+         if loss_filter_fn(v.name)])
     tf.summary.scalar('l2_loss', l2_loss)
-    loss = cross_entropy + l2_loss
+    tf.summary.scalar('l1_loss', l1_loss)
+    loss = cross_entropy + l1_loss + l2_loss
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
