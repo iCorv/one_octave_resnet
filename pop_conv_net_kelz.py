@@ -217,7 +217,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
             mode=mode,
             predictions=predictions)
 
-    individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm))
+    individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
 
     # loss_filter_fn = loss_filter_fn
@@ -233,7 +233,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     #      if loss_filter_fn(v.name)])
     # tf.summary.scalar('l2_loss', l2_loss)
     # tf.summary.scalar('l1_loss', l1_loss)
-    # loss = cross_entropy + l1_loss + l2_loss
+    # loss = loss + l1_loss + l2_loss
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()

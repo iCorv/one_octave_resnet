@@ -12,9 +12,9 @@ import numpy as np
 import pop_conv_net_kelz
 import glob
 
-train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
-val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
-test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
+train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/train/*.tfrecords")
+val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/valid/*.tfrecords")
+test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/test/*.tfrecords")
 #train_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/train/*.tfrecords")
 #val_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/valid/*.tfrecords")
 #test_dataset_tfrecord = "./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/" \
@@ -46,7 +46,8 @@ def main(_):
         model_fn=pop_conv_net_kelz.conv_net_model_fn,
         # model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
         # model_dir="/Users/Jaedicke/tensorflow/model/model",
-        model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
+        model_dir="./model",
+        # model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params=hparams)
 
