@@ -228,7 +228,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
          if loss_filter_fn(v.name)])
     l1_loss = tf.add_n(
         # loss is computed using fp32 for numerical stability.
-        [slim.losses.l1_loss(tf.cast(v, tf.float32), weight_decay, scope='l1_loss') for v in tf.trainable_variables()
+        [l1_loss_fn(tf.cast(v, tf.float32), weight_decay, scope='l1_loss') for v in tf.trainable_variables()
          if loss_filter_fn(v.name)])
     tf.summary.scalar('l2_loss', l2_loss)
     tf.summary.scalar('l1_loss', l1_loss)
@@ -371,6 +371,23 @@ def log_loss(labels, predictions, epsilon=1e-7, scope=None, weights=None):
             losses = tf.multiply(losses, weights)
 
         return losses
+
+
+def l1_loss_fn(tensor, weight=1.0, scope=None):
+    """Define a L1Loss, useful for regularize, i.e. lasso.
+    Args:
+      tensor: tensor to regularize.
+      weight: scale the loss by this factor.
+      scope: Optional scope for name_scope.
+    Returns:
+      the L1 loss op.
+    """
+    with tf.name_scope(scope, 'L1Loss', [tensor]):
+        weight = tf.convert_to_tensor(weight,
+                                      dtype=tensor.dtype.base_dtype,
+                                      name='loss_weight')
+        loss = tf.multiply(weight, tf.reduce_sum(tf.abs(tensor)), name='value')
+        return loss
 
 
 def put_kernels_on_grid(kernel, pad=1):
