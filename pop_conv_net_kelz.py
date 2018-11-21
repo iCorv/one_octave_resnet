@@ -194,8 +194,6 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size)
 
 
-    logits = tf.clip_by_value(logits, clip_norm, 1.0-clip_norm)
-
     # Visualize conv1 kernels
     with tf.variable_scope('conv1'):
         tf.get_variable_scope().reuse_variables()
@@ -219,7 +217,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
             mode=mode,
             predictions=predictions)
 
-    individual_loss = log_loss(labels, predictions['probabilities'])
+    individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm))
     loss = tf.reduce_mean(individual_loss)
 
     # loss_filter_fn = loss_filter_fn
