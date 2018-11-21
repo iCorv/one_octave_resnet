@@ -39,7 +39,7 @@ def get_hyper_parameters(net):
                                          #0:31],
                   'decay_rates': [10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 1, 10e-1, 10e-2, 10e-3, 10e-4, 10e-3],
                   'momentum': 1.0,
-                  'momentum_cycle': [0.9, 0.9, 0.9, 0.9], #[momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+2))][0:30] + [momentum for momentum in frange(0.85, 0.95, (0.95-0.85)/(30+2))][0:31],
+                  'momentum_cycle': [0.9, 0.9, 0.9, 0.9, 0.9], #[momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+2))][0:30] + [momentum for momentum in frange(0.85, 0.95, (0.95-0.85)/(30+2))][0:31],
                   'frames': 5,
                   'freq_bins': 229,
                   'num_channels': 1,
