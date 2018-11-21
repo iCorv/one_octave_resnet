@@ -193,6 +193,9 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
 
     logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size)
 
+
+    logits = tf.clip_by_value(logits, clip_norm, 1.0-clip_norm)
+
     # Visualize conv1 kernels
     with tf.variable_scope('conv1'):
         tf.get_variable_scope().reuse_variables()
@@ -216,23 +219,23 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
             mode=mode,
             predictions=predictions)
 
-    individual_loss = log_loss(labels, predictions['probabilities'], epsilon=clip_norm)
-    cross_entropy = tf.reduce_mean(individual_loss)
+    individual_loss = log_loss(labels, predictions['probabilities'])
+    loss = tf.reduce_mean(individual_loss)
 
-    loss_filter_fn = loss_filter_fn
-
-    # Add weight decay to the loss.
-    l2_loss = weight_decay * tf.add_n(
-        # loss is computed using fp32 for numerical stability.
-        [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
-         if loss_filter_fn(v.name)])
-    l1_loss = tf.add_n(
-        # loss is computed using fp32 for numerical stability.
-        [l1_loss_fn(tf.cast(v, tf.float32), weight_decay, scope='l1_loss') for v in tf.trainable_variables()
-         if loss_filter_fn(v.name)])
-    tf.summary.scalar('l2_loss', l2_loss)
-    tf.summary.scalar('l1_loss', l1_loss)
-    loss = cross_entropy + l1_loss + l2_loss
+    # loss_filter_fn = loss_filter_fn
+    #
+    # # Add weight decay to the loss.
+    # l2_loss = weight_decay * tf.add_n(
+    #     # loss is computed using fp32 for numerical stability.
+    #     [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
+    #      if loss_filter_fn(v.name)])
+    # l1_loss = tf.add_n(
+    #     # loss is computed using fp32 for numerical stability.
+    #     [l1_loss_fn(tf.cast(v, tf.float32), weight_decay, scope='l1_loss') for v in tf.trainable_variables()
+    #      if loss_filter_fn(v.name)])
+    # tf.summary.scalar('l2_loss', l2_loss)
+    # tf.summary.scalar('l1_loss', l1_loss)
+    # loss = cross_entropy + l1_loss + l2_loss
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
