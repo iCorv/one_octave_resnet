@@ -24,10 +24,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = True
+train_and_val = False
 predict_flag = False
 train_flag = False
-eval_flag = False
+eval_flag = True
 
 hparams = php.get_hyper_parameters('ConvNet')
 
@@ -50,7 +50,7 @@ def main(_):
         # model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params=hparams,
-        warm_start_from="./model/model.ckpt-1294223")
+        warm_start_from="./model/model.ckpt-1455686")
 
     benchmark_logger = logger.get_benchmark_logger()
     #benchmark_logger.log_run_info('ConvNet', 'MAPS', hparams, test_id=TEST_ID)
