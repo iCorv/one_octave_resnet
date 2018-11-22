@@ -50,7 +50,7 @@ def main(_):
         # model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params=hparams,
-        warm_start_from="./model/model.ckpt-1455686")
+        warm_start_from="./model/model.ckpt-1568500")
 
     benchmark_logger = logger.get_benchmark_logger()
     #benchmark_logger.log_run_info('ConvNet', 'MAPS', hparams, test_id=TEST_ID)
