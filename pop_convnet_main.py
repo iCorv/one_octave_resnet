@@ -24,10 +24,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = False
+train_and_val = True
 predict_flag = False
 train_flag = False
-eval_flag = True
+eval_flag = False
 
 hparams = php.get_hyper_parameters('ConvNet')
 
@@ -38,7 +38,7 @@ def main(_):
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
 
     estimator_config = tf.estimator.RunConfig(
-        save_checkpoints_secs=600,  # Save checkpoints every 50 steps.
+        save_checkpoints_secs=60,  # Save checkpoints every 50 steps.
         keep_checkpoint_max=50,  # Retain the 10 most recent checkpoints.
         log_step_count_steps=1000
     )
@@ -66,7 +66,7 @@ def main(_):
             input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
-            steps=hparams['eval_steps'], throttle_secs=150)
+            steps=hparams['eval_steps'], throttle_secs=60)
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
     # Train the Model.
