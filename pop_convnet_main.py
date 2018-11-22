@@ -12,9 +12,9 @@ import numpy as np
 import pop_conv_net_kelz
 import glob
 
-train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/train/*.tfrecords")
-val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/valid/*.tfrecords")
-test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/test/*.tfrecords")
+train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
+val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
+test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
 #train_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/train/*.tfrecords")
 #val_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/valid/*.tfrecords")
 #test_dataset_tfrecord = "./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/" \
@@ -24,10 +24,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = True
+train_and_val = False
 predict_flag = False
 train_flag = False
-eval_flag = False
+eval_flag = True
 
 hparams = php.get_hyper_parameters('ConvNet')
 
