@@ -5,8 +5,8 @@ DEFAULT_DTYPE = tf.float32
 # fold_1: train - 4197453, valid - 749017, test - 1570005
 # fold_2: train - 4249469, valid - 697001, test - 1570005
 
-num_examples = 4249469  # 4197453  # 482952
-num_val_examples = 697001  # 749017  # 87628
+num_examples = 4197453  # 4197453  # 482952
+num_val_examples = 749017  # 749017  # 87628
 num_test_examples = 1570005
 batch_size = 128
 batches_per_epoch = int(round(num_examples/batch_size))
@@ -53,7 +53,7 @@ def get_hyper_parameters(net):
                   'train_steps': total_train_steps,
                   'eval_steps': int(round(num_val_examples/batch_size)),
                   'test_steps': int(round(num_test_examples/batch_size)),
-                  'weight_decay': 1e-8,
+                  'weight_decay': 1e-7,
                   'data_format': 'NCHW', # NHWC (channels last, faster on CPU) or NCHW (channels first, faster on GPU)
                   'train_epochs': train_epochs}
     elif net == 'ResNet':
