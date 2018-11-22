@@ -252,7 +252,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         optimizer = tf.train.MomentumOptimizer(
             learning_rate=learning_rate,
             momentum=momentum,
-            use_nesterov=True
+            use_nesterov=False
         )
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
