@@ -9,13 +9,13 @@ import pop_input_data
 
 
 def import_tfrecord(filepath):
-    #dataset = tf.data.TFRecordDataset(filepath)
+    dataset = tf.data.TFRecordDataset(filepath)
 
 
     # Extract features from single example
     #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
     #spec = tf.slice(spec, [0, 0, 1], [5, 231, 1])
-    dataset = pop_input_data.tfrecord_train_input_fn(filepath, 1, 1)
+    #dataset = pop_input_data.tfrecord_test_input_fn(filepath, 1, 1)
 
     # Make dataset iteratable.
     #iterator = dataset.make_one_shot_iterator()
@@ -175,4 +175,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_single_example(["./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S1_M74_ENSTDkAm.tfrecords","./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S0_M100_AkPnStgb.tfrecords", "./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S0_M86_AkPnBsdf.tfrecords", "./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_RE_F_S1_M21_SptkBGAm.tfrecords"])
+import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_1/MAPS_MUS-burg_perlen_SptkBGCl.tfrecords"])
