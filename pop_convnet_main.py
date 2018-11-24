@@ -82,10 +82,10 @@ def main(_):
             input_fn=lambda: dataset.tfrecord_val_input_fn(test_dataset_tfrecord,
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
-            steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-1339892")
+            steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-584418")
         benchmark_logger.log_evaluation_result(eval_result)
 
-
+    # 1339892
     # Predict
     if predict_flag:
         predictions = classifier.predict(input_fn=lambda: dataset.tfrecord_test_input_fn(filepath=test_dataset_tfrecord,
