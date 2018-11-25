@@ -195,11 +195,11 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
 
 
     # Visualize conv1 kernels
-    with tf.variable_scope('conv1'):
-        tf.get_variable_scope().reuse_variables()
-        weights = tf.get_variable('weights')
-        grid = put_kernels_on_grid(weights)
-        tf.summary.image('conv1/kernels', grid, max_outputs=1)
+    # with tf.variable_scope('conv1'):
+    #     tf.get_variable_scope().reuse_variables()
+    #     weights = tf.get_variable('weights')
+    #     grid = put_kernels_on_grid(weights)
+    #     tf.summary.image('conv1/kernels', grid, max_outputs=1)
 
     # This acts as a no-op if the logits are already in fp32 (provided logits are
     # not a SparseTensor). If dtype is of low precision, logits must be cast to
