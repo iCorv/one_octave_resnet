@@ -120,6 +120,32 @@ def preprocess_fold(fold, mode, norm=False):
              total_examples_processed=total_examples_processed)
 
 
+def preprocess_2ch_fold(fold, mode, norm=False):
+    """Preprocess an entire fold as defined in the preprocessing parameters.
+        fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
+        mode - 'train', 'valid' or 'test' to address the correct config parameter
+    """
+    config = ppp.get_preprocessing_parameters(fold.value)
+    audio_config = config['audio_config']
+
+    # load fold
+    filenames = open(config[mode+'_fold'], 'r').readlines()
+    filenames = [f.strip() for f in filenames]
+
+    total_examples_processed = 0
+
+    for file in filenames:
+        # split file path string at "/" and take the last split, since it's the actual filename
+        num_ex_processed = write_file_to_tfrecords_2ch(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
+                                                   ".tfrecords", config['audio_path'], file, audio_config, norm,
+                                                   config['context_frames'])
+        total_examples_processed = total_examples_processed + num_ex_processed
+
+    print("Examples processed: " + str(total_examples_processed))
+    np.savez(config['tfrecords_' + mode + '_fold'] + "total_examples_processed",
+             total_examples_processed=total_examples_processed)
+
+
 def preprocess_fold_parallel(fold, mode, norm=False):
     """Parallel preprocess an entire fold as defined in the preprocessing parameters.
         This seems only to work on Win with Anaconda!
@@ -148,6 +174,34 @@ def preprocess_fold_parallel(fold, mode, norm=False):
              total_examples_processed=np.sum(total_examples_processed))
 
 
+def preprocess_2ch_fold_parallel(fold, mode, norm=False):
+    """Parallel preprocess an entire fold as defined in the preprocessing parameters.
+        This seems only to work on Win with Anaconda!
+        fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
+        mode - 'train', 'valid' or 'test' to address the correct config parameter
+    """
+    config = ppp.get_preprocessing_parameters(fold.value)
+    audio_config = config['audio_config']
+
+    # load fold
+    filenames = open(config[mode+'_fold'], 'r').readlines()
+    filenames = [f.strip() for f in filenames]
+
+    def parallel_loop(file):
+        # split file path string at "/" and take the last split, since it's the actual filename
+        num_ex_processed = write_file_to_tfrecords_2ch(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
+                                                   ".tfrecords", config['audio_path'], file, audio_config, norm,
+                                                   config['context_frames'])
+        return num_ex_processed
+
+    num_cores = multiprocessing.cpu_count()
+
+    total_examples_processed = Parallel(n_jobs=num_cores)(delayed(parallel_loop)(file) for file in filenames)
+    print("Examples processed: " + str(np.sum(total_examples_processed)))
+    np.savez(config['tfrecords_' + mode + '_fold'] + "total_examples_processed",
+             total_examples_processed=np.sum(total_examples_processed))
+
+
 def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm, context_frames):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     writer = tf.python_io.TFRecordWriter(write_file)
@@ -160,6 +214,34 @@ def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm,
 
     for frame in range(context_frames, spectrogram.shape[0] - context_frames):
         example = features_to_example(spectrogram[frame - context_frames:frame + context_frames + 1, :],
+                                      ground_truth[frame, :])
+
+        # Serialize to string and write on the file
+        writer.write(example.SerializeToString())
+        total_examples_processed = total_examples_processed + 1
+
+    writer.close()
+    return total_examples_processed
+
+
+def write_file_to_tfrecords_2ch(write_file, base_dir, read_file, audio_config, norm, context_frames):
+    """Transforms a wav and mid file to features and writes them to a tfrecords file."""
+    writer = tf.python_io.TFRecordWriter(write_file)
+    spectrogram_2 = wav_to_spec(base_dir, read_file, audio_config)
+    audio_config['frame_size'] = 1024
+    spectrogram_1 = wav_to_spec(base_dir, read_file, audio_config)
+    ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram_2.shape[0])
+    total_examples_processed = 0
+    # re-scale spectrogram to the range [0, 1]
+    if norm:
+        spectrogram_1 = np.divide(spectrogram_1, np.max(spectrogram_1))
+        spectrogram_2 = np.divide(spectrogram_2, np.max(spectrogram_2))
+    spectrogram = np.stack((spectrogram_1, spectrogram_2), axis=0)
+    spectrogram = np.transpose(spectrogram, (1, 2, 0))
+    print(spectrogram.shape)
+
+    for frame in range(context_frames, spectrogram_2.shape[0] - context_frames):
+        example = features_to_example(spectrogram[frame - context_frames:frame + context_frames + 1, :, :],
                                       ground_truth[frame, :])
 
         # Serialize to string and write on the file

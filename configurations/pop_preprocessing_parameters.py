@@ -8,7 +8,7 @@ def get_preprocessing_parameters(fold_num):
 
     split = splits[fold_num]
 
-    config = {'audio_path': '../MAPS',
+    config = {'audio_path': '../../MAPS',
               'train_fold': './splits/{}/train'.format(split),
               'valid_fold': './splits/{}/valid'.format(split),
               'test_fold': './splits/{}/test'.format(split),
@@ -22,13 +22,13 @@ def get_preprocessing_parameters(fold_num):
                                'frame_size': 4096,
                                'fft_size': 4096,
                                'fps': 100,
-                               'num_bands': 48,
+                               'num_bands': 24,
                                'fmin': 30,
                                'fmax': 8000.0,
                                'fref': 440.0,
                                'norm_filters': True,
                                'unique_filters': True,
-                               'circular_shift': False,
+                               'circular_shift': True,
                                'norm': True}
               }
 

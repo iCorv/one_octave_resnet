@@ -9,35 +9,35 @@ import pop_input_data
 
 
 def import_tfrecord(filepath):
-    dataset = tf.data.TFRecordDataset(filepath)
-
+    #dataset = tf.data.TFRecordDataset(filepath)
+    input_shape = [5, 136, 2]
 
     # Extract features from single example
     #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
     #spec = tf.slice(spec, [0, 0, 1], [5, 231, 1])
-    #dataset = pop_input_data.tfrecord_test_input_fn(filepath, 1, 1)
+    dataset = pop_input_data.tfrecord_test_input_fn(filepath, 1, 1)
 
     # Make dataset iteratable.
-    #iterator = dataset.make_one_shot_iterator()
-    #next_example = iterator.get_next()
-    spec = dataset[0]
-    labels = dataset[1]
+    iterator = dataset.make_one_shot_iterator()
+    next_example = iterator.get_next()
+    spec = next_example[0]
+    labels = next_example[1]
 
     print(spec.shape)
     f, (ax1, ax2) = plt.subplots(2, 1, sharey=False)
-    np_spec = np.zeros((229, 2))
+    np_spec = np.zeros((input_shape[1], 2))
     np_label = np.zeros((88, 2))
 
     # Actual session to run the graph.
     with tf.Session() as sess:
-        while True: #for index in range(0, 400):
+        for index in range(0, 300):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
-                print(spec_tensor.shape)
-                example_slice = np.array(np.squeeze(spec_tensor), np.float32)[1, :]
+                #print(spec_tensor.shape)
+                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,1]), np.float32)[1, :]
                 #print(np.shape(example_slice))
 
-                np_spec = np.append(np_spec, np.reshape(example_slice, (229, 1)), axis=1)
+                np_spec = np.append(np_spec, np.reshape(example_slice, (input_shape[1], 1)), axis=1)
                 # print(np.shape(np_spec))
 
                 # Show the labels
@@ -64,11 +64,11 @@ def import_tfrecord(filepath):
 def import_single_example(filepath):
     #dataset = tf.data.TFRecordDataset(filepath)
 
-
+    input_shape = [5, 229]
     # Extract features from single example
     #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
     #spec = tf.slice(spec, [0, 0, 1], [5, 231, 1])
-    dataset = pop_input_data.tfrecord_train_input_fn(filepath, 8, 1)
+    dataset = pop_input_data.tfrecord_test_input_fn(filepath, 8, 1)
 
     # Make dataset iteratable.
     iterator = dataset.make_one_shot_iterator()
@@ -76,10 +76,10 @@ def import_single_example(filepath):
     spec = next_example[0]
     labels = next_example[1]
 
-    spec = tf.reshape(spec, [-1, 5, 229, 1])
+    spec = tf.reshape(spec, [-1, input_shape[0], input_shape[1], 1])
     print(spec.shape)
     f, (ax1, ax2) = plt.subplots(2, 1, sharey=False)
-    np_spec = np.zeros((229, 1))
+    np_spec = np.zeros((input_shape[1], 1))
     np_label_fix = np.zeros((88, 2))
     label_mat = np.zeros((88, 1))
 
@@ -175,4 +175,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_1/MAPS_MUS-burg_perlen_SptkBGCl.tfrecords"])
+import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_MUS-schumm-6_AkPnBcht.tfrecords"])

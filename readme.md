@@ -36,3 +36,7 @@ momentarily only notes from one octave of the piano are used to train and evalua
     ```
     $ scp -i /path/to/your/pem -r ubuntu@ec2-18-224-61-22.us-east-2.compute.amazonaws.com:~/remote/model ./local/model/
     ```
+### Running the Project on Windows 10 with Anaconda
+1. Install Anaconda environment
+2. Set up a tensorflow GPU environment. As easy as this: https://towardsdatascience.com/tensorflow-gpu-installation-made-easy-use-conda-instead-of-pip-52e5249374bc
+3. Get the TF models, as described above and link them to Python following these instructions: https://stackoverflow.com/questions/37006114/anaconda-permanently-include-external-packages-like-in-pythonpath
