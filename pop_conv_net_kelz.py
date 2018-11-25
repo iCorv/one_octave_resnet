@@ -307,16 +307,16 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8):
         with slim.arg_scope([slim.batch_norm], is_training=is_training, data_format=data_format):
             net = slim.conv2d(
                 inputs, 32, [3, 3], scope='conv1', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
-            conv1_output = tf.unstack(net, num=batch_size, axis=0)
-            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv1_output[0], transpose_shape), 2))
-            tf.summary.image('conv1/output', grid, max_outputs=1)
+            #conv1_output = tf.unstack(net, num=batch_size, axis=0)
+            #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv1_output[0], transpose_shape), 2))
+            #tf.summary.image('conv1/output', grid, max_outputs=1)
             print(net.shape)
 
             net = slim.conv2d(
                 net, 32, [3, 3], scope='conv2', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
-            conv2_output = tf.unstack(net, num=batch_size, axis=0)
-            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], transpose_shape), 2))
-            tf.summary.image('conv2/output', grid, max_outputs=1)
+            #conv2_output = tf.unstack(net, num=batch_size, axis=0)
+            #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], transpose_shape), 2))
+            #tf.summary.image('conv2/output', grid, max_outputs=1)
             print(net.shape)
             net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool2', data_format=data_format)
             print(net.shape)
@@ -324,9 +324,9 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8):
 
             net = slim.conv2d(
                 net, 64, [3, 3], scope='conv3', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
-            conv3_output = tf.unstack(net, num=batch_size, axis=0)
-            grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
-            tf.summary.image('conv3/output', grid, max_outputs=1)
+            #conv3_output = tf.unstack(net, num=batch_size, axis=0)
+            #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
+            #tf.summary.image('conv3/output', grid, max_outputs=1)
             print(net.shape)
             net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool3', data_format=data_format)
 
