@@ -8,7 +8,7 @@ def get_preprocessing_parameters(fold_num):
 
     split = splits[fold_num]
 
-    config = {'audio_path': '../../MAPS',
+    config = {'audio_path': '../MAPS',
               'train_fold': './splits/{}/train'.format(split),
               'valid_fold': './splits/{}/valid'.format(split),
               'test_fold': './splits/{}/test'.format(split),
