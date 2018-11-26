@@ -7,8 +7,6 @@ import tensorflow.contrib.slim as slim
 import numpy as np
 from math import sqrt
 
-_NUM_CLASSES = 88
-
 
 def conv_net_model_fn(features, labels, mode, params):
     if params['data_format'] == 'NCHW':
@@ -18,8 +16,6 @@ def conv_net_model_fn(features, labels, mode, params):
         features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
     else:
         features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
-
-    _NUM_CLASSES = params['num_classes']
 
     # learning_rate_fn = learning_rate_with_decay(
     #     initial_learning_rate=params['learning_rate'],
@@ -56,7 +52,8 @@ def conv_net_model_fn(features, labels, mode, params):
         clip_norm=params['clip_norm'],
         data_format=params['data_format'],
         batch_size=params['batch_size'],
-        dtype=params['dtype']
+        dtype=params['dtype'],
+        num_classes=params['num_classes']
     )
 
 
@@ -161,7 +158,7 @@ def weights_from_labels(labels):
     return np.where(weights == 0.0, 0.25, weights)
 
 
-def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weight_decay, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32):
+def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weight_decay, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32, num_classes=88):
     """Shared functionality for different model_fns.
 
     Initializes the ConvNet representing the model layers
@@ -195,7 +192,8 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size)
+    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+                           batch_size=batch_size, num_classes=num_classes)
 
 
     # Visualize conv1 kernels
@@ -297,7 +295,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         eval_metric_ops=metrics)
 
 
-def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8):
+def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8, num_classes=88):
     """Builds the ConvNet from Kelz 2016."""
     if data_format == 'NCHW':
         transpose_shape = [2, 1, 0]
@@ -343,7 +341,7 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8):
             net = slim.fully_connected(net, 512, scope='fc5')
             print(net.shape)
             net = slim.dropout(net, 0.5, scope='dropout5', is_training=is_training)
-            net = slim.fully_connected(net, 88, activation_fn=None, scope='fc6')
+            net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc6')
             print(net.shape)
             return net
 
