@@ -10,7 +10,7 @@ import pop_input_data
 
 def import_tfrecord(filepath):
     #dataset = tf.data.TFRecordDataset(filepath)
-    input_shape = [5, 136, 2]
+    input_shape = [11, 78, 2]
 
     # Extract features from single example
     #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
@@ -30,11 +30,11 @@ def import_tfrecord(filepath):
 
     # Actual session to run the graph.
     with tf.Session() as sess:
-        for index in range(0, 300):
+        for index in range(0, 700):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
                 #print(spec_tensor.shape)
-                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,1]), np.float32)[1, :]
+                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,0]), np.float32)[1, :]
                 #print(np.shape(example_slice))
 
                 np_spec = np.append(np_spec, np.reshape(example_slice, (input_shape[1], 1)), axis=1)

@@ -236,6 +236,7 @@ def write_file_to_tfrecords_2ch(write_file, base_dir, read_file, audio_config, n
     if norm:
         spectrogram_1 = np.divide(spectrogram_1, np.max(spectrogram_1))
         spectrogram_2 = np.divide(spectrogram_2, np.max(spectrogram_2))
+    spectrogram_1 = np.append(spectrogram_1[4:, :], spectrogram_1[0:4, :], axis=0)
     spectrogram = np.stack((spectrogram_1, spectrogram_2), axis=0)
     spectrogram = np.transpose(spectrogram, (1, 2, 0))
     print(spectrogram.shape)
