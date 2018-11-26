@@ -334,7 +334,7 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8):
 
             # Flatten
             print(net.shape)
-            net = tf.reshape(net, (-1, 64*1*32), 'flatten4')
+            net = tf.reshape(net, (-1, 64*1*18), 'flatten4')
             print(net.shape)
             net = slim.fully_connected(net, 512, scope='fc5')
             print(net.shape)
