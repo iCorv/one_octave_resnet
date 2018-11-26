@@ -318,7 +318,7 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8):
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], transpose_shape), 2))
             #tf.summary.image('conv2/output', grid, max_outputs=1)
             print(net.shape)
-            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool2', data_format=data_format)
+            net = slim.max_pool2d(net, [2, 2], stride=[2, 2], scope='pool2', data_format=data_format)
             print(net.shape)
             net = slim.dropout(net, 0.25, scope='dropout2', is_training=is_training)
 
@@ -328,7 +328,7 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8):
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             #tf.summary.image('conv3/output', grid, max_outputs=1)
             print(net.shape)
-            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool3', data_format=data_format)
+            net = slim.max_pool2d(net, [2, 2], stride=[2, 2], scope='pool3', data_format=data_format)
 
             net = slim.dropout(net, 0.25, scope='dropout3', is_training=is_training)
 
