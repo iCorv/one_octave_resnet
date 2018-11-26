@@ -241,7 +241,8 @@ FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0
                   [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.],
                   [0]]  # sets field types
 
-feature_shape = [11, 78, 2]
+feature_shape = [5, 229, 2]
+num_labels = 12
 num_features = feature_shape[0] * feature_shape[1] * feature_shape[2]
 
 
@@ -301,7 +302,7 @@ def tfrecord_train_parser(serialized_example):
     example = tf.parse_single_example(
         serialized_example,
         features={"spec": tf.FixedLenFeature([num_features], tf.float32),
-                  "label": tf.FixedLenFeature([88], tf.int64)})
+                  "label": tf.FixedLenFeature([num_labels], tf.int64)})
     features = tf.cast(example['spec'], tf.float32)
     # Reshape spec data into the original shape
     features = tf.reshape(features, feature_shape)

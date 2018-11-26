@@ -10,7 +10,8 @@ import pop_input_data
 
 def import_tfrecord(filepath):
     #dataset = tf.data.TFRecordDataset(filepath)
-    input_shape = [11, 78, 2]
+    input_shape = [5, 229, 2]
+    num_labels = 12
 
     # Extract features from single example
     #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
@@ -26,7 +27,7 @@ def import_tfrecord(filepath):
     print(spec.shape)
     f, (ax1, ax2) = plt.subplots(2, 1, sharey=False)
     np_spec = np.zeros((input_shape[1], 2))
-    np_label = np.zeros((88, 2))
+    np_label = np.zeros((num_labels, 2))
 
     # Actual session to run the graph.
     with tf.Session() as sess:
@@ -34,14 +35,14 @@ def import_tfrecord(filepath):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
                 #print(spec_tensor.shape)
-                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,0]), np.float32)[1, :]
+                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,1]), np.float32)[1, :]
                 #print(np.shape(example_slice))
 
                 np_spec = np.append(np_spec, np.reshape(example_slice, (input_shape[1], 1)), axis=1)
                 # print(np.shape(np_spec))
 
                 # Show the labels
-                np_label = np.append(np_label, np.reshape(label_text, (88, 1)), axis=1)
+                np_label = np.append(np_label, np.reshape(label_text, (num_labels, 1)), axis=1)
                 # print(label_text)
 
 

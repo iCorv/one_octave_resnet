@@ -65,16 +65,16 @@ def get_spec_processor(_audio_options, madmom_spec):
     return spectype, audio_options
 
 
-def midi_to_groundtruth(base_dir, filename, dt, n_frames):
-    """Computes the frame-wise ground truth from a midi file."""
+def midi_to_groundtruth(base_dir, filename, dt, n_frames, is_chroma=False):
+    """Computes the frame-wise ground truth from a piano midi file, as a note or chroma vector."""
     midi_filename = os.path.join(base_dir, filename + '.mid')
     pattern = midi.MIDIFile.from_file(midi_filename)
-    ground_truth = np.zeros((n_frames, 88)).astype(np.int64)
+    ground_truth = np.zeros((n_frames, 12 if is_chroma else 88)).astype(np.int64)
     for onset, _pitch, duration, velocity, _channel in pattern.notes():
         pitch = int(_pitch)
         frame_start = int(np.round(onset / dt))
         frame_end = int(np.round((onset + duration) / dt))
-        label = pitch - 21
+        label = np.mod(pitch - 21, 12) if is_chroma else pitch - 21
         ground_truth[frame_start:frame_end, label] = 1
     return ground_truth
 
@@ -112,7 +112,7 @@ def preprocess_fold(fold, mode, norm=False):
         # split file path string at "/" and take the last split, since it's the actual filename
         num_ex_processed = write_file_to_tfrecords(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
                                                    ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                   config['context_frames'])
+                                                   config['context_frames'], config['is_chroma'])
         total_examples_processed = total_examples_processed + num_ex_processed
 
     print("Examples processed: " + str(total_examples_processed))
@@ -138,7 +138,7 @@ def preprocess_2ch_fold(fold, mode, norm=False):
         # split file path string at "/" and take the last split, since it's the actual filename
         num_ex_processed = write_file_to_tfrecords_2ch(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
                                                    ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                   config['context_frames'])
+                                                   config['context_frames'], config['is_chroma'])
         total_examples_processed = total_examples_processed + num_ex_processed
 
     print("Examples processed: " + str(total_examples_processed))
@@ -163,7 +163,7 @@ def preprocess_fold_parallel(fold, mode, norm=False):
         # split file path string at "/" and take the last split, since it's the actual filename
         num_ex_processed = write_file_to_tfrecords(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
                                                    ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                   config['context_frames'])
+                                                   config['context_frames'], config['is_chroma'])
         return num_ex_processed
 
     num_cores = multiprocessing.cpu_count()
@@ -191,7 +191,7 @@ def preprocess_2ch_fold_parallel(fold, mode, norm=False):
         # split file path string at "/" and take the last split, since it's the actual filename
         num_ex_processed = write_file_to_tfrecords_2ch(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
                                                    ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                   config['context_frames'])
+                                                   config['context_frames'], config['is_chroma'])
         return num_ex_processed
 
     num_cores = multiprocessing.cpu_count()
@@ -202,11 +202,11 @@ def preprocess_2ch_fold_parallel(fold, mode, norm=False):
              total_examples_processed=np.sum(total_examples_processed))
 
 
-def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm, context_frames):
+def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm, context_frames, is_chroma):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     writer = tf.python_io.TFRecordWriter(write_file)
     spectrogram = wav_to_spec(base_dir, read_file, audio_config)
-    ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0])
+    ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0], is_chroma)
     total_examples_processed = 0
     # re-scale spectrogram to the range [0, 1]
     if norm:
@@ -224,13 +224,13 @@ def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm,
     return total_examples_processed
 
 
-def write_file_to_tfrecords_2ch(write_file, base_dir, read_file, audio_config, norm, context_frames):
+def write_file_to_tfrecords_2ch(write_file, base_dir, read_file, audio_config, norm, context_frames, is_chroma):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     writer = tf.python_io.TFRecordWriter(write_file)
     spectrogram_2 = wav_to_spec(base_dir, read_file, audio_config)
     audio_config['frame_size'] = 1024
     spectrogram_1 = wav_to_spec(base_dir, read_file, audio_config)
-    ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram_2.shape[0])
+    ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram_2.shape[0], is_chroma)
     total_examples_processed = 0
     # re-scale spectrogram to the range [0, 1]
     if norm:

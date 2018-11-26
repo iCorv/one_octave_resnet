@@ -7,6 +7,8 @@ import tensorflow.contrib.slim as slim
 import numpy as np
 from math import sqrt
 
+_NUM_CLASSES = 88
+
 
 def conv_net_model_fn(features, labels, mode, params):
     if params['data_format'] == 'NCHW':
@@ -16,6 +18,8 @@ def conv_net_model_fn(features, labels, mode, params):
         features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
     else:
         features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
+
+    _NUM_CLASSES = params['num_classes']
 
     # learning_rate_fn = learning_rate_with_decay(
     #     initial_learning_rate=params['learning_rate'],
