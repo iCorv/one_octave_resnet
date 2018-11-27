@@ -13,7 +13,7 @@ def serving_input_fn():
 
 classifier = tf.estimator.Estimator(
     model_fn=pop_conv_net_kelz.conv_net_model_fn,
-    model_dir="./model",
+    model_dir="./model_kelz_chroma",
     #warm_start_from="./model/model.ckpt-1323466",
     params=hparams)
 
