@@ -60,8 +60,8 @@ f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharey=True)
 
 data = np.load("props_MAPS_MUS-bor_ps6_ENSTDkCl_2018-11-11.npz")
 props = data["props"]
-prefix = np.zeros((88, 7))
-props = np.append(prefix, props, axis=1)
+#prefix = np.zeros((88, 7))
+#props = np.append(prefix, props, axis=1)
 
 print(np.min(props))
 print(np.max(props))
@@ -75,48 +75,48 @@ plt.grid(True)
 
 
 
-fps = 1/hop_size_sec
-proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.55, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.0, fps=fps)
-
-est_intervals_notes = proc(props.T)
-
-
-est_onset_frames = find_onset_frame(est_intervals_notes[:, 0], frame_length=frame_length, hop_size=hop_size, sample_rate=sr)
-
-est_piano_roll = piano_roll_rep(onset_frames=est_onset_frames, midi_pitches=est_intervals_notes[:, 1].astype(int)-21, piano_roll_shape=np.shape(props))
-
-ax2.pcolormesh(np.log10(est_piano_roll[:, 0:plot_frames]+1))
-ax2.set_title("Peak Picked Notes")
-
-#locs, labels = plt.yticks()
-# set last y-tick to 88
-#locs[-1] = 88
-# find labels in frequency bins
-#plt.yticks(locs, np.append(freq_bins.round(decimals=1)[::10], freq_bins.round(decimals=1)[-1]))
-#plt.title(title)
-#ax1.colorbar(format='%+2.0f dB')
-#plt.tight_layout()
-#plt.show()
-
-
-sorted_ground_truth_list = glob.glob('../../MAPS/ENSTDkCl/MUS/MAPS_MUS-bor_ps6_ENSTDkCl.txt')
-# load ground truth
-ground_truth = loadtxt(sorted_ground_truth_list[0], skiprows=1, delimiter='\t')
-# find values within range
-midi_range_bool = np.isin(ground_truth[:, 2], midi_range)
-midi_range_indices = np.where(midi_range_bool)
-
-
-onset_frames = find_onset_frame(ground_truth[midi_range_indices, 0], frame_length=frame_length, hop_size=hop_size, sample_rate=sr)
-pitch_per_frame = ground_truth[midi_range_indices, 2] - midi_range_low
-
-
-piano_roll = piano_roll_rep(onset_frames=onset_frames, midi_pitches=pitch_per_frame.astype(int), piano_roll_shape=np.shape(props))
-
-
-
-ax3.pcolormesh((piano_roll[:, 0:plot_frames]))
-ax3.set_title("Ground Truth")
+# fps = 1/hop_size_sec
+# proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.55, pre_max=1.0/fps, post_max=1.0/fps, delay=-0.0, combine=0.03, smooth=0.0, fps=fps)
+#
+# est_intervals_notes = proc(props.T)
+#
+#
+# est_onset_frames = find_onset_frame(est_intervals_notes[:, 0], frame_length=frame_length, hop_size=hop_size, sample_rate=sr)
+#
+# est_piano_roll = piano_roll_rep(onset_frames=est_onset_frames, midi_pitches=est_intervals_notes[:, 1].astype(int)-21, piano_roll_shape=np.shape(props))
+#
+# ax2.pcolormesh(np.log10(est_piano_roll[:, 0:plot_frames]+1))
+# ax2.set_title("Peak Picked Notes")
+#
+# #locs, labels = plt.yticks()
+# # set last y-tick to 88
+# #locs[-1] = 88
+# # find labels in frequency bins
+# #plt.yticks(locs, np.append(freq_bins.round(decimals=1)[::10], freq_bins.round(decimals=1)[-1]))
+# #plt.title(title)
+# #ax1.colorbar(format='%+2.0f dB')
+# #plt.tight_layout()
+# #plt.show()
+#
+#
+# sorted_ground_truth_list = glob.glob('../../MAPS/ENSTDkCl/MUS/MAPS_MUS-bor_ps6_ENSTDkCl.txt')
+# # load ground truth
+# ground_truth = loadtxt(sorted_ground_truth_list[0], skiprows=1, delimiter='\t')
+# # find values within range
+# midi_range_bool = np.isin(ground_truth[:, 2], midi_range)
+# midi_range_indices = np.where(midi_range_bool)
+#
+#
+# onset_frames = find_onset_frame(ground_truth[midi_range_indices, 0], frame_length=frame_length, hop_size=hop_size, sample_rate=sr)
+# pitch_per_frame = ground_truth[midi_range_indices, 2] - midi_range_low
+#
+#
+# piano_roll = piano_roll_rep(onset_frames=onset_frames, midi_pitches=pitch_per_frame.astype(int), piano_roll_shape=np.shape(props))
+#
+#
+#
+# ax3.pcolormesh((piano_roll[:, 0:plot_frames]))
+# ax3.set_title("Ground Truth")
 
 
 #pianoroll = ppr.parse("/Users/Jaedicke/Desktop/MAPS_MUS-alb_se3_AkPnBcht.mid", beat_resolution=24,
