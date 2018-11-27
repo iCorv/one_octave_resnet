@@ -27,9 +27,9 @@ DEFAULT_DTYPE = tf.float32
 TEST_ID = 1
 
 train_and_val = False
-predict_flag = False
+predict_flag = True
 train_flag = False
-eval_flag = True
+eval_flag = False
 
 hparams = php.get_hyper_parameters('ConvNet')
 
