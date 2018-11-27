@@ -248,7 +248,7 @@ def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm,
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
     #spectrogram[:, 229 - 12:] = predict.spectrogram_to_chroma(spectrogram, context_frames)
-    spectrogram[:, spectrogram.shape[1] - 12] = load_chroma("./chroma/", read_file.split('/')[-1])
+    spectrogram[:, spectrogram.shape[1] - 12:] = load_chroma("./chroma/", read_file.split('/')[-1])
 
 
     for frame in range(context_frames, spectrogram.shape[0] - context_frames):
