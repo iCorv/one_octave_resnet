@@ -13,7 +13,7 @@ def serving_input_fn():
 
 classifier = tf.estimator.Estimator(
     model_fn=pop_conv_net_kelz.conv_net_model_fn,
-    model_dir="./model/model.ckpt-1323466",
+    model_dir="./model",
     params=hparams)
 
 estimator_predictor = tf.contrib.predictor.from_estimator(classifier, serving_input_fn, output_key='predictions')
