@@ -109,11 +109,11 @@ def convert_fold_to_chroma(fold, mode, norm=False):
 
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
-        write_file_to_npz(config['chroma_folder'] + file.split('/')[-1], config['audio_path'], file, audio_config,
-                          norm, config['context_frames'])
+        write_chroma_to_npz(config['chroma_folder'] + file.split('/')[-1], config['audio_path'], file, audio_config,
+                            norm, config['context_frames'])
 
 
-def write_file_to_npz(write_file, base_dir, read_file, audio_config, norm, context_frames):
+def write_chroma_to_npz(write_file, base_dir, read_file, audio_config, norm, context_frames):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     spectrogram = wav_to_spec(base_dir, read_file, audio_config)
     # re-scale spectrogram to the range [0, 1]
@@ -122,6 +122,12 @@ def write_file_to_npz(write_file, base_dir, read_file, audio_config, norm, conte
     chroma = predict.spectrogram_to_chroma(spectrogram, context_frames)
 
     np.savez(write_file, chroma=chroma)
+
+
+def load_chroma(chroma_folder, file):
+    data = np.load(chroma_folder + file + ".npz")
+
+    return data["chroma"]
 
 
 def preprocess_fold(fold, mode, norm=False):
@@ -241,7 +247,9 @@ def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm,
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
-    spectrogram[:, 229 - 12:] = predict.spectrogram_to_chroma(spectrogram, context_frames)
+    #spectrogram[:, 229 - 12:] = predict.spectrogram_to_chroma(spectrogram, context_frames)
+    spectrogram[:, spectrogram.shape[1] - 12] = load_chroma("./chroma/", read_file.split('/')[-1])
+
 
     for frame in range(context_frames, spectrogram.shape[0] - context_frames):
         #features = np.append(spectrogram[frame - context_frames:frame + context_frames + 1, :],

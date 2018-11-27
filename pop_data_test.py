@@ -176,4 +176,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_MUS-liz_rhap10_AkPnBsdf.tfrecords"])
+import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_MUS-chpn_op66_AkPnBcht.tfrecords"])
