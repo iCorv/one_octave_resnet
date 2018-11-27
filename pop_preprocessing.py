@@ -124,12 +124,12 @@ def _bytes_feature(value):
 #     chroma = predict.spectrogram_to_chroma(spectrogram, context_frames, predictor)
 #
 #     np.savez(write_file, chroma=chroma)
-#
-#
-# def load_chroma(chroma_folder, file):
-#     data = np.load(chroma_folder + file + ".npz")
-#
-#     return data["chroma"]
+
+
+def load_chroma(chroma_folder, file):
+    data = np.load(chroma_folder + file + ".npz")
+
+    return data["chroma"]
 
 
 def preprocess_fold(fold, mode, norm=False):
