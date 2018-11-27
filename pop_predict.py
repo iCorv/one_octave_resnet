@@ -23,7 +23,7 @@ def get_activation(features):
 
     p = estimator_predictor({'input': features})
     #print(p['probabilities'].shape)
-    return p['probabilities']
+    return p['classes']
 
 
 def spectrogram_to_chroma(spec, context_frames):
