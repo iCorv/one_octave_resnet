@@ -210,14 +210,16 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
 
     predictions = {
         'classes': tf.round(tf.sigmoid(logits)),
-        'probabilities': tf.sigmoid(logits, name='sigmoid_tensor')
+        'probabilities': tf.sigmoid(logits, name='sigmoid_tensor'),
+        'logits': logits
     }
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         # Return the predictions and the specification for serving a SavedModel
         return tf.estimator.EstimatorSpec(
             mode=mode,
-            predictions=predictions)
+            predictions=predictions,
+            export_outputs={'predictions': tf.estimator.export.PredictOutput(predictions)})
 
     individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)

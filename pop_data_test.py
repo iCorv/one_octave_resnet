@@ -10,7 +10,7 @@ import pop_input_data
 
 def import_tfrecord(filepath):
     #dataset = tf.data.TFRecordDataset(filepath)
-    input_shape = [5, 229, 2]
+    input_shape = [5, 229, 1]
     num_labels = 12
 
     # Extract features from single example
@@ -31,11 +31,11 @@ def import_tfrecord(filepath):
 
     # Actual session to run the graph.
     with tf.Session() as sess:
-        for index in range(0, 700):
+        for index in range(0, 1500):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
                 #print(spec_tensor.shape)
-                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,1]), np.float32)[1, :]
+                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,0]), np.float32)[1, :]
                 #print(np.shape(example_slice))
 
                 np_spec = np.append(np_spec, np.reshape(example_slice, (input_shape[1], 1)), axis=1)
@@ -176,4 +176,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_MUS-schumm-6_AkPnBcht.tfrecords"])
+import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_MUS-liz_rhap10_AkPnBsdf.tfrecords"])

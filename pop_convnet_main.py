@@ -14,7 +14,8 @@ import glob
 
 train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
 val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
-test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
+#test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
+test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_MUS-liz_rhap10_AkPnBsdf.tfrecords")
 #train_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/train/*.tfrecords")
 #val_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/valid/*.tfrecords")
 #test_dataset_tfrecord = "./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/" \
@@ -24,10 +25,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = True
+train_and_val = False
 predict_flag = False
 train_flag = False
-eval_flag = False
+eval_flag = True
 
 hparams = php.get_hyper_parameters('ConvNet')
 
@@ -79,20 +80,20 @@ def main(_):
     # Evaluate the model.
     if eval_flag:
         eval_result = classifier.evaluate(
-            input_fn=lambda: dataset.tfrecord_val_input_fn(test_dataset_tfrecord,
+            input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
-            steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-1475668")
+            steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-1323466")
         benchmark_logger.log_evaluation_result(eval_result)
 
     # 1339892
     # Predict
     if predict_flag:
         predictions = classifier.predict(input_fn=lambda: dataset.tfrecord_test_input_fn(filepath=test_dataset_tfrecord,
-                                                                                         batch_size=1, num_epochs=1))
+                                                                                         batch_size=1, num_epochs=1), checkpoint_path="./model/model.ckpt-1323466")
 
         # Problem: due to graph structure the value needs to be determined at compilation time?!
-        num_test_frames = 11468
+        num_test_frames = 28442
         # pythonic way to count elements in generator object
         # num_test_frames = len(list(predictions)) #sum(1 for i in predictions)
         print(num_test_frames)
@@ -100,7 +101,7 @@ def main(_):
         notes = np.zeros((hparams['num_classes'], num_test_frames))
         index = 0
         for p in predictions:
-            if index < hparams['num_val_examples']:
+            if index < num_test_frames:  #hparams['num_val_examples']:
                 # print(np.shape(p['probabilities'][:]))
                 props[:, index] = p['probabilities'][:]
                 notes[:, index] = p['classes'][:]
