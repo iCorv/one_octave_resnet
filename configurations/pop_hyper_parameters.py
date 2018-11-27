@@ -59,7 +59,7 @@ def get_hyper_parameters(net):
                   'eval_steps': int(round(num_val_examples/batch_size)),
                   'test_steps': int(round(num_test_examples/batch_size)),
                   'weight_decay': 1e-7,
-                  'data_format': 'NCHW', # NHWC (channels last, faster on CPU) or NCHW (channels first, faster on GPU)
+                  'data_format': 'NHWC', # NHWC (channels last, faster on CPU) or NCHW (channels first, faster on GPU)
                   'train_epochs': train_epochs}
     elif net == 'ResNet':
         config = {'batch_size': batch_size,
