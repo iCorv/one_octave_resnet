@@ -13,7 +13,8 @@ import pop_conv_net_kelz
 import glob
 
 train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
-val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
+#val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
+val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_MUS-liz_rhap10_AkPnBsdf.tfrecords")
 #test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
 test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_MUS-liz_rhap10_AkPnBsdf.tfrecords")
 #train_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/train/*.tfrecords")
