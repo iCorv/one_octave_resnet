@@ -14,6 +14,7 @@ def serving_input_fn():
 classifier = tf.estimator.Estimator(
     model_fn=pop_conv_net_kelz.conv_net_model_fn,
     model_dir="./model",
+    #warm_start_from="./model/model.ckpt-1323466",
     params=hparams)
 
 estimator_predictor = tf.contrib.predictor.from_estimator(classifier, serving_input_fn, output_key='predictions')
@@ -23,7 +24,7 @@ def get_activation(features):
 
     p = estimator_predictor({'input': features})
     #print(p['probabilities'].shape)
-    return p['classes']
+    return p['probabilities']
 
 
 def spectrogram_to_chroma(spec, context_frames):
