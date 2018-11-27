@@ -15,6 +15,7 @@ def get_preprocessing_parameters(fold_num):
               'tfrecords_train_fold': './tfrecords-dataset/{}/train/'.format(split),
               'tfrecords_valid_fold': './tfrecords-dataset/{}/valid/'.format(split),
               'tfrecords_test_fold': './tfrecords-dataset/{}/test/'.format(split),
+              'chroma_folder': './chroma/',
               'context_frames': 2,
               'is_chroma': True,
               'audio_config': {'num_channels': 1,
