@@ -17,7 +17,7 @@ def get_preprocessing_parameters(fold_num):
               'tfrecords_test_fold': './tfrecords-dataset/{}/test/'.format(split),
               'chroma_folder': './chroma/',
               'context_frames': 2,
-              'is_chroma': True,
+              'is_chroma': False,
               'audio_config': {'num_channels': 1,
                                'sample_rate': 44100,
                                'filterbank': 'LogarithmicFilterbank',

@@ -50,7 +50,7 @@ def get_hyper_parameters(net):
                   'frames': 5,
                   'freq_bins': 229,
                   'num_channels': 1,
-                  'num_classes': 12,
+                  'num_classes': 88,
                   'num_examples': num_examples,
                   'num_val_examples': num_val_examples,
                   'num_test_examples': num_test_examples,
