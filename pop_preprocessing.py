@@ -19,7 +19,7 @@ import tensorflow as tf
 import os
 import configurations.pop_preprocessing_parameters as ppp
 import warnings
-import pop_predict as predict
+#import pop_predict as predict
 from joblib import Parallel, delayed
 import multiprocessing
 from madmom.utils import midi
@@ -95,41 +95,41 @@ def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
-def convert_fold_to_chroma(fold, mode, norm=False):
-    """Preprocess an entire fold as defined in the preprocessing parameters.
-        fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
-        mode - 'train', 'valid' or 'test' to address the correct config parameter
-    """
-    config = ppp.get_preprocessing_parameters(fold.value)
-    audio_config = config['audio_config']
-
-    # load fold
-    filenames = open(config[mode+'_fold'], 'r').readlines()
-    filenames = [f.strip() for f in filenames]
-
-    predictor = predict.build_predictor()
-
-    for file in filenames:
-        # split file path string at "/" and take the last split, since it's the actual filename
-        write_chroma_to_npz(config['chroma_folder'] + file.split('/')[-1], config['audio_path'], file, audio_config,
-                            norm, config['context_frames'], predictor)
-
-
-def write_chroma_to_npz(write_file, base_dir, read_file, audio_config, norm, context_frames, predictor):
-    """Transforms a wav and mid file to features and writes them to a tfrecords file."""
-    spectrogram = wav_to_spec(base_dir, read_file, audio_config)
-    # re-scale spectrogram to the range [0, 1]
-    if norm:
-        spectrogram = np.divide(spectrogram, np.max(spectrogram))
-    chroma = predict.spectrogram_to_chroma(spectrogram, context_frames, predictor)
-
-    np.savez(write_file, chroma=chroma)
-
-
-def load_chroma(chroma_folder, file):
-    data = np.load(chroma_folder + file + ".npz")
-
-    return data["chroma"]
+# def convert_fold_to_chroma(fold, mode, norm=False):
+#     """Preprocess an entire fold as defined in the preprocessing parameters.
+#         fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
+#         mode - 'train', 'valid' or 'test' to address the correct config parameter
+#     """
+#     config = ppp.get_preprocessing_parameters(fold.value)
+#     audio_config = config['audio_config']
+#
+#     # load fold
+#     filenames = open(config[mode+'_fold'], 'r').readlines()
+#     filenames = [f.strip() for f in filenames]
+#
+#     predictor = predict.build_predictor()
+#
+#     for file in filenames:
+#         # split file path string at "/" and take the last split, since it's the actual filename
+#         write_chroma_to_npz(config['chroma_folder'] + file.split('/')[-1], config['audio_path'], file, audio_config,
+#                             norm, config['context_frames'], predictor)
+#
+#
+# def write_chroma_to_npz(write_file, base_dir, read_file, audio_config, norm, context_frames, predictor):
+#     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
+#     spectrogram = wav_to_spec(base_dir, read_file, audio_config)
+#     # re-scale spectrogram to the range [0, 1]
+#     if norm:
+#         spectrogram = np.divide(spectrogram, np.max(spectrogram))
+#     chroma = predict.spectrogram_to_chroma(spectrogram, context_frames, predictor)
+#
+#     np.savez(write_file, chroma=chroma)
+#
+#
+# def load_chroma(chroma_folder, file):
+#     data = np.load(chroma_folder + file + ".npz")
+#
+#     return data["chroma"]
 
 
 def preprocess_fold(fold, mode, norm=False):
