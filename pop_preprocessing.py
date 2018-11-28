@@ -132,6 +132,58 @@ def load_chroma(chroma_folder, file):
     return data["chroma"]
 
 
+# TODO: test function works
+def preprocess_chords(fold, norm=False):
+    """Preprocess an entire fold as defined in the preprocessing parameters.
+        fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
+        mode - 'train', 'valid' or 'test' to address the correct config parameter
+    """
+    config = ppp.get_preprocessing_parameters(fold.value)
+    audio_config = config['audio_config']
+
+    # load fold
+    filenames = open(config['chord_fold'], 'r').readlines()
+    filenames = [f.strip() for f in filenames]
+
+    total_examples_processed = 0
+
+    ex_per_tfrecords = 0
+
+    num_tfrecords = 0
+
+    for file in filenames:
+        if ex_per_tfrecords == 0:
+            writer = tf.python_io.TFRecordWriter(config['chord_folder'] + str(num_tfrecords) + "_chords.tfrecords")
+
+        spectrogram = wav_to_spec(config['audio_path'], file, audio_config)
+        print(spectrogram.shape)
+        ground_truth = midi_to_groundtruth(config['audio_path'], file, 1. / audio_config['fps'], spectrogram.shape[0],
+                                           config['is_chroma'])
+
+        # re-scale spectrogram to the range [0, 1]
+        if norm:
+            spectrogram = np.divide(spectrogram, np.max(spectrogram))
+
+        for frame in range(config['context_frames'], spectrogram.shape[0] - config['context_frames']):
+            example = features_to_example(spectrogram[frame - config['context_frames']:frame + config['context_frames'] + 1, :],
+                                          ground_truth[frame, :])
+
+            # Serialize to string and write on the file
+            writer.write(example.SerializeToString())
+            total_examples_processed = total_examples_processed + 1
+            ex_per_tfrecords = ex_per_tfrecords + 1
+
+        if ex_per_tfrecords > 20000:
+            writer.close()
+            num_tfrecords = num_tfrecords + 1
+            ex_per_tfrecords = 0
+
+
+    print("Examples processed: " + str(total_examples_processed))
+    np.savez(config['tfrecords_' + 'chord_fold'] + "total_examples_processed",
+             total_examples_processed=total_examples_processed)
+
+
 def preprocess_fold(fold, mode, norm=False):
     """Preprocess an entire fold as defined in the preprocessing parameters.
         fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
@@ -282,7 +334,10 @@ def write_file_to_tfrecords_2ch(write_file, base_dir, read_file, audio_config, a
         spectrogram_1 = np.divide(spectrogram_1, np.max(spectrogram_1))
         spectrogram_2 = np.divide(spectrogram_2, np.max(spectrogram_2))
     #spectrogram_1 = np.append(spectrogram_1[4:, :], spectrogram_1[0:4, :], axis=0)
-    spectrogram = np.stack((spectrogram_1[:, :spectrogram_2.shape[1]], spectrogram_2), axis=0)
+    #spectrogram = np.stack((spectrogram_1[:, :spectrogram_2.shape[1]], spectrogram_2), axis=0)
+    print(spectrogram_1.shape)
+    print(spectrogram_2.shape)
+    spectrogram = np.stack((spectrogram_1, spectrogram_2), axis=0)
     spectrogram = np.transpose(spectrogram, (1, 2, 0))
     print(spectrogram.shape)
 
