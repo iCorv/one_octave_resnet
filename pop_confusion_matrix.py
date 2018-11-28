@@ -6,6 +6,7 @@ import re
 import io
 import itertools
 import matplotlib
+import matplotlib.pyplot as plt
 
 
 class SaverHook(tf.train.SessionRunHook):
@@ -68,7 +69,7 @@ class SaverHook(tf.train.SessionRunHook):
         '''
         numClasses = len(self.labels)
 
-        fig = matplotlib.figure.Figure(figsize=(numClasses, numClasses), dpi=100, facecolor='w', edgecolor='k')
+        fig = plt.figure(figsize=(numClasses, numClasses), dpi=100, facecolor='w', edgecolor='k')
         ax = fig.add_subplot(1, 1, 1)
         ax.imshow(cm, cmap='Oranges')
 
