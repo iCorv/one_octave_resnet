@@ -229,8 +229,9 @@ def preprocess_2ch_fold_parallel(fold, mode, norm=False):
     def parallel_loop(file):
         # split file path string at "/" and take the last split, since it's the actual filename
         num_ex_processed = write_file_to_tfrecords_2ch(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
-                                                   ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                   config['context_frames'], config['is_chroma'])
+                                                       ".tfrecords", config['audio_path'], file, audio_config,
+                                                       config['audio_config_2'], norm, config['context_frames'],
+                                                       config['is_chroma'])
         return num_ex_processed
 
     num_cores = multiprocessing.cpu_count()
