@@ -6,7 +6,6 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
 from math import sqrt
-import pop_confusion_matrix
 
 
 def conv_net_model_fn(features, labels, mode, params):
@@ -268,7 +267,6 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     else:
         train_op = None
 
-    #mean_iou = tf.metrics.mean_iou(labels, predictions['classes'], 88)
     fn = tf.metrics.false_negatives(labels, predictions['classes'])
     fp = tf.metrics.false_positives(labels, predictions['classes'])
     tp = tf.metrics.true_positives(labels, predictions['classes'])
@@ -277,12 +275,6 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     # this is the Kelz et. al. def of frame wise metric F1
     f = tf.multiply(tf.constant(2.0), tf.multiply(precision[0], recall[0]))
     f = tf.divide(f, tf.add(precision[0], recall[0]))
-
-    confusionMatrixSaveHook = pop_confusion_matrix.SaverHook(
-        labels=list(str(i) for i in range(88)),
-        confusion_matrix_tensor_name='mean_iou/total_confusion_matrix',
-        summary_writer=tf.summary.FileWriterCache.get("./model/eval")
-    )
 
     tf.identity(fn[0], name="fn")
     tf.identity(fp[0], name="fp")
@@ -303,8 +295,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         predictions=predictions,
         loss=loss,
         train_op=train_op,
-        eval_metric_ops=metrics,
-        evaluation_hooks=[confusionMatrixSaveHook])
+        eval_metric_ops=metrics)
 
 
 def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8, num_classes=88):

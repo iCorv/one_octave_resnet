@@ -11,7 +11,6 @@ from official.utils.logs import logger
 import numpy as np
 import pop_conv_net_kelz
 import glob
-import pop_confusion_matrix
 
 train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
 val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
@@ -51,11 +50,6 @@ def main(_):
         # model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params=hparams)
-
-    classifier = tf.contrib.estimator.add_metrics(classifier,
-                                                 lambda labels, predictions: {
-                                                     'mean_iou': tf.metrics.mean_iou(labels, predictions['classes'],
-                                                                                     88)})
 
     benchmark_logger = logger.get_benchmark_logger()
     #benchmark_logger.log_run_info('ConvNet', 'MAPS', hparams, test_id=TEST_ID)
