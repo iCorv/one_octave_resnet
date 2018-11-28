@@ -304,7 +304,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         loss=loss,
         train_op=train_op,
         eval_metric_ops=metrics,
-        evaluation_hooks=confusionMatrixSaveHook)
+        evaluation_hooks=[confusionMatrixSaveHook])
 
 
 def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8, num_classes=88):
