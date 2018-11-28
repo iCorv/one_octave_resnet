@@ -35,7 +35,7 @@ def import_tfrecord(filepath):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
                 #print(spec_tensor.shape)
-                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,1]), np.float32)[1, :]
+                example_slice = np.array(np.squeeze(spec_tensor[:,:,:,0]), np.float32)[1, :]
                 #print(np.shape(example_slice))
 
                 np_spec = np.append(np_spec, np.reshape(example_slice, (input_shape[1], 1)), axis=1)
