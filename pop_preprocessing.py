@@ -244,13 +244,14 @@ def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm,
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     writer = tf.python_io.TFRecordWriter(write_file)
     spectrogram = wav_to_spec(base_dir, read_file, audio_config)
+    print(spectrogram.shape)
     ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0], is_chroma)
     total_examples_processed = 0
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
     #spectrogram[:, 229 - 12:] = predict.spectrogram_to_chroma(spectrogram, context_frames)
-    spectrogram[:, spectrogram.shape[1] - 12:] = load_chroma("./chroma/", read_file.split('/')[-1])
+    #spectrogram[:, spectrogram.shape[1] - 12:] = load_chroma("./chroma/", read_file.split('/')[-1])
 
 
     for frame in range(context_frames, spectrogram.shape[0] - context_frames):
@@ -267,20 +268,19 @@ def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm,
     return total_examples_processed
 
 
-def write_file_to_tfrecords_2ch(write_file, base_dir, read_file, audio_config, norm, context_frames, is_chroma):
+def write_file_to_tfrecords_2ch(write_file, base_dir, read_file, audio_config, audio_config_2, norm, context_frames, is_chroma):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     writer = tf.python_io.TFRecordWriter(write_file)
     spectrogram_2 = wav_to_spec(base_dir, read_file, audio_config)
-    audio_config['frame_size'] = 1024
-    spectrogram_1 = wav_to_spec(base_dir, read_file, audio_config)
+    spectrogram_1 = wav_to_spec(base_dir, read_file, audio_config_2)
     ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram_2.shape[0], is_chroma)
     total_examples_processed = 0
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram_1 = np.divide(spectrogram_1, np.max(spectrogram_1))
         spectrogram_2 = np.divide(spectrogram_2, np.max(spectrogram_2))
-    spectrogram_1 = np.append(spectrogram_1[4:, :], spectrogram_1[0:4, :], axis=0)
-    spectrogram = np.stack((spectrogram_1, spectrogram_2), axis=0)
+    #spectrogram_1 = np.append(spectrogram_1[4:, :], spectrogram_1[0:4, :], axis=0)
+    spectrogram = np.stack((spectrogram_1[:, :spectrogram_2.shape[1]], spectrogram_2), axis=0)
     spectrogram = np.transpose(spectrogram, (1, 2, 0))
     print(spectrogram.shape)
 

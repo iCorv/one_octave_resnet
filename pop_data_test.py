@@ -11,7 +11,7 @@ import pop_input_data
 def import_tfrecord(filepath):
     #dataset = tf.data.TFRecordDataset(filepath)
     input_shape = [5, 229, 1]
-    num_labels = 12
+    num_labels = 88
 
     # Extract features from single example
     #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
