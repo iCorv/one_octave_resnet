@@ -52,6 +52,11 @@ def main(_):
         config=estimator_config,
         params=hparams)
 
+    classifier = tf.contrib.estimator.add_metrics(classifier,
+                                                 lambda labels, predictions: {
+                                                     'mean_iou': tf.metrics.mean_iou(labels, predictions['classes'],
+                                                                                     88)})
+
     benchmark_logger = logger.get_benchmark_logger()
     #benchmark_logger.log_run_info('ConvNet', 'MAPS', hparams, test_id=TEST_ID)
 

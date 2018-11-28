@@ -268,7 +268,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     else:
         train_op = None
 
-    mean_iou = tf.metrics.mean_iou(labels, predictions['classes'], 88)
+    #mean_iou = tf.metrics.mean_iou(labels, predictions['classes'], 88)
     fn = tf.metrics.false_negatives(labels, predictions['classes'])
     fp = tf.metrics.false_positives(labels, predictions['classes'])
     tp = tf.metrics.true_positives(labels, predictions['classes'])
@@ -295,8 +295,8 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
                'true_positives': tp,
                'precision': precision,
                'recall': recall,
-               'f1_score': (f, tf.group(precision[1], recall[1])),
-               'mean_iou': mean_iou}
+               'f1_score': (f, tf.group(precision[1], recall[1]))}
+               #'mean_iou': mean_iou}
 
     return tf.estimator.EstimatorSpec(
         mode=mode,
