@@ -279,7 +279,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     f = tf.divide(f, tf.add(precision[0], recall[0]))
 
     confusionMatrixSaveHook = pop_confusion_matrix.SaverHook(
-        labels=list(range(88)),
+        labels=list(str(i) for i in range(88)),
         confusion_matrix_tensor_name='mean_iou/total_confusion_matrix',
         summary_writer=tf.summary.FileWriterCache.get("./model/eval")
     )
