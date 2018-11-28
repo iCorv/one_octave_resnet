@@ -11,6 +11,7 @@ from official.utils.logs import logger
 import numpy as np
 import pop_conv_net_kelz
 import glob
+import pop_confusion_matrix
 
 train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
 val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
