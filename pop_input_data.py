@@ -243,7 +243,7 @@ FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0
 
 feature_shape = [5, 229]
 num_labels = 88
-num_features = feature_shape[0] * feature_shape[1] #* feature_shape[2]
+num_features = feature_shape[0] * feature_shape[1] * feature_shape[2]
 
 
 def _parse_line(line):
