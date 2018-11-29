@@ -9,7 +9,7 @@ import pop_input_data as dataset
 import os
 from official.utils.logs import logger
 import numpy as np
-import pop_conv_net_kelz
+import pop_model
 import glob
 
 train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
@@ -43,7 +43,7 @@ def main(_):
         log_step_count_steps=1000
     )
     classifier = tf.estimator.Estimator(
-        model_fn=pop_conv_net_kelz.conv_net_model_fn,
+        model_fn=pop_model.conv_net_model_fn,
         # model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
         # model_dir="/Users/Jaedicke/tensorflow/model/model",
         model_dir="./model",

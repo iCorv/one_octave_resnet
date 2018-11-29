@@ -1,5 +1,5 @@
 import tensorflow as tf
-import pop_conv_net_kelz
+import pop_model
 import configurations.pop_hyper_parameters as php
 import numpy as np
 
@@ -13,7 +13,7 @@ def serving_input_fn():
 
 def build_predictor():
     classifier = tf.estimator.Estimator(
-        model_fn=pop_conv_net_kelz.conv_net_model_fn,
+        model_fn=pop_model.conv_net_model_fn,
         model_dir="./model_kelz_chroma",
         #warm_start_from="./model/model.ckpt-1323466",
         params=hparams)
