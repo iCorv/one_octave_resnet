@@ -9,7 +9,7 @@ from math import sqrt
 
 
 def conv_net_model_fn(features, labels, mode, params):
-    if params['data_format'] == 'NCHW':
+    if params['data_format'] == 'NCHW' or params['data_format'] == 'channels_first':
         # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
         # This provides a large performance boost on GPU. See
         # https://www.tensorflow.org/performance/performance_guide#data_formats
@@ -192,7 +192,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+    logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
                            batch_size=batch_size, num_classes=num_classes)
 
 
@@ -347,6 +347,158 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8, num_cla
             net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc6')
             print(net.shape)
             return net
+
+_BATCH_NORM_DECAY = 0.997
+_BATCH_NORM_EPSILON = 1e-5
+#def _building_block():
+
+
+def batch_norm(inputs, training, data_format):
+    """Performs a batch normalization using a standard set of parameters."""
+    # We set fused=True for a significant performance boost. See
+    # https://www.tensorflow.org/performance/performance_guide#common_fused_ops
+    return tf.layers.batch_normalization(
+        inputs=inputs, axis=1 if data_format == 'channels_first' else 3,
+        momentum=_BATCH_NORM_DECAY, epsilon=_BATCH_NORM_EPSILON, center=True,
+        scale=True, training=training, fused=True)
+
+
+def fixed_padding(inputs, kernel_size, data_format):
+    """Pads the input along the spatial dimensions independently of input size.
+    Args:
+      inputs: A tensor of size [batch, channels, height_in, width_in] or
+        [batch, height_in, width_in, channels] depending on data_format.
+      kernel_size: The kernel to be used in the conv2d or max_pool2d operation.
+                   Should be a positive integer.
+      data_format: The input format ('channels_last' or 'channels_first').
+    Returns:
+      A tensor with the same format as the input with the data either intact
+      (if kernel_size == 1) or padded (if kernel_size > 1).
+    """
+    pad_total = kernel_size - 1
+    pad_beg = pad_total // 2
+    pad_end = pad_total - pad_beg
+
+    if data_format == 'channels_first':
+        padded_inputs = tf.pad(inputs, [[0, 0], [0, 0],
+                                        [pad_beg, pad_end], [pad_beg, pad_end]])
+    else:
+        padded_inputs = tf.pad(inputs, [[0, 0], [pad_beg, pad_end],
+                                        [pad_beg, pad_end], [0, 0]])
+    return padded_inputs
+
+
+def conv2d_fixed_padding(inputs, filters, kernel_size, strides, padding, data_format):
+    """Strided 2-D convolution with explicit padding."""
+    # The padding is consistent and is based only on `kernel_size`, not on the
+    # dimensions of `inputs` (as opposed to using `tf.layers.conv2d` alone).
+    if strides > 1:
+        inputs = fixed_padding(inputs, kernel_size, data_format)
+
+    return tf.layers.conv2d(
+        inputs=inputs, filters=filters, kernel_size=kernel_size, strides=strides,
+        padding=padding, use_bias=False,
+        kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+              factor=2.0, mode='FAN_AVG', uniform=True),
+        data_format=data_format)
+
+
+def _building_block_v1(inputs, filters, training, projection_shortcut, strides, padding,
+                       data_format):
+    """A single block for ResNet v1, without a bottleneck.
+    Convolution then batch normalization then ReLU as described by:
+      Deep Residual Learning for Image Recognition
+      https://arxiv.org/pdf/1512.03385.pdf
+      by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Dec 2015.
+    Args:
+      inputs: A tensor of size [batch, channels, height_in, width_in] or
+        [batch, height_in, width_in, channels] depending on data_format.
+      filters: The number of filters for the convolutions.
+      training: A Boolean for whether the model is in training or inference
+        mode. Needed for batch normalization.
+      projection_shortcut: The function to use for projection shortcuts
+        (typically a 1x1 convolution when downsampling the input).
+      strides: The block's stride. If greater than 1, this block will ultimately
+        downsample the input.
+      data_format: The input format ('channels_last' or 'channels_first').
+    Returns:
+      The output tensor of the block; shape should match inputs.
+    """
+    shortcut = inputs
+
+    if projection_shortcut is not None:
+        shortcut = projection_shortcut(inputs)
+        shortcut = batch_norm(inputs=shortcut, training=training,
+                              data_format=data_format)
+
+    inputs = conv2d_fixed_padding(
+        inputs=inputs, filters=filters, kernel_size=3, strides=strides, padding=padding,
+        data_format=data_format)
+    inputs = batch_norm(inputs, training, data_format)
+    inputs = tf.nn.relu(inputs)
+
+    inputs = conv2d_fixed_padding(
+        inputs=inputs, filters=filters, kernel_size=3, strides=1, padding='SAME',
+        data_format=data_format)
+    inputs = batch_norm(inputs, training, data_format)
+    inputs += shortcut
+    inputs = tf.nn.relu(inputs)
+
+    return inputs
+
+
+def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_classes=88):
+    """
+
+    :param inputs:
+    :param is_training:
+    :param data_format:
+    :param batch_size:
+    :param num_classes:
+    :return:
+    """
+
+    def projection_shortcut(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
+                               data_format=data_format)
+
+    print(net.shape)
+
+    net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[1, 2], padding='VALID',
+                                  data_format=data_format)
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
+
+    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
+                             data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[1, 2], padding='VALID',
+                                  data_format=data_format)
+
+    net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
+
+    # Flatten
+    print(net.shape)
+    #net = tf.reshape(net, (-1, 64 * 1 * 53), 'flatten4')
+    net = tf.layers.flatten(net)
+    print(net.shape)
+    #net = slim.fully_connected(net, 512, scope='fc5')
+    net = tf.layers.dense(net, 512, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+              factor=2.0, mode='FAN_AVG', uniform=True))
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
+    net = tf.layers.dense(net, num_classes, activation=None, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+              factor=2.0, mode='FAN_AVG', uniform=True))
+    print(net.shape)
+    return net
 
 
 def log_loss(labels, predictions, epsilon=1e-7, scope=None, weights=None):
