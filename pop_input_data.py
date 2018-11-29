@@ -241,7 +241,7 @@ FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0
                   [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.],
                   [0]]  # sets field types
 
-feature_shape = [5, 229, 2]
+feature_shape = [5, 213, 1]
 num_labels = 88
 num_features = feature_shape[0] * feature_shape[1] * feature_shape[2]
 

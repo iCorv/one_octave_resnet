@@ -48,7 +48,7 @@ def get_hyper_parameters(net):
                   'momentum': 1.0,
                   'momentum_cycle': [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9], #[momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+2))][0:30] + [momentum for momentum in frange(0.85, 0.95, (0.95-0.85)/(30+2))][0:31],
                   'frames': 5,
-                  'freq_bins': 229,
+                  'freq_bins': 213,
                   'num_channels': 2,
                   'num_classes': 88,
                   'num_examples': num_examples,
