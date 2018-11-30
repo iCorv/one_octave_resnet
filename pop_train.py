@@ -24,10 +24,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = False
+train_and_val = True
 predict_flag = False
 train_flag = False
-eval_flag = True
+eval_flag = False
 
 hparams = php.get_hyper_parameters('ResNet_v1')
 
