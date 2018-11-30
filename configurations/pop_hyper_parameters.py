@@ -71,8 +71,8 @@ def get_hyper_parameters(net):
                   'boundary_epochs': [5, 10, 15, 20, 25, 30, 35, 40, 45],
                   # [epoch for epoch in frange(0, train_epochs, train_epochs/60)][0:60],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
-                  'learning_rate_cycle': [0.1*10, 0.05*10, 0.025*10, 0.0125*10, 0.00625*10, 0.003125*10, 0.0015625*10, 0.00078125*10,
-                                          0.000390625*10, 0.0001*10],
+                  'learning_rate_cycle': [0.1*2, 0.05*2, 0.025*2, 0.0125*2, 0.00625*2, 0.003125*2, 0.0015625*2, 0.00078125*2,
+                                          0.000390625*2, 0.0001*2],
                   # [learning_rate for learning_rate in frange(10e-5, 1., (1. - 10e-5) / (30. + 2.))][
                   # 0:30] + [learning_rate for learning_rate in frange(1., 10e-5, (1. - 10e-5) / (30. + 2.))][
                   # 0:31],
