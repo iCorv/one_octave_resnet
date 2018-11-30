@@ -24,10 +24,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = True
+train_and_val = False
 predict_flag = False
 train_flag = False
-eval_flag = False
+eval_flag = True
 
 hparams = php.get_hyper_parameters('ResNet_v1')
 
@@ -89,7 +89,7 @@ def main(_):
     # Predict
     if predict_flag:
         predictions = classifier.predict(input_fn=lambda: dataset.tfrecord_test_input_fn(filepath=test_dataset_tfrecord,
-                                                                                         batch_size=1, num_epochs=1), checkpoint_path="./model/model.ckpt-1323466")
+                                                                                         batch_size=1, num_epochs=1), checkpoint_path="./model/model.ckpt-312775")
 
         # Problem: due to graph structure the value needs to be determined at compilation time?!
         num_test_frames = 28442
