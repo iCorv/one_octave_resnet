@@ -10,8 +10,8 @@ DEFAULT_DTYPE = tf.float32
 # fold_3: train - 4366098. valid - 580372, test - 1570005
 # fold_4: train - 4221233. valid - 725237, test - 1570005
 
-num_examples = 4366098
-num_val_examples = 580372
+num_examples = 4197453
+num_val_examples = 749017
 num_test_examples = 1570005
 batch_size = 128
 batches_per_epoch = int(round(num_examples/batch_size))
@@ -71,8 +71,8 @@ def get_hyper_parameters(net):
                   'boundary_epochs': [5, 10, 15, 20, 25, 30, 35, 40, 45],
                   # [epoch for epoch in frange(0, train_epochs, train_epochs/60)][0:60],
                   # factor by which the initial learning rate is multiplied (needs to be one more than the boundaries)
-                  'learning_rate_cycle': [0.1*2, 0.05*2, 0.025*2, 0.0125*2, 0.00625*2, 0.003125*2, 0.0015625*2, 0.00078125*2,
-                                          0.000390625*2, 0.0001*2],
+                  'learning_rate_cycle': [0.1, 0.05, 0.025, 0.0125, 0.00625, 0.003125, 0.0015625, 0.00078125,
+                                          0.000390625, 0.0001],
                   # [learning_rate for learning_rate in frange(10e-5, 1., (1. - 10e-5) / (30. + 2.))][
                   # 0:30] + [learning_rate for learning_rate in frange(1., 10e-5, (1. - 10e-5) / (30. + 2.))][
                   # 0:31],
