@@ -1,4 +1,4 @@
-# Simple frame-wise Piano Transcription using Deep Convolutional Neural Networks
+# Improving Polyphonic Piano Transcription using Deep Residual Learning
 This project investigates the usage of ResNet for frame-wise piano transcription. The project is still work in progress, 
 momentarily only notes from one octave of the piano are used to train and evaluate the model.
 ### Adding TF models to interpreter path
