@@ -337,12 +337,13 @@ def write_file_to_tfrecords_2ch(write_file, base_dir, read_file, audio_config, a
     #spectrogram = np.stack((spectrogram_1[:, :spectrogram_2.shape[1]], spectrogram_2), axis=0)
     print(spectrogram_1.shape)
     print(spectrogram_2.shape)
-    spectrogram = np.stack((spectrogram_1, spectrogram_2), axis=0)
-    spectrogram = np.transpose(spectrogram, (1, 2, 0))
+    spectrogram = np.append(spectrogram_1, spectrogram_2, axis=1)
+    #spectrogram = np.stack((spectrogram_1, spectrogram_2), axis=0)
+    #spectrogram = np.transpose(spectrogram, (1, 2, 0))
     print(spectrogram.shape)
 
     for frame in range(context_frames, spectrogram_2.shape[0] - context_frames):
-        example = features_to_example(spectrogram[frame - context_frames:frame + context_frames + 1, :, :],
+        example = features_to_example(spectrogram[frame - context_frames:frame + context_frames + 1, :],
                                       ground_truth[frame, :])
 
         # Serialize to string and write on the file
