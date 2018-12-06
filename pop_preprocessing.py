@@ -19,6 +19,7 @@ import tensorflow as tf
 import os
 import configurations.pop_preprocessing_parameters as ppp
 import warnings
+import librosa
 #import pop_predict as predict
 from joblib import Parallel, delayed
 import multiprocessing
@@ -298,6 +299,9 @@ def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm,
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     writer = tf.python_io.TFRecordWriter(write_file)
     spectrogram = wav_to_spec(base_dir, read_file, audio_config)
+    spectrogram, _ = librosa.decompose.hpss(spectrogram.T)
+    #spectrogram = np.minimum(spectrogram.T, librosa.decompose.nn_filter(spectrogram.T, aggregate=np.median, metric='cosine'))
+    spectrogram = spectrogram.T
     print(spectrogram.shape)
     ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0], is_chroma)
     total_examples_processed = 0
