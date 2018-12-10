@@ -252,12 +252,12 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         tf.identity(momentum, name='momentum')
         tf.summary.scalar('momentum', momentum)
 
-        #optimizer = tf.train.AdamOptimizer(learning_rate)
-        optimizer = tf.train.MomentumOptimizer(
-            learning_rate=learning_rate,
-            momentum=momentum,
-            use_nesterov=True
-        )
+        optimizer = tf.train.AdamOptimizer(0.001)
+        #optimizer = tf.train.MomentumOptimizer(
+        #    learning_rate=learning_rate,
+        #    momentum=momentum,
+        #    use_nesterov=True
+        #)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
         with tf.control_dependencies(update_ops):
@@ -471,7 +471,7 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[2, 2], strides=[1, 2], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[2, 2], strides=[2, 2], padding='VALID',
                                   data_format=data_format)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
@@ -480,7 +480,7 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
                              data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[2, 2], strides=[1, 2], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[2, 2], strides=[2, 2], padding='VALID',
                                   data_format=data_format)
 
     net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
