@@ -192,8 +192,8 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
-                           batch_size=batch_size, num_classes=num_classes)
+    #logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+    #                       batch_size=batch_size, num_classes=num_classes)
 
     logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size,
                            num_classes=num_classes)
