@@ -350,7 +350,6 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8, num_cla
 
 _BATCH_NORM_DECAY = 0.997
 _BATCH_NORM_EPSILON = 1e-5
-#def _building_block():
 
 
 def batch_norm(inputs, training, data_format):

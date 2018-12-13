@@ -49,6 +49,33 @@ def wav_to_spec(base_dir, filename, _audio_options):
     return spectrogram
 
 
+def wav_to_hpcp(base_dir, filename):
+    """Transforms the contents of a wav file into a series of spec frames."""
+    audio_filename = os.path.join(base_dir, filename + '.wav')
+    audio_options = ppp.get_hpcp_parameters()
+    fmin = audio_options['fmin']
+    fmax = audio_options['fmax']
+    hpcp_processor = getattr(madmom.audio.chroma, 'HarmonicPitchClassProfile')
+    audio_options['fmin'] = fmin[0]
+    audio_options['fmax'] = fmax[0]
+    hpcp = np.array(hpcp_processor(audio_filename, **audio_options))
+
+    for index in range(1, 7):
+        audio_options['fmin'] = fmin[index]
+        audio_options['fmax'] = fmax[index]
+        hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)), axis=1)
+    audio_options['fmin'] = fmin[-1]
+    audio_options['fmax'] = fmax[-1]
+    #audio_options['num_classes'] = 8
+    hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)[:, :4]), axis=1)
+    # post-processing,
+    # normalize hpcp by max value per frame. Add a small value to avoid division by zero
+    norm_vec = np.max(hpcp, axis=0) + 1e-7
+
+    hpcp = hpcp/norm_vec[None, :]
+    return hpcp
+
+
 def get_spec_processor(_audio_options, madmom_spec):
     """Returns the madmom spectrogram processor as defined in audio options."""
     audio_options = dict(_audio_options)
@@ -65,6 +92,20 @@ def get_spec_processor(_audio_options, madmom_spec):
         audio_options['filterbank'] = getattr(madmom_spec, 'LogarithmicFilterbank')
 
     return spectype, audio_options
+
+
+def get_hpcp_processor(madmom_chroma):
+    """Returns the madmom Harmonic Pitch Class Profile processor as defined in audio options."""
+    audio_options = ppp.get_hpcp_parameters()
+
+    hpcp = getattr(madmom_chroma, 'HarmonicPitchClassProfile')
+
+    # if 'filterbank' in audio_options:
+    #     audio_options['filterbank'] = getattr(madmom_chroma, audio_options['filterbank'])
+    # else:
+    #     audio_options['filterbank'] = getattr(madmom_chroma, 'PitchClassProfileFilterbank')
+
+    return hpcp, audio_options
 
 
 def midi_to_groundtruth(base_dir, filename, dt, n_frames, is_chroma=False):
@@ -203,7 +244,7 @@ def preprocess_fold(fold, mode, norm=False):
         # split file path string at "/" and take the last split, since it's the actual filename
         num_ex_processed = write_file_to_tfrecords(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
                                                    ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                   config['context_frames'], config['is_chroma'])
+                                                   config['context_frames'], config['is_chroma'], config['is_hpcp'])
         total_examples_processed = total_examples_processed + num_ex_processed
 
     print("Examples processed: " + str(total_examples_processed))
@@ -255,7 +296,7 @@ def preprocess_fold_parallel(fold, mode, norm=False):
         # split file path string at "/" and take the last split, since it's the actual filename
         num_ex_processed = write_file_to_tfrecords(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
                                                    ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                   config['context_frames'], config['is_chroma'])
+                                                   config['context_frames'], config['is_chroma'], config['is_hpcp'])
         return num_ex_processed
 
     num_cores = multiprocessing.cpu_count()
@@ -295,13 +336,19 @@ def preprocess_2ch_fold_parallel(fold, mode, norm=False):
              total_examples_processed=np.sum(total_examples_processed))
 
 
-def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm, context_frames, is_chroma):
+def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm, context_frames, is_chroma, is_hpcp):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     writer = tf.python_io.TFRecordWriter(write_file)
-    spectrogram = wav_to_spec(base_dir, read_file, audio_config)
-    spectrogram, _ = librosa.decompose.hpss(spectrogram.T)
+    if is_hpcp:
+        spectrogram = wav_to_hpcp(base_dir, read_file)
+    else:
+        spectrogram = wav_to_spec(base_dir, read_file, audio_config)
+    #rec = librosa.segment.recurrence_matrix(spectrogram.T, mode='affinity', metric='cosine', sparse=True)
+    #spectrogram = np.minimum(spectrogram.T, librosa.decompose.nn_filter(spectrogram.T, metric='cosine', k=5, aggregate=np.median))
+    #spectrogram, _ = librosa.decompose.hpss(spectrogram.T)
     #spectrogram = np.minimum(spectrogram.T, librosa.decompose.nn_filter(spectrogram.T, aggregate=np.median, metric='cosine'))
-    spectrogram = spectrogram.T
+    #spectrogram = spectrogram.T
+
     print(spectrogram.shape)
     ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0], is_chroma)
     total_examples_processed = 0
