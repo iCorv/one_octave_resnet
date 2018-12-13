@@ -8,7 +8,7 @@ def get_preprocessing_parameters(fold_num):
 
     split = splits[fold_num]
 
-    config = {'audio_path': '../MAPS',
+    config = {'audio_path': '../../MAPS',
               'train_fold': './splits/{}/train'.format(split),
               'valid_fold': './splits/{}/valid'.format(split),
               'test_fold': './splits/{}/test'.format(split),
@@ -16,7 +16,7 @@ def get_preprocessing_parameters(fold_num):
               'tfrecords_valid_fold': './tfrecords-dataset/{}/valid/'.format(split),
               'tfrecords_test_fold': './tfrecords-dataset/{}/test/'.format(split),
               'chord_folder': './tfrecords-dataset/chords/',
-              'chord_fold': './splits/UMA_chords/train',
+              'chord_fold': './splits/chord-splits/train',
               'chroma_folder': './chroma/',
               'context_frames': 2,
               'is_chroma': False,
