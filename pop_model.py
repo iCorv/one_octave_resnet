@@ -195,6 +195,9 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
                            batch_size=batch_size, num_classes=num_classes)
 
+    logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size,
+                           num_classes=num_classes)
+
 
     # Visualize conv1 kernels
     # with tf.variable_scope('conv1'):
@@ -470,7 +473,7 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[2, 1], strides=[1, 1], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[2, 2], strides=[2, 1], padding='VALID',
                                   data_format=data_format)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)

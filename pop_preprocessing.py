@@ -222,7 +222,7 @@ def preprocess_chords(fold, norm=False):
 
 
     print("Examples processed: " + str(total_examples_processed))
-    np.savez(config['tfrecords_' + 'chord_fold'] + "total_examples_processed",
+    np.savez(config['chord_folder'] + "total_examples_processed",
              total_examples_processed=total_examples_processed)
 
 
