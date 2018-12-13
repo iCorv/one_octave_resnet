@@ -252,12 +252,12 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         tf.identity(momentum, name='momentum')
         tf.summary.scalar('momentum', momentum)
 
-        optimizer = tf.train.AdamOptimizer(0.001)
-        #optimizer = tf.train.MomentumOptimizer(
-        #    learning_rate=learning_rate,
-        #    momentum=momentum,
-        #    use_nesterov=True
-        #)
+        #optimizer = tf.train.AdamOptimizer(0.001)
+        optimizer = tf.train.MomentumOptimizer(
+            learning_rate=learning_rate,
+            momentum=momentum,
+            use_nesterov=True
+        )
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
         with tf.control_dependencies(update_ops):
