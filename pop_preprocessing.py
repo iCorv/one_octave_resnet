@@ -67,12 +67,14 @@ def wav_to_hpcp(base_dir, filename):
     audio_options['fmin'] = fmin[-1]
     audio_options['fmax'] = fmax[-1]
     #audio_options['num_classes'] = 8
-    hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)[:, :12]), axis=1)
+    hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)[:, :int(audio_options['num_classes']/3)]), axis=1)
     # post-processing,
     # normalize hpcp by max value per frame. Add a small value to avoid division by zero
-    norm_vec = np.max(hpcp, axis=0) + 1e-7
+    #norm_vec = np.max(hpcp, axis=1) + 1e-7
 
-    hpcp = hpcp/norm_vec[None, :]
+    #hpcp = hpcp/norm_vec[:, None]
+    hpcp = np.log10(hpcp + 1.0)
+    hpcp = hpcp/np.max(hpcp)
     return hpcp
 
 

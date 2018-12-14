@@ -6,11 +6,12 @@ import madmom
 import glob
 import tensorflow as tf
 import pop_input_data
+from scipy import signal
 
 
 def import_tfrecord(filepath):
     #dataset = tf.data.TFRecordDataset(filepath)
-    input_shape = [5, 264, 1]
+    input_shape = [15, 88, 1]
     num_labels = 88
 
     # Extract features from single example
@@ -31,7 +32,7 @@ def import_tfrecord(filepath):
 
     # Actual session to run the graph.
     with tf.Session() as sess:
-        for index in range(0, 1500):
+        for index in range(0, 5000):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
                 #print(spec_tensor.shape)
@@ -49,6 +50,7 @@ def import_tfrecord(filepath):
             except tf.errors.OutOfRangeError:
                 break
 
+        #np_spec = np.clip(signal.convolve2d(np_spec, [[-1, -1, -1],[-1, 8, -1],[-1, -1, -1]], boundary='symm', mode='same'), 0.0, None)
         print(np.max(np_spec))
         print(np.min(np_spec))
         print(np.shape(np_spec))
