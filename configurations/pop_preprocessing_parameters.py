@@ -8,7 +8,7 @@ def get_preprocessing_parameters(fold_num):
 
     split = splits[fold_num]
 
-    config = {'audio_path': '../../MAPS',
+    config = {'audio_path': '../MAPS',
               'train_fold': './splits/{}/train'.format(split),
               'valid_fold': './splits/{}/valid'.format(split),
               'test_fold': './splits/{}/test'.format(split),
@@ -20,7 +20,7 @@ def get_preprocessing_parameters(fold_num):
               'chroma_folder': './chroma/',
               'context_frames': 2,
               'is_chroma': False,
-              'is_hpcp': True,
+              'is_hpcp': False,
               'audio_config': {'num_channels': 1,
                                'sample_rate': 44100,
                                'filterbank': 'LogarithmicFilterbank',
@@ -60,11 +60,11 @@ def get_hpcp_parameters():
               'frame_size': 4096,
               'fft_size': 4096,
               'fps': 100,
-              'num_classes': 12,
-              'fmin': [27.5, 55.0, 110.0, 220.0, 440.0, 880.0, 1760.0, 3520.0], #[20.0, 53.0, 105.0, 213.0, 427.0, 855.0, 1710.0, 3420.0]
-              'fmax': [51.9, 103.8, 207.7, 415.3, 830.6, 1661.2, 3322.4, 6644.9], #[53.0, 105.0, 213.0, 427.0, 855.0, 1710.0, 3420.0, 4300.0]
+              'num_classes': 36,
+              'fmin': [27.5, 54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0], #[27.5, 54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0]
+              'fmax': [53.0, 106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9], #[53.0, 106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9]
               'fref': 440.0,
-              'window': 1,
+              'window': 2,
               'norm_filters': False,
               'circular_shift': False,
               'norm': True}
