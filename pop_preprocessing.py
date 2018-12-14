@@ -67,7 +67,7 @@ def wav_to_hpcp(base_dir, filename):
     audio_options['fmin'] = fmin[-1]
     audio_options['fmax'] = fmax[-1]
     #audio_options['num_classes'] = 8
-    hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)[:, :4]), axis=1)
+    hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)[:, :12]), axis=1)
     # post-processing,
     # normalize hpcp by max value per frame. Add a small value to avoid division by zero
     norm_vec = np.max(hpcp, axis=0) + 1e-7
@@ -92,20 +92,6 @@ def get_spec_processor(_audio_options, madmom_spec):
         audio_options['filterbank'] = getattr(madmom_spec, 'LogarithmicFilterbank')
 
     return spectype, audio_options
-
-
-def get_hpcp_processor(madmom_chroma):
-    """Returns the madmom Harmonic Pitch Class Profile processor as defined in audio options."""
-    audio_options = ppp.get_hpcp_parameters()
-
-    hpcp = getattr(madmom_chroma, 'HarmonicPitchClassProfile')
-
-    # if 'filterbank' in audio_options:
-    #     audio_options['filterbank'] = getattr(madmom_chroma, audio_options['filterbank'])
-    # else:
-    #     audio_options['filterbank'] = getattr(madmom_chroma, 'PitchClassProfileFilterbank')
-
-    return hpcp, audio_options
 
 
 def midi_to_groundtruth(base_dir, filename, dt, n_frames, is_chroma=False):
