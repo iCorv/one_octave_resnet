@@ -465,9 +465,12 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
         return conv2d_fixed_padding(
             inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
+
     net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
                                data_format=data_format)
 
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+                                  data_format=data_format)
     print(net.shape)
 
     net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
@@ -483,7 +486,7 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
                              data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[2, 2], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[2, 2], padding='VALID', #
                                   data_format=data_format)
 
     net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
