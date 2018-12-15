@@ -3,7 +3,7 @@ import tensorflow as tf
 
 DEFAULT_DTYPE = tf.float32
 # Context - 7
-# fold_1: train - 4195653, valid - 748717, test - 1570005
+# fold_1: train - 4195653, valid - 748717, test - 1569405
 # Context - 2
 # fold_1: train - 4197453, valid - 749017, test - 1570005
 # fold_2: train - 4249469, valid - 697001, test - 1570005
@@ -12,7 +12,7 @@ DEFAULT_DTYPE = tf.float32
 
 num_examples = 4195653
 num_val_examples = 748717
-num_test_examples = 1570005
+num_test_examples = 1569405
 batch_size = 128
 batches_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 50
