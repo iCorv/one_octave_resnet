@@ -23,7 +23,7 @@ import librosa
 #import pop_predict as predict
 from joblib import Parallel, delayed
 import multiprocessing
-from madmom.utils import midi
+from madmom.io import midi
 from enum import Enum
 warnings.filterwarnings("ignore")
 
@@ -99,9 +99,9 @@ def get_spec_processor(_audio_options, madmom_spec):
 def midi_to_groundtruth(base_dir, filename, dt, n_frames, is_chroma=False):
     """Computes the frame-wise ground truth from a piano midi file, as a note or chroma vector."""
     midi_filename = os.path.join(base_dir, filename + '.mid')
-    pattern = midi.MIDIFile.from_file(midi_filename)
+    notes = midi.load_midi(midi_filename)
     ground_truth = np.zeros((n_frames, 12 if is_chroma else 88)).astype(np.int64)
-    for onset, _pitch, duration, velocity, _channel in pattern.notes():
+    for onset, _pitch, duration, velocity, _channel in notes:
         pitch = int(_pitch)
         frame_start = int(np.round(onset / dt))
         frame_end = int(np.round((onset + duration) / dt))
