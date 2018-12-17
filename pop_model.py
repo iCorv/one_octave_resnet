@@ -7,6 +7,7 @@ import tensorflow.contrib.slim as slim
 import numpy as np
 from math import sqrt
 from tcn import TemporalConvNet
+import pop_tcn
 
 
 def conv_net_model_fn(features, labels, mode, params):
@@ -513,16 +514,20 @@ def tcn(inputs, is_training):
     timesteps = 15 * 88  # timesteps
     inputs = tf.reshape(inputs, [-1, num_inputs, timesteps])
     num_classes = 88  # MNIST total classes (0-9 digits)
-    if is_training:
-        dropout = 0.25
-    else:
-        dropout = 0.0
+    #if is_training:
+    dropout = 0.25
+    #else:
+    #    dropout = 0.0
     kernel_size = 3
     levels = 4
     nhid = 20  # hidden layer num of features
     print("Building TCN!")
-    logits = TemporalConvNet(num_channels=[nhid] * levels, num_levels=levels, stride=1, kernel_size=kernel_size, dropout=dropout)(
-            inputs)
+    logits = tf.layers.dense(
+        pop_tcn.TemporalConvNet([nhid] * levels, kernel_size, dropout)(
+            inputs, training=is_training)[:, -1, :],
+        num_classes, activation=None,
+        kernel_initializer=tf.orthogonal_initializer()
+    )
     print(logits.shape)
     return logits
 

@@ -1,6 +1,21 @@
 import tensorflow as tf
 
 
+
+_BATCH_NORM_DECAY = 0.997
+_BATCH_NORM_EPSILON = 1e-5
+
+
+def batch_norm(inputs, training, data_format):
+    """Performs a batch normalization using a standard set of parameters."""
+    # We set fused=True for a significant performance boost. See
+    # https://www.tensorflow.org/performance/performance_guide#common_fused_ops
+    return tf.layers.batch_normalization(
+        inputs=inputs, axis=1 if data_format == 'channels_first' else 3,
+        momentum=_BATCH_NORM_DECAY, epsilon=_BATCH_NORM_EPSILON, center=True,
+        scale=True, training=training, fused=True)
+
+
 class CausalConv1D(tf.layers.Conv1D):
     def __init__(self, filters,
                  kernel_size,
@@ -23,7 +38,7 @@ class CausalConv1D(tf.layers.Conv1D):
             kernel_size=kernel_size,
             strides=strides,
             padding='valid',
-            data_format='channels_last',
+            data_format='channels_first',
             dilation_rate=dilation_rate,
             activation=activation,
             use_bias=use_bias,
@@ -77,10 +92,12 @@ class TemporalBlock(tf.layers.Layer):
 
     def call(self, inputs, training=True):
         x = self.conv1(inputs)
-        x = tf.contrib.layers.layer_norm(x)
+        #x = tf.contrib.layers.layer_norm(x)
+        x = batch_norm(x, training=training, data_format='channels_first')
         x = self.dropout1(x, training=training)
         x = self.conv2(x)
-        x = tf.contrib.layers.layer_norm(x)
+        #x = tf.contrib.layers.layer_norm(x)
+        x = batch_norm(x, training=training, data_format='channels_first')
         x = self.dropout2(x, training=training)
         if self.down_sample is not None:
             inputs = self.down_sample(inputs)
