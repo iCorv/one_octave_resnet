@@ -193,9 +193,9 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    #logits = tcn(features, mode == tf.estimator.ModeKeys.TRAIN)
-    logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
-                           batch_size=batch_size, num_classes=num_classes)
+    logits = tcn(features, mode == tf.estimator.ModeKeys.TRAIN)
+    #logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+    #                       batch_size=batch_size, num_classes=num_classes)
 
     #logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size,
     #                       num_classes=num_classes)
@@ -517,13 +517,14 @@ def tcn(inputs, is_training):
     kernel_size = 3
     levels = 6
     nhid = 20  # hidden layer num of features
-
+    print("Building TCN!")
     logits = tf.layers.dense(
         pop_tcn.TemporalConvNet([nhid] * levels, kernel_size, dropout)(
             inputs, training=is_training)[:, -1, :],
         num_classes, activation=None,
         kernel_initializer=tf.orthogonal_initializer()
     )
+    print("Done!")
     return logits
 
 
