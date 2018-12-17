@@ -522,9 +522,11 @@ def tcn(inputs, is_training):
     levels = 4
     nhid = 20  # hidden layer num of features
     print("Building TCN!")
+    net = pop_tcn.TemporalConvNet([nhid] * levels, kernel_size, dropout)(
+                                  inputs, training=is_training)[:, -1, :]
+    print(net.shape)
     logits = tf.layers.dense(
-        pop_tcn.TemporalConvNet([nhid] * levels, kernel_size, dropout)(
-            inputs, training=is_training)[:, -1, :],
+        net,
         num_classes, activation=None,
         kernel_initializer=tf.orthogonal_initializer()
     )
