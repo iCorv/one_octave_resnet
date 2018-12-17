@@ -55,7 +55,7 @@ class CausalConv1D(tf.layers.Conv1D):
 
     def call(self, inputs):
         padding = (self.kernel_size[0] - 1) * self.dilation_rate[0]
-        inputs = tf.pad(inputs, tf.constant([(0, 0,), (1, 0), (0, 0)]) * padding)
+        inputs = tf.pad(inputs, tf.constant([(0, 0,), (0, 0), (1, 0)]) * padding)
         return super(CausalConv1D, self).call(inputs)
 
 
