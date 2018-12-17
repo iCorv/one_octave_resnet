@@ -520,7 +520,7 @@ def tcn(inputs, is_training):
     #    dropout = 0.0
     kernel_size = 3
     levels = 4
-    nhid = 20  # hidden layer num of features
+    nhid = 150  # hidden layer num of features
     print("Building TCN!")
     net = pop_tcn.TemporalConvNet([nhid] * levels, kernel_size, dropout)(
                                   inputs, training=is_training)[:, :, -1]
