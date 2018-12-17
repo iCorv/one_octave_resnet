@@ -101,6 +101,8 @@ class TemporalBlock(tf.layers.Layer):
         x = self.dropout2(x, training=training)
         if self.down_sample is not None:
             inputs = self.down_sample(inputs)
+        print(inputs.shape)
+        print(x.shape)
         return tf.nn.relu(x + inputs)
 
 
