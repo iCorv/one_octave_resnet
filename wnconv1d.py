@@ -13,7 +13,7 @@ from tensorflow.python.ops import nn_impl
 import tensorflow as tf
 
 
-class _WNConv(convolutional_layers.Conv1D):
+class _WNConv(convolutional_layers.base):
     def __init__(self, *args, **kwargs):
         self.weight_norm = kwargs.pop('weight_norm')
         super(_WNConv, self).__init__(*args, **kwargs)
