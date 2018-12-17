@@ -91,7 +91,9 @@ class TemporalBlock(tf.layers.Layer):
             #self.down_sample = tf.layers.Dense(self.n_outputs, activation=None)
 
     def call(self, inputs, training=True):
+        print(inputs.shape)
         x = self.conv1(inputs)
+        print(x.shape)
         #x = tf.contrib.layers.layer_norm(x)
         x = batch_norm(x, training=training, data_format='channels_first')
         x = self.dropout1(x, training=training)
