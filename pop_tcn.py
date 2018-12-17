@@ -87,7 +87,7 @@ class TemporalBlock(tf.layers.Layer):
         if input_shape[channel_dim] != self.n_outputs:
             self.down_sample = tf.layers.Conv1D(
                 self.n_outputs, kernel_size=1,
-                activation=None, data_format="channels_last", padding="valid")
+                activation=None, data_format="channels_first", padding="valid")
             #self.down_sample = tf.layers.Dense(self.n_outputs, activation=None)
 
     def call(self, inputs, training=True):
