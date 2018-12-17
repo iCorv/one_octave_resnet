@@ -81,7 +81,7 @@ class TemporalBlock(tf.layers.Layer):
         self.down_sample = None
 
     def build(self, input_shape):
-        channel_dim = 2
+        channel_dim = 1
         self.dropout1 = tf.layers.Dropout(self.dropout, [tf.constant(1), tf.constant(self.n_outputs), tf.constant(1)])
         self.dropout2 = tf.layers.Dropout(self.dropout, [tf.constant(1), tf.constant(self.n_outputs), tf.constant(1)])
         if input_shape[channel_dim] != self.n_outputs:
