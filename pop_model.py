@@ -6,6 +6,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
 from math import sqrt
+import pop_tcn
 
 
 def conv_net_model_fn(features, labels, mode, params):
@@ -192,8 +193,9 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
-                           batch_size=batch_size, num_classes=num_classes)
+    logits = tcn(features, mode == tf.estimator.ModeKeys.TRAIN)
+    #logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+    #                       batch_size=batch_size, num_classes=num_classes)
 
     #logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size,
     #                       num_classes=num_classes)
@@ -469,8 +471,6 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
     net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
                                data_format=data_format)
 
-    #net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
-    #                              data_format=data_format)
     print(net.shape)
 
     net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
@@ -505,6 +505,27 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
               factor=2.0, mode='FAN_AVG', uniform=True))
     print(net.shape)
     return net
+
+
+def tcn(inputs, is_training):
+    # Network Parameters
+    num_input = 1  # MNIST data input (img shape: 28*28)
+    timesteps = 15 * 88  # timesteps
+    inputs = tf.reshape(inputs, [-1, timesteps, num_input])
+    num_classes = 88  # MNIST total classes (0-9 digits)
+    dropout = 0.1
+    kernel_size = 3
+    levels = 6
+    nhid = 20  # hidden layer num of features
+
+    logits = tf.layers.dense(
+        pop_tcn.TemporalConvNet([nhid] * levels, kernel_size, dropout)(
+            inputs, training=is_training)[:, -1, :],
+        num_classes, activation=None,
+        kernel_initializer=tf.orthogonal_initializer()
+    )
+    return logits
+
 
 
 def log_loss(labels, predictions, epsilon=1e-7, scope=None, weights=None):
