@@ -101,6 +101,7 @@ class TemporalBlock(tf.layers.Layer):
         #x = tf.contrib.layers.layer_norm(x)
         x = batch_norm(x, training=training, data_format='channels_first')
         x = self.dropout2(x, training=training)
+        print(inputs.shape)
         if self.down_sample is not None:
             inputs = self.down_sample(inputs)
         print(inputs.shape)
