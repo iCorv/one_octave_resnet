@@ -85,10 +85,10 @@ class TemporalBlock(tf.layers.Layer):
         self.dropout1 = tf.layers.Dropout(self.dropout, [tf.constant(1), tf.constant(self.n_outputs), tf.constant(1)])
         self.dropout2 = tf.layers.Dropout(self.dropout, [tf.constant(1), tf.constant(self.n_outputs), tf.constant(1)])
         if input_shape[channel_dim] != self.n_outputs:
-            # self.down_sample = tf.layers.Conv1D(
-            #     self.n_outputs, kernel_size=1,
-            #     activation=None, data_format="channels_last", padding="valid")
-            self.down_sample = tf.layers.Dense(self.n_outputs, activation=None)
+            self.down_sample = tf.layers.Conv1D(
+                self.n_outputs, kernel_size=1,
+                activation=None, data_format="channels_last", padding="valid")
+            #self.down_sample = tf.layers.Dense(self.n_outputs, activation=None)
 
     def call(self, inputs, training=True):
         x = self.conv1(inputs)
