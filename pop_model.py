@@ -509,9 +509,9 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
 
 def tcn(inputs, is_training):
     # Network Parameters
-    num_channels = 1  # MNIST data input (img shape: 28*28)
+    num_inputs = 1  # MNIST data input (img shape: 28*28)
     timesteps = 15 * 88  # timesteps
-    inputs = tf.reshape(inputs, [-1, num_channels, timesteps])
+    inputs = tf.reshape(inputs, [-1, num_inputs, timesteps])
     num_classes = 88  # MNIST total classes (0-9 digits)
     if is_training:
         dropout = 0.25
@@ -521,7 +521,7 @@ def tcn(inputs, is_training):
     levels = 4
     nhid = 20  # hidden layer num of features
     print("Building TCN!")
-    logits = TemporalConvNet(num_channels=num_channels, num_levels=levels, stride=1, kernel_size=kernel_size, dropout=dropout)(
+    logits = TemporalConvNet(num_channels=[nhid] * levels, num_levels=levels, stride=1, kernel_size=kernel_size, dropout=dropout)(
             inputs)
     print(logits.shape)
     return logits
