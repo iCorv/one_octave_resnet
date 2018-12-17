@@ -104,7 +104,7 @@ class TemporalBlock(tf.layers.Layer):
 
         if self.down_sample is not None:
             inputs = self.down_sample(inputs)
-        print(inputs.shape)
+
 
         return tf.nn.relu(x + inputs)
 

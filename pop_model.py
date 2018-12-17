@@ -523,7 +523,7 @@ def tcn(inputs, is_training):
     nhid = 20  # hidden layer num of features
     print("Building TCN!")
     net = pop_tcn.TemporalConvNet([nhid] * levels, kernel_size, dropout)(
-                                  inputs, training=is_training)[:, -1, :]
+                                  inputs, training=is_training)#[:, -1, :]
     print(net.shape)
     logits = tf.layers.dense(
         net,
