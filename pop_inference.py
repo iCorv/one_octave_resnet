@@ -38,7 +38,6 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
 
-    np.savez(write_file, note_activation=note_activation)
     savemat(write_file, {"features": note_activation, "labels": ground_truth})
 
 
