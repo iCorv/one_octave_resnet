@@ -86,7 +86,7 @@ def build_predictor(net, model_dir):
         #warm_start_from=model_dir,
         params=hparams)
 
-    estimator_predictor = tf.contrib.predictor.from_estimator(classifier, serving_input_fn, output_key='predictions', checkpoint_path="./model_ResNet_fold_4/model.ckpt-1477730")
+    estimator_predictor = tf.contrib.predictor.from_estimator(classifier, serving_input_fn, output_key='predictions')
     return estimator_predictor
 
 
