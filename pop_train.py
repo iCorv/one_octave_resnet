@@ -29,7 +29,7 @@ predict_flag = False
 train_flag = False
 eval_flag = False
 
-hparams = php.get_hyper_parameters('TCN')
+hparams = php.get_hyper_parameters('ResNet_v1')
 
 
 def main(_):

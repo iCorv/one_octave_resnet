@@ -8,7 +8,7 @@ def get_preprocessing_parameters(fold_num):
 
     split = splits[fold_num]
 
-    config = {'audio_path': '../../MAPS',
+    config = {'audio_path': '../MAPS',
               'train_fold': './splits/{}/train'.format(split),
               'valid_fold': './splits/{}/valid'.format(split),
               'test_fold': './splits/{}/test'.format(split),
@@ -18,9 +18,10 @@ def get_preprocessing_parameters(fold_num):
               'chord_folder': './tfrecords-dataset/chords/',
               'chord_fold': './splits/chord-splits/train',
               'chroma_folder': './chroma/',
-              'context_frames': 7,
+              'note_activation_folder': './note_activation/',
+              'context_frames': 2,
               'is_chroma': False,
-              'is_hpcp': True,
+              'is_hpcp': False,
               'audio_config': {'num_channels': 1,
                                'sample_rate': 44100,
                                'filterbank': 'LogarithmicFilterbank',
@@ -29,7 +30,7 @@ def get_preprocessing_parameters(fold_num):
                                'fps': 100,
                                'num_bands': 48,
                                'fmin': 30.0,
-                               'fmax': 4200.0,
+                               'fmax': 8000.0,
                                'fref': 440.0,
                                'norm_filters': True,
                                'unique_filters': True,

@@ -194,9 +194,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = tcn(features, mode == tf.estimator.ModeKeys.TRAIN)
-    #logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
-    #                       batch_size=batch_size, num_classes=num_classes)
+    logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
 
     #logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size,
     #                       num_classes=num_classes)
@@ -453,7 +451,7 @@ def _building_block_v1(inputs, filters, training, projection_shortcut, strides, 
     return inputs
 
 
-def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_classes=88):
+def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
     """
 
     :param inputs:
@@ -478,7 +476,7 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[2, 2], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[1, 2], padding='VALID',
                                   data_format=data_format)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
@@ -487,17 +485,16 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
                              data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[2, 2], padding='VALID', #
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[1, 2], padding='VALID',
                                   data_format=data_format)
 
     net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
 
     # Flatten
     print(net.shape)
-    #net = tf.reshape(net, (-1, 64 * 1 * 53), 'flatten4')
     net = tf.layers.flatten(net)
     print(net.shape)
-    #net = slim.fully_connected(net, 512, scope='fc5')
+
     net = tf.layers.dense(net, 512, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
               factor=2.0, mode='FAN_AVG', uniform=True))
     print(net.shape)
@@ -506,33 +503,6 @@ def resnet(inputs, is_training, data_format='channels_last', batch_size=8, num_c
               factor=2.0, mode='FAN_AVG', uniform=True))
     print(net.shape)
     return net
-
-
-def tcn(inputs, is_training):
-    # Network Parameters
-    num_inputs = 1  # MNIST data input (img shape: 28*28)
-    timesteps = 15 * 88  # timesteps
-    inputs = tf.reshape(inputs, [-1, num_inputs, timesteps])
-    num_classes = 88  # MNIST total classes (0-9 digits)
-    #if is_training:
-    dropout = 0.25
-    #else:
-    #    dropout = 0.0
-    kernel_size = 3
-    levels = 4
-    nhid = 150  # hidden layer num of features
-    print("Building TCN!")
-    net = pop_tcn.TemporalConvNet([nhid] * levels, kernel_size, dropout)(
-                                  inputs, training=is_training)[:, :, -1]
-    print(net.shape)
-    logits = tf.layers.dense(
-        net,
-        num_classes, activation=None,
-        kernel_initializer=tf.orthogonal_initializer()
-    )
-    print(logits.shape)
-    return logits
-
 
 
 def log_loss(labels, predictions, epsilon=1e-7, scope=None, weights=None):
