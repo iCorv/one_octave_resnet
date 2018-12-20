@@ -13,6 +13,7 @@ def convert_fold_to_note_activation(fold, mode, net, model_dir, norm=False):
         mode - 'train', 'valid' or 'test' to address the correct config parameter
         norm - Flag if the spectrogram should be normed to 1
         net - The network used for classification, e.g. 'ConvNet, 'ResNet_v1'
+        model_dir - e.g. "./model_ResNet_fold_4/model.ckpt-1477730" for a specific checkpoint
     """
     config = ppp.get_preprocessing_parameters(fold.value)
     audio_config = config['audio_config']
@@ -82,7 +83,7 @@ def build_predictor(net, model_dir):
     classifier = tf.estimator.Estimator(
         model_fn=pop_model.conv_net_model_fn,
         model_dir=model_dir,
-        #warm_start_from="./model/model.ckpt-1323466",
+        warm_start_from=model_dir,
         params=hparams)
 
     estimator_predictor = tf.contrib.predictor.from_estimator(classifier, serving_input_fn, output_key='predictions')
