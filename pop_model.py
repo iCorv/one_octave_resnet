@@ -6,8 +6,6 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
 from math import sqrt
-from tcn import TemporalConvNet
-import pop_tcn
 
 
 def conv_net_model_fn(features, labels, mode, params):

@@ -15,10 +15,6 @@ import glob
 train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
 val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
 test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
-#train_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/train/*.tfrecords")
-#val_dataset_tfrecord = glob.glob("./tfrecords-dataset/single-note-splits/valid/*.tfrecords")
-#test_dataset_tfrecord = "./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/test/" \
-#                        "MAPS_MUS-bor_ps6_ENSTDkCl.tfrecords"
 
 DEFAULT_DTYPE = tf.float32
 
