@@ -10,9 +10,9 @@ DEFAULT_DTYPE = tf.float32
 # fold_3: train - 4366098. valid - 580372, test - 1570005
 # fold_4: train - 4221233. valid - 725237, test - 1570005
 
-num_examples = 4195653
-num_val_examples = 748717
-num_test_examples = 1569405
+num_examples = 4197453
+num_val_examples = 749017
+num_test_examples = 1570005
 batch_size = 128
 batches_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 50

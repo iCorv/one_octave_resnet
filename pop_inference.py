@@ -13,7 +13,8 @@ def convert_fold_to_note_activation(fold, mode, net, model_dir, norm=False):
         mode - 'train', 'valid' or 'test' to address the correct config parameter
         norm - Flag if the spectrogram should be normed to 1
         net - The network used for classification, e.g. 'ConvNet, 'ResNet_v1'
-        model_dir - e.g. "./model_ResNet_fold_4/model.ckpt-1477730" for a specific checkpoint
+        model_dir - e.g. "./model_ResNet_fold_4/". For a specific checkpoint, change the checkpoint number in the
+        chekpoint file from the model folder.
     """
     config = ppp.get_preprocessing_parameters(fold.value)
     audio_config = config['audio_config']
