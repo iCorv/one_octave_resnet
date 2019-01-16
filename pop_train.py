@@ -7,7 +7,7 @@ import tensorflow as tf
 import configurations.pop_hyper_parameters as php
 import pop_input_data as dataset
 import os
-from official.utils.logs import logger
+#from official.utils.logs import logger
 import numpy as np
 import pop_model
 import glob
@@ -47,7 +47,7 @@ def main(_):
         config=estimator_config,
         params=hparams)
 
-    benchmark_logger = logger.get_benchmark_logger()
+    #benchmark_logger = logger.get_benchmark_logger()
     #benchmark_logger.log_run_info('ConvNet', 'MAPS', hparams, test_id=TEST_ID)
 
     # Train and validate in turns
@@ -79,7 +79,7 @@ def main(_):
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
             steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-712348")
-        benchmark_logger.log_evaluation_result(eval_result)
+        #benchmark_logger.log_evaluation_result(eval_result)
 
     # 1339892
     # Predict
