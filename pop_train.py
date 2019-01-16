@@ -20,10 +20,10 @@ DEFAULT_DTYPE = tf.float32
 
 TEST_ID = 1
 
-train_and_val = True
+train_and_val = False
 predict_flag = False
 train_flag = False
-eval_flag = False
+eval_flag = True
 
 hparams = php.get_hyper_parameters('ResNet_v1')
 
@@ -78,7 +78,7 @@ def main(_):
             input_fn=lambda: dataset.tfrecord_val_input_fn(test_dataset_tfrecord,
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
-            steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-712348")
+            steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-813389")
         #benchmark_logger.log_evaluation_result(eval_result)
 
     # 1339892
