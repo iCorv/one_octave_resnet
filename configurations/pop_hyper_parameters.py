@@ -10,8 +10,8 @@ DEFAULT_DTYPE = tf.float32
 # fold_3: train - 4366098. valid - 580372, test - 1570005
 # fold_4: train - 4221233. valid - 725237, test - 1570005
 
-num_examples = 4249469
-num_val_examples = 697001
+num_examples = 4197453
+num_val_examples = 749017
 num_test_examples = 1570005
 batch_size = 128
 batches_per_epoch = int(round(num_examples/batch_size))
@@ -80,8 +80,8 @@ def get_hyper_parameters(net):
                   'momentum': 1.0,
                   'momentum_cycle': [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
                   # [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+2))][0:30] + [momentum for momentum in frange(0.85, 0.95, (0.95-0.85)/(30+2))][0:31],
-                  'frames': 5,
-                  'freq_bins': 229,
+                  'frames': 15,
+                  'freq_bins': 88,
                   'num_channels': 1,
                   'num_classes': 88,
                   'num_examples': num_examples,
