@@ -12,9 +12,9 @@ import numpy as np
 import pop_model
 import glob
 
-train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
-val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/valid/*.tfrecords")
-test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
+train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/train/*.tfrecords")
+val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/valid/*.tfrecords")
+test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_2/test/*.tfrecords")
 
 DEFAULT_DTYPE = tf.float32
 
@@ -78,7 +78,7 @@ def main(_):
             input_fn=lambda: dataset.tfrecord_val_input_fn(test_dataset_tfrecord,
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
-            steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-724555")
+            steps=hparams['test_steps'], checkpoint_path="./model/model.ckpt-776888")
         #benchmark_logger.log_evaluation_result(eval_result)
 
     # 1339892
