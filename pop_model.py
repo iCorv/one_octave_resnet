@@ -465,6 +465,11 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
             inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
 
+    def projection_shortcut_2(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=96, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+
     net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
                                data_format=data_format)
 
@@ -488,7 +493,7 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
     ##########
-    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=None, strides=1, padding='SAME',
+    net = _building_block_v1(inputs=net, filters=96, training=is_training, projection_shortcut=projection_shortcut_2, strides=1, padding='SAME',
                              data_format=data_format)
 
     print(net.shape)
