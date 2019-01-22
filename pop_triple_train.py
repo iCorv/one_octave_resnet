@@ -12,7 +12,7 @@ import numpy as np
 import pop_triple_model
 import glob
 
-train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_4/train/*.tfrecords")
+train_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/train/*.tfrecords")
 val_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
 
 test_dataset_tfrecord = glob.glob("./tfrecords-dataset/sigtia-configuration2-splits/fold_1/test/*.tfrecords")
@@ -41,10 +41,7 @@ def main(_):
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_triple_model.conv_net_model_fn,
-        # model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
-        # model_dir="/Users/Jaedicke/tensorflow/model/model",
         model_dir="./model",
-        # model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params=hparams)
 

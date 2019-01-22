@@ -41,10 +41,7 @@ def main(_):
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_model.conv_net_model_fn,
-        # model_dir="/Users/Jaedicke/tensorflow/one_octave_resnet/model",
-        # model_dir="/Users/Jaedicke/tensorflow/model/model",
         model_dir="./model",
-        # model_dir="D:/Users/cjaedicke/one_octave_resnet/model",
         config=estimator_config,
         params=hparams)
 

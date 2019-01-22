@@ -8,7 +8,7 @@ import numpy as np
 from math import sqrt
 
 
-def conv_net_model_fn(features, labels, mode, params):
+def conv_net_model_fn(features, frame_gt, onset_gt, offset_gt, mode, params):
     if params['data_format'] == 'NCHW' or params['data_format'] == 'channels_first':
         # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
         # This provides a large performance boost on GPU. See
@@ -16,18 +16,6 @@ def conv_net_model_fn(features, labels, mode, params):
         features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
     else:
         features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
-
-    # learning_rate_fn = learning_rate_with_decay(
-    #     initial_learning_rate=params['learning_rate'],
-    #     batches_per_epoch=params['batches_per_epoch'],
-    #     boundary_epochs=params['boundary_epochs'],
-    #     decay_rates=params['decay_rates'])
-    #
-    # momentum_fn = momentum_with_decay(
-    #     initial_momentum=params['momentum'],
-    #     batches_per_epoch=params['batches_per_epoch'],
-    #     boundary_epochs=params['boundary_epochs'],
-    #     decay_rates=params['decay_rates_momentum'])
 
     learning_rate_fn = cycle_fn(params['learning_rate_cycle'], params['batches_per_epoch'], params['boundary_epochs'])
 
@@ -43,11 +31,11 @@ def conv_net_model_fn(features, labels, mode, params):
 
     return conv_net_init(
         features=features,
-        labels=labels,
+        frame_gt=frame_gt,
+        onset_gt=onset_gt,
+        offset_gt=offset_gt,
         mode=mode,
         learning_rate_fn=learning_rate_fn,
-        loss_filter_fn=loss_filter_fn,
-        weight_decay=params['weight_decay'],
         momentum_fn=momentum_fn,
         clip_norm=params['clip_norm'],
         data_format=params['data_format'],
@@ -158,7 +146,7 @@ def weights_from_labels(labels):
     return np.where(weights == 0.0, 0.25, weights)
 
 
-def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weight_decay, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32, num_classes=88):
+def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_fn, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32, num_classes=88):
     """Shared functionality for different model_fns.
 
     Initializes the ConvNet representing the model layers
@@ -190,12 +178,16 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     features = tf.cast(features, dtype)
 
     if mode != tf.estimator.ModeKeys.PREDICT:
-        labels = tf.cast(labels, dtype)
+        frame_gt = tf.cast(frame_gt, dtype)
+        onset_gt = tf.cast(onset_gt, dtype)
+        offset_gt = tf.cast(offset_gt, dtype)
 
-    logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
+    logits_onset, feature_map_onset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+                                 batch_size=batch_size, num_classes=num_classes)
+    logits_offset, feature_map_offset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+                                 batch_size=batch_size, num_classes=num_classes)
 
-    #logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size,
-    #                       num_classes=num_classes)
+    logits = resnet(features, feature_map_onset, feature_map_offset, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
 
 
     # Visualize conv1 kernels
@@ -209,10 +201,14 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     # not a SparseTensor). If dtype is of low precision, logits must be cast to
     # fp32 for numerical stability.
     logits = tf.cast(logits, tf.float32)
+    logits_onset = tf.cast(logits_onset, tf.float32)
+    logits_offset = tf.cast(logits_offset, tf.float32)
 
     predictions = {
         'classes': tf.round(tf.sigmoid(logits)),
         'probabilities': tf.sigmoid(logits, name='sigmoid_tensor'),
+        'probabilities_onset': tf.sigmoid(logits_onset, name='sigmoid_tensor_onset'),
+        'probabilities_offset': tf.sigmoid(logits_offset, name='sigmoid_tensor_offset'),
         'logits': logits
     }
 
@@ -223,23 +219,17 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
             predictions=predictions,
             export_outputs={'predictions': tf.estimator.export.PredictOutput(predictions)})
 
-    individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
+    individual_loss = log_loss(frame_gt, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm),
+                               epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
 
-    # loss_filter_fn = loss_filter_fn
-    #
-    # # Add weight decay to the loss.
-    # l2_loss = weight_decay * tf.add_n(
-    #     # loss is computed using fp32 for numerical stability.
-    #     [tf.nn.l2_loss(tf.cast(v, tf.float32)) for v in tf.trainable_variables()
-    #      if loss_filter_fn(v.name)])
-    # l1_loss = tf.add_n(
-    #     # loss is computed using fp32 for numerical stability.
-    #     [l1_loss_fn(tf.cast(v, tf.float32), weight_decay, scope='l1_loss') for v in tf.trainable_variables()
-    #      if loss_filter_fn(v.name)])
-    # tf.summary.scalar('l2_loss', l2_loss)
-    # tf.summary.scalar('l1_loss', l1_loss)
-    # loss = loss + l1_loss + l2_loss
+    individual_loss_onset = log_loss(onset_gt, tf.clip_by_value(predictions['probabilities_onset'],
+                                                                clip_norm, 1.0 - clip_norm), epsilon=0.0)
+    loss_onset = tf.reduce_mean(individual_loss_onset)
+
+    individual_loss_offset = log_loss(offset_gt, tf.clip_by_value(predictions['probabilities_offset'],
+                                                                  clip_norm, 1.0 - clip_norm), epsilon=0.0)
+    loss_offset = tf.reduce_mean(individual_loss_offset)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
@@ -264,16 +254,18 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
 
         with tf.control_dependencies(update_ops):
             minimize_op = optimizer.minimize(loss, global_step)
+            minimize_onset_op = optimizer.minimize(loss_onset, global_step)
+            minimize_offset_op = optimizer.minimize(loss_offset, global_step)
 
-        train_op = tf.group(minimize_op, update_ops)
+        train_op = tf.group(minimize_op, minimize_onset_op, minimize_offset_op, update_ops)
     else:
         train_op = None
 
-    fn = tf.metrics.false_negatives(labels, predictions['classes'])
-    fp = tf.metrics.false_positives(labels, predictions['classes'])
-    tp = tf.metrics.true_positives(labels, predictions['classes'])
-    precision = tf.metrics.precision(labels, predictions['classes'])
-    recall = tf.metrics.recall(labels, predictions['classes'])
+    fn = tf.metrics.false_negatives(frame_gt, predictions['classes'])
+    fp = tf.metrics.false_positives(frame_gt, predictions['classes'])
+    tp = tf.metrics.true_positives(frame_gt, predictions['classes'])
+    precision = tf.metrics.precision(frame_gt, predictions['classes'])
+    recall = tf.metrics.recall(frame_gt, predictions['classes'])
     # this is the Kelz et. al. def of frame wise metric F1
     f = tf.multiply(tf.constant(2.0), tf.multiply(precision[0], recall[0]))
     f = tf.divide(f, tf.add(precision[0], recall[0]))
@@ -295,7 +287,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     return tf.estimator.EstimatorSpec(
         mode=mode,
         predictions=predictions,
-        loss=loss,
+        loss=loss + loss_onset + loss_offset,
         train_op=train_op,
         eval_metric_ops=metrics)
 
@@ -342,14 +334,14 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8, num_cla
             # Flatten
             print(net.shape)
             # was  64*1*51
-            net = tf.reshape(net, (-1, 64*1*20), 'flatten4')
-            print(net.shape)
-            net = slim.fully_connected(net, 512, scope='fc5')
+            feature_map = tf.reshape(net, (-1, 64*1*20), 'flatten4')
+            print(feature_map.shape)
+            net = slim.fully_connected(feature_map, 512, scope='fc5')
             print(net.shape)
             net = slim.dropout(net, 0.5, scope='dropout5', is_training=is_training)
             net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc6')
             print(net.shape)
-            return net
+            return net, feature_map
 
 _BATCH_NORM_DECAY = 0.997
 _BATCH_NORM_EPSILON = 1e-5
@@ -449,7 +441,7 @@ def _building_block_v1(inputs, filters, training, projection_shortcut, strides, 
     return inputs
 
 
-def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
+def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_format='channels_last', num_classes=88):
     """
 
     :param inputs:
@@ -463,11 +455,6 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
     def projection_shortcut(inputs):
         return conv2d_fixed_padding(
             inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
-            data_format=data_format)
-
-    def projection_shortcut_2(inputs):
-        return conv2d_fixed_padding(
-            inputs=inputs, filters=96, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
 
     net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
