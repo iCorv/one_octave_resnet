@@ -8,7 +8,7 @@ import numpy as np
 from math import sqrt
 
 
-def conv_net_model_fn(features, frame_gt, onset_gt, offset_gt, mode, params):
+def conv_net_model_fn(features, labels, mode, params):
     if params['data_format'] == 'NCHW' or params['data_format'] == 'channels_first':
         # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
         # This provides a large performance boost on GPU. See
@@ -31,9 +31,9 @@ def conv_net_model_fn(features, frame_gt, onset_gt, offset_gt, mode, params):
 
     return conv_net_init(
         features=features,
-        frame_gt=frame_gt,
-        onset_gt=onset_gt,
-        offset_gt=offset_gt,
+        frame_gt=labels[0],
+        onset_gt=labels[1],
+        offset_gt=labels[2],
         mode=mode,
         learning_rate_fn=learning_rate_fn,
         momentum_fn=momentum_fn,

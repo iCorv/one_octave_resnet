@@ -325,7 +325,7 @@ def tfrecord_triple_parser(serialized_example):
     frame_gt = tf.cast(example["frame_gt"], tf.int64)
     onset_gt = tf.cast(example["onset_gt"], tf.int64)
     offset_gt = tf.cast(example["offset_gt"], tf.int64)
-    return features, frame_gt, onset_gt, offset_gt
+    return features, [frame_gt, onset_gt, offset_gt]
 
 
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
