@@ -312,7 +312,7 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
             print(net.shape)
 
             net = slim.conv2d(
-                net, 32, [3, 3], scope=scope+'conv2', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
+                net, 32, [3, 3], scope=scope+'conv2', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
             #conv2_output = tf.unstack(net, num=batch_size, axis=0)
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], transpose_shape), 2))
             #tf.summary.image('conv2/output', grid, max_outputs=1)
@@ -322,7 +322,7 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
             net = slim.dropout(net, 0.25, scope=scope+'dropout2', is_training=is_training)
 
             net = slim.conv2d(
-                net, 64, [3, 3], scope=scope+'conv3', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
+                net, 64, [3, 3], scope=scope+'conv3', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
             #conv3_output = tf.unstack(net, num=batch_size, axis=0)
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             #tf.summary.image('conv3/output', grid, max_outputs=1)
@@ -470,16 +470,7 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
                                   data_format=data_format)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
-    ##########
-    # net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut,
-    #                          strides=1, padding='SAME', data_format=data_format)
-    #
-    # print(net.shape)
-    # net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
-    #                               data_format=data_format)
-    # print(net.shape)
-    # net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
-    ##########
+
     net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
                              data_format=data_format)
 
