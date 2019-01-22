@@ -183,9 +183,9 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
         offset_gt = tf.cast(offset_gt, dtype)
 
     logits_onset, feature_map_onset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
-                                 batch_size=batch_size, num_classes=num_classes)
+                                 batch_size=batch_size, num_classes=num_classes, scope='onset')
     logits_offset, feature_map_offset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
-                                 batch_size=batch_size, num_classes=num_classes)
+                                 batch_size=batch_size, num_classes=num_classes, scope='offset')
 
     logits = resnet(features, feature_map_onset, feature_map_offset, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
 
@@ -292,7 +292,7 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
         eval_metric_ops=metrics)
 
 
-def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_classes=88):
+def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_classes=88, scope=''):
     """Builds the ConvNet from Kelz 2016."""
     if data_format == 'NCHW':
         transpose_shape = [2, 1, 0]
@@ -305,41 +305,41 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
               factor=2.0, mode='FAN_AVG', uniform=True)):
         with slim.arg_scope([slim.batch_norm], is_training=is_training, data_format=data_format):
             net = slim.conv2d(
-                inputs, 32, [3, 3], scope='conv1', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
+                inputs, 32, [3, 3], scope=scope+'conv1', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
             #conv1_output = tf.unstack(net, num=batch_size, axis=0)
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv1_output[0], transpose_shape), 2))
             #tf.summary.image('conv1/output', grid, max_outputs=1)
             print(net.shape)
 
             net = slim.conv2d(
-                net, 32, [3, 3], scope='conv2', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
+                net, 32, [3, 3], scope=scope+'conv2', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
             #conv2_output = tf.unstack(net, num=batch_size, axis=0)
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], transpose_shape), 2))
             #tf.summary.image('conv2/output', grid, max_outputs=1)
             print(net.shape)
-            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool2', data_format=data_format)
+            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope=scope+'pool2', data_format=data_format)
             print(net.shape)
-            net = slim.dropout(net, 0.25, scope='dropout2', is_training=is_training)
+            net = slim.dropout(net, 0.25, scope=scope+'dropout2', is_training=is_training)
 
             net = slim.conv2d(
-                net, 64, [3, 3], scope='conv3', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
+                net, 64, [3, 3], scope=scope+'conv3', normalizer_fn=slim.batch_norm, padding='VALID', data_format=data_format)
             #conv3_output = tf.unstack(net, num=batch_size, axis=0)
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             #tf.summary.image('conv3/output', grid, max_outputs=1)
             print(net.shape)
-            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope='pool3', data_format=data_format)
+            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope=scope+'pool3', data_format=data_format)
 
-            net = slim.dropout(net, 0.25, scope='dropout3', is_training=is_training)
+            net = slim.dropout(net, 0.25, scope=scope+'dropout3', is_training=is_training)
 
             # Flatten
             print(net.shape)
             # was  64*1*51
-            feature_map = tf.reshape(net, (-1, 64*1*20), 'flatten4')
+            feature_map = tf.reshape(net, (-1, 64*1*20), scope+'flatten4')
             print(feature_map.shape)
-            net = slim.fully_connected(feature_map, 512, scope='fc5')
+            net = slim.fully_connected(feature_map, 512, scope=scope+'fc5')
             print(net.shape)
-            net = slim.dropout(net, 0.5, scope='dropout5', is_training=is_training)
-            net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc6')
+            net = slim.dropout(net, 0.5, scope=scope+'dropout5', is_training=is_training)
+            net = slim.fully_connected(net, num_classes, activation_fn=None, scope=scope+'fc6')
             print(net.shape)
             return net, feature_map
 
