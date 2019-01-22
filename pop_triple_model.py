@@ -182,9 +182,9 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
         onset_gt = tf.cast(onset_gt, dtype)
         offset_gt = tf.cast(offset_gt, dtype)
 
-    logits_onset, feature_map_onset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+    logits_onset, feature_map_onset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
                                  batch_size=batch_size, num_classes=num_classes)
-    logits_offset, feature_map_offset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+    logits_offset, feature_map_offset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
                                  batch_size=batch_size, num_classes=num_classes)
 
     logits = resnet(features, feature_map_onset, feature_map_offset, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
@@ -292,7 +292,7 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
         eval_metric_ops=metrics)
 
 
-def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8, num_classes=88):
+def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_classes=88):
     """Builds the ConvNet from Kelz 2016."""
     if data_format == 'NCHW':
         transpose_shape = [2, 1, 0]
