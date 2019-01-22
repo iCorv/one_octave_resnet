@@ -334,7 +334,7 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
             # Flatten
             print(net.shape)
             # was  64*1*51
-            feature_map = tf.reshape(net, (-1, 64*1*20), scope+'flatten4')
+            feature_map = tf.reshape(net, (-1, 64*1*38), scope+'flatten4')
             print(feature_map.shape)
             net = slim.fully_connected(feature_map, 512, scope=scope+'fc5')
             print(net.shape)
