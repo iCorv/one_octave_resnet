@@ -492,7 +492,7 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
     net = tf.concat([feature_map_onset, net, feature_map_offset], axis=1)
     print(net.shape)
 
-    net = tf.layers.dense(net, 512, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+    net = tf.layers.dense(net, 1024, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
               factor=2.0, mode='FAN_AVG', uniform=True))
     print(net.shape)
     net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
