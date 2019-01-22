@@ -227,11 +227,11 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
                                epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
 
-    individual_loss_onset = log_loss(tf.reduce_max(onset_gt, axis=1), tf.clip_by_value(tf.expand_dims(predictions['probabilities_onset'], axis=1),
+    individual_loss_onset = log_loss(tf.reduce_max(onset_gt, axis=1, keepdims=True), tf.clip_by_value(predictions['probabilities_onset'],
                                                                 clip_norm, 1.0 - clip_norm), epsilon=0.0)
     loss_onset = tf.reduce_mean(individual_loss_onset)
 
-    individual_loss_offset = log_loss(tf.reduce_max(offset_gt, axis=1), tf.clip_by_value(tf.expand_dims(predictions['probabilities_offset'], axis=1),
+    individual_loss_offset = log_loss(tf.reduce_max(offset_gt, axis=1, keepdims=True), tf.clip_by_value(predictions['probabilities_offset'],
                                                                   clip_norm, 1.0 - clip_norm), epsilon=0.0)
     loss_offset = tf.reduce_mean(individual_loss_offset)
 
