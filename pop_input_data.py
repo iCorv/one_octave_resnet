@@ -241,7 +241,7 @@ FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0
                   [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.],
                   [0]]  # sets field types
 
-feature_shape = [15, 88, 1]
+feature_shape = [5, 76, 1]
 
 num_labels = 88
 num_features = feature_shape[0] * feature_shape[1] * feature_shape[2]
@@ -298,7 +298,7 @@ def spec_norm_0_1(spec):
     return np.divide(spec, 2.0)
 
 
-def tfrecord_train_parser(serialized_example):
+def tfrecord_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
     example = tf.parse_single_example(
         serialized_example,
@@ -311,6 +311,23 @@ def tfrecord_train_parser(serialized_example):
     return features, label
 
 
+def tfrecord_triple_parser(serialized_example):
+    """Parses a single tf.Example into spectrogram and label tensors."""
+    example = tf.parse_single_example(
+        serialized_example,
+        features={"spec": tf.FixedLenFeature([num_features], tf.float32),
+                  "frame_gt": tf.FixedLenFeature([num_labels], tf.int64),
+                  "onset_gt": tf.FixedLenFeature([num_labels], tf.int64),
+                  "offset_gt": tf.FixedLenFeature([num_labels], tf.int64)})
+    features = tf.cast(example['spec'], tf.float32)
+    # Reshape spec data into the original shape
+    features = tf.reshape(features, feature_shape)
+    frame_gt = tf.cast(example["frame_gt"], tf.int64)
+    onset_gt = tf.cast(example["onset_gt"], tf.int64)
+    offset_gt = tf.cast(example["offset_gt"], tf.int64)
+    return features, frame_gt, onset_gt, offset_gt
+
+
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     # estimators optimize to cpu input pipeline on their own
     # with tf.device('/cpu:0'):
@@ -320,7 +337,7 @@ def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     # dataset = dataset.shuffle(100000)
     # dataset = dataset.repeat(num_epochs)
     dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(10000, num_epochs))
-    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_train_parser, batch_size))
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_parser, batch_size))
     # dataset = dataset.map(tfrecord_train_parser)
     # dataset = dataset.batch(batch_size)
     dataset = dataset.prefetch(batch_size)
@@ -337,7 +354,7 @@ def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
     # dataset = dataset.map(tfrecord_train_parser)
     # dataset = dataset.batch(batch_size)
     dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(10000, num_epochs))
-    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_train_parser, batch_size))
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_parser, batch_size))
     dataset = dataset.prefetch(batch_size)
 
     return dataset
@@ -348,7 +365,42 @@ def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
 
     # Map the parser over dataset, and batch results by up to batch_size
     dataset = dataset.repeat(num_epochs)
-    dataset = dataset.map(tfrecord_train_parser)
+    dataset = dataset.map(tfrecord_parser)
+    dataset = dataset.batch(batch_size)
+
+    return dataset
+
+
+def tfrecord_triple_train_input_fn(filepath, batch_size, num_epochs):
+    # estimators optimize to cpu input pipeline on their own
+    # with tf.device('/cpu:0'):
+    dataset = tf.data.TFRecordDataset(filepath)
+
+    # Map the parser over dataset, and batch results by up to batch_size
+    dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(10000, num_epochs))
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_triple_parser, batch_size))
+    dataset = dataset.prefetch(batch_size)
+
+    return dataset
+
+
+def tfrecord_triple_val_input_fn(filepath, batch_size, num_epochs):
+    dataset = tf.data.TFRecordDataset(filepath)
+
+    # Map the parser over dataset, and batch results by up to batch_size
+    dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(10000, num_epochs))
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_triple_parser, batch_size))
+    dataset = dataset.prefetch(batch_size)
+
+    return dataset
+
+
+def tfrecord_triple_test_input_fn(filepath, batch_size, num_epochs):
+    dataset = tf.data.TFRecordDataset(filepath)
+
+    # Map the parser over dataset, and batch results by up to batch_size
+    dataset = dataset.repeat(num_epochs)
+    dataset = dataset.map(tfrecord_triple_parser)
     dataset = dataset.batch(batch_size)
 
     return dataset

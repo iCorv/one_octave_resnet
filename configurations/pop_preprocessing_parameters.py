@@ -19,7 +19,7 @@ def get_preprocessing_parameters(fold_num):
               'chord_fold': './splits/chord-splits/train',
               'chroma_folder': './chroma/',
               'note_activation_folder': './note_activation/',
-              'context_frames': 7,
+              'context_frames': 2,
               'is_chroma': False,
               'is_hpcp': True,
               'audio_config': {'num_channels': 1,
@@ -59,11 +59,12 @@ def get_hpcp_parameters():
     config = {'num_channels': 1,
               'sample_rate': 44100,
               'frame_size': 4096,
-              'fft_size': 4096,
+              'fft_size': 4096*3,
               'fps': 100,
               'num_classes': 12,
-              'fmin': [27.5, 54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0], #[27.5, 54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0]
-              'fmax': [53.0, 106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9], #[53.0, 106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9]
+              # dont use lowest piano octave, since the spectrogram does not provide enough information in the low freq
+              'fmin': [54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0],#[27.5, 54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0], #[27.5, 54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0]
+              'fmax': [106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9],#[53.0, 106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9], #[53.0, 106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9]
               'fref': 440.0,
               'window': 1,
               'norm_filters': False,

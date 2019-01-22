@@ -11,13 +11,15 @@ from scipy import signal
 
 def import_tfrecord(filepath):
     #dataset = tf.data.TFRecordDataset(filepath)
-    input_shape = [5, 229, 1]
+    input_shape = [5, 76, 1]
     num_labels = 88
 
     # Extract features from single example
     #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
     #spec = tf.slice(spec, [0, 0, 1], [5, 231, 1])
-    dataset = pop_input_data.tfrecord_test_input_fn(filepath, 1, 1)
+    #dataset = pop_input_data.tfrecord_test_input_fn(filepath, 1, 1)
+
+    dataset = pop_input_data.tfrecord_triple_test_input_fn(filepath, 1, 1)
 
     # Make dataset iteratable.
     iterator = dataset.make_one_shot_iterator()
@@ -32,10 +34,10 @@ def import_tfrecord(filepath):
 
     # Actual session to run the graph.
     with tf.Session() as sess:
-        for index in range(0, 500):
+        for index in range(0, 2180):
             try:
                 spec_tensor, label_text = sess.run([spec, labels])
-                print(spec_tensor.shape)
+                #print(spec_tensor.shape)
                 example_slice = np.array(np.squeeze(spec_tensor[:,:,:,0]), np.float32)[1, :]
                 #print(np.shape(example_slice))
 
@@ -55,7 +57,7 @@ def import_tfrecord(filepath):
         print(np.min(np_spec))
         print(np.shape(np_spec))
         ax1.pcolormesh(np_spec[:, :])
-        ax1.set_title("spec_4096")
+        ax1.set_title("Octave-wise HPCP (4x fft-size)")
 
         ax2.pcolormesh(np_label[:, :])
         locs, l = plt.yticks()
@@ -178,4 +180,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_tfrecord(["./tfrecords-dataset/single-note-splits/train/MAPS_ISOL_CH0.1_F_AkPnBcht.tfrecords"])
+import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_ISOL_CH0.1_F_AkPnBcht.tfrecords"])
