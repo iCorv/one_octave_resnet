@@ -187,9 +187,9 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
         offset_gt = tf.cast(offset_gt, dtype)
 
     logits_onset, feature_map_onset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
-                                 batch_size=batch_size, num_classes=num_classes, scope='onset')
+                                 batch_size=batch_size, num_classes=1, scope='onset')
     logits_offset, feature_map_offset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
-                                 batch_size=batch_size, num_classes=num_classes, scope='offset')
+                                 batch_size=batch_size, num_classes=1, scope='offset')
 
     logits = resnet(features, feature_map_onset, feature_map_offset, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
 
@@ -227,11 +227,11 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
                                epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
 
-    individual_loss_onset = log_loss(onset_gt, tf.clip_by_value(predictions['probabilities_onset'],
+    individual_loss_onset = log_loss(tf.reduce_max(onset_gt, axis=1), tf.clip_by_value(predictions['probabilities_onset'],
                                                                 clip_norm, 1.0 - clip_norm), epsilon=0.0)
     loss_onset = tf.reduce_mean(individual_loss_onset)
 
-    individual_loss_offset = log_loss(offset_gt, tf.clip_by_value(predictions['probabilities_offset'],
+    individual_loss_offset = log_loss(tf.reduce_max(offset_gt, axis=1), tf.clip_by_value(predictions['probabilities_offset'],
                                                                   clip_norm, 1.0 - clip_norm), epsilon=0.0)
     loss_offset = tf.reduce_mean(individual_loss_offset)
 
@@ -325,22 +325,22 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
             print(net.shape)
             net = slim.dropout(net, 0.25, scope=scope+'dropout2', is_training=is_training)
 
-            net = slim.conv2d(
+            feature_map = slim.conv2d(
                 net, 64, [3, 3], scope=scope+'conv3', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
             #conv3_output = tf.unstack(net, num=batch_size, axis=0)
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             #tf.summary.image('conv3/output', grid, max_outputs=1)
             print(net.shape)
-            net = slim.max_pool2d(net, [3, 2], stride=[1, 2], scope=scope+'pool3', data_format=data_format)
+            net = slim.max_pool2d(feature_map, [3, 2], stride=[1, 2], scope=scope+'pool3', data_format=data_format)
 
             net = slim.dropout(net, 0.25, scope=scope+'dropout3', is_training=is_training)
 
             # Flatten
             print(net.shape)
             # was  64*1*51
-            feature_map = tf.reshape(net, (-1, 64*1*38), scope+'flatten4')
-            print(feature_map.shape)
-            net = slim.fully_connected(feature_map, 512, scope=scope+'fc5')
+            net = tf.reshape(net, (-1, 64*1*38), scope+'flatten4')
+            print(net.shape)
+            net = slim.fully_connected(net, 256, scope=scope+'fc5')
             print(net.shape)
             net = slim.dropout(net, 0.5, scope=scope+'dropout5', is_training=is_training)
             net = slim.fully_connected(net, num_classes, activation_fn=None, scope=scope+'fc6')
@@ -461,6 +461,11 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
             inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
 
+    def projection_shortcut_2(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=128, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+
     net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
                                data_format=data_format)
 
@@ -478,6 +483,13 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
     net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
                              data_format=data_format)
 
+    net += feature_map_onset
+    net += feature_map_offset
+
+    net = _building_block_v1(inputs=net, filters=128, training=is_training, projection_shortcut=projection_shortcut_2,
+                             strides=1, padding='SAME',
+                             data_format=data_format)
+
     print(net.shape)
     net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[1, 2], padding='VALID',
                                   data_format=data_format)
@@ -489,8 +501,8 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
     net = tf.layers.flatten(net)
     print(net.shape)
 
-    net = tf.concat([feature_map_onset, net, feature_map_offset], axis=1)
-    print(net.shape)
+    #net = tf.concat([feature_map_onset, net, feature_map_offset], axis=1)
+    #print(net.shape)
 
     net = tf.layers.dense(net, 1024, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
               factor=2.0, mode='FAN_AVG', uniform=True))
