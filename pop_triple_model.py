@@ -29,11 +29,14 @@ def conv_net_model_fn(features, labels, mode, params):
     def loss_filter_fn(name):
         return 'conv' in name
 
+    unstacked_labels = tf.unstack(labels, axis=1)
+    print(unstacked_labels[0].shape)
+
     return conv_net_init(
         features=features,
-        frame_gt=labels[0],
-        onset_gt=labels[1],
-        offset_gt=labels[2],
+        frame_gt=unstacked_labels[0],
+        onset_gt=unstacked_labels[1],
+        offset_gt=unstacked_labels[2],
         mode=mode,
         learning_rate_fn=learning_rate_fn,
         momentum_fn=momentum_fn,
