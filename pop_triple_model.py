@@ -327,7 +327,7 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             #tf.summary.image('conv3/output', grid, max_outputs=1)
             print(net.shape)
-            net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope=scope+'pool3', data_format=data_format)
+            #net = slim.max_pool2d(net, [1, 2], stride=[1, 2], scope=scope+'pool3', data_format=data_format)
 
             net = slim.dropout(net, 0.25, scope=scope+'dropout3', is_training=is_training)
 
