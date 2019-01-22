@@ -326,7 +326,7 @@ def tfrecord_triple_parser(serialized_example):
     onset_gt = tf.cast(example["onset_gt"], tf.int64)
     offset_gt = tf.cast(example["offset_gt"], tf.int64)
     labels = tf.stack((frame_gt, onset_gt, offset_gt))
-    print(labels.shape)
+
     return features, labels
 
 

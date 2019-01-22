@@ -29,8 +29,9 @@ def conv_net_model_fn(features, labels, mode, params):
     def loss_filter_fn(name):
         return 'conv' in name
 
+    # unstack the three different labels
     unstacked_labels = tf.unstack(labels, axis=1)
-    print(unstacked_labels[0].shape)
+
 
     return conv_net_init(
         features=features,
@@ -486,6 +487,9 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
     # Flatten
     print(net.shape)
     net = tf.layers.flatten(net)
+    print(net.shape)
+
+    net = tf.concat([feature_map_onset, net, feature_map_offset], axis=1)
     print(net.shape)
 
     net = tf.layers.dense(net, 512, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
