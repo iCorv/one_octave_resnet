@@ -194,9 +194,9 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
         offset_gt = tf.cast(offset_gt, dtype)
 
     logits_onset, feature_map_onset = conv_net_kelz(features[1], mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
-                                 batch_size=batch_size, num_classes=1, scope='onset')
+                                 batch_size=batch_size, num_classes=num_classes, scope='onset')
     logits_offset, feature_map_offset = conv_net_kelz(features[2], mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
-                                 batch_size=batch_size, num_classes=1, scope='offset')
+                                 batch_size=batch_size, num_classes=num_classes, scope='offset')
 
     logits = resnet(features[0], feature_map_onset, feature_map_offset, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
 
@@ -234,11 +234,11 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
                                epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
 
-    individual_loss_onset = log_loss(tf.reduce_max(onset_gt, axis=1, keepdims=True), tf.clip_by_value(predictions['probabilities_onset'],
+    individual_loss_onset = log_loss(onset_gt, tf.clip_by_value(predictions['probabilities_onset'],
                                                                 clip_norm, 1.0 - clip_norm), epsilon=0.0)
     loss_onset = tf.reduce_mean(individual_loss_onset)
 
-    individual_loss_offset = log_loss(tf.reduce_max(offset_gt, axis=1, keepdims=True), tf.clip_by_value(predictions['probabilities_offset'],
+    individual_loss_offset = log_loss(offset_gt, tf.clip_by_value(predictions['probabilities_offset'],
                                                                   clip_norm, 1.0 - clip_norm), epsilon=0.0)
     loss_offset = tf.reduce_mean(individual_loss_offset)
 
@@ -500,7 +500,7 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
                              data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
                                   data_format=data_format)
 
     net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
