@@ -230,6 +230,10 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
             predictions=predictions,
             export_outputs={'predictions': tf.estimator.export.PredictOutput(predictions)})
 
+    print("lanbels")
+    print(onset_gt.shape)
+    print(predictions['probabilities_onset'])
+
     individual_loss = log_loss(frame_gt, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm),
                                epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
