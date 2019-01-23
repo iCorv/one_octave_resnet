@@ -19,7 +19,7 @@ def get_preprocessing_parameters(fold_num):
               'chord_fold': './splits/chord-splits/train',
               'chroma_folder': './chroma/',
               'note_activation_folder': './note_activation/',
-              'context_frames': 2,
+              'context_frames': 7,
               'is_chroma': False,
               'is_hpcp': True,
               'audio_config': {'num_channels': 1,

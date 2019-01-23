@@ -287,16 +287,21 @@ def write_file_to_triple_tfrecords(write_file, base_dir, read_file, audio_config
         spectrogram = wav_to_spec(base_dir, read_file, audio_config)
 
     print(spectrogram.shape)
-    frame_gt, onset_gt, offset_gt = midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'],
-                                                               spectrogram.shape[0])
+    #frame_gt, onset_gt, offset_gt = midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'],
+    #                                                           spectrogram.shape[0])
+    ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0])
+
     total_examples_processed = 0
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
-
-    for frame in range(context_frames, spectrogram.shape[0] - context_frames):
+    pre_post_run = context_frames*2 + 1
+    offset = 2*context_frames
+    for frame in range(pre_post_run, spectrogram.shape[0] - pre_post_run):
         example = features_to_triple_example(spectrogram[frame - context_frames:frame + context_frames + 1, :],
-                                             frame_gt[frame, :], onset_gt[frame, :], offset_gt[frame, :])
+                                             spectrogram[frame - offset:frame + 1, :],
+                                             spectrogram[frame:frame + offset + 1, :],
+                                             ground_truth[frame, :], ground_truth[frame-1, :], ground_truth[frame+1, :])
 
         # Serialize to string and write on the file
         writer.write(example.SerializeToString())
@@ -317,13 +322,15 @@ def features_to_example(spectrogram, ground_truth):
     return example
 
 
-def features_to_triple_example(spectrogram, frame_gt, onset_gt, offset_gt):
+def features_to_triple_example(spectrogram, onset_spec, offset_spec, frame_gt, onset_gt, offset_gt):
     """Build an example from spectrogram and ground truth data."""
     # Create a feature
     feature = {"frame_gt": _int64_feature(frame_gt),
                "onset_gt": _int64_feature(onset_gt),
                "offset_gt": _int64_feature(offset_gt),
-               "spec": _float_feature(spectrogram.ravel())}
+               "spec": _float_feature(spectrogram.ravel()),
+               "spec_onset": _float_feature(onset_spec.ravel()),
+               "spec_offset": _float_feature(offset_spec.ravel())}
 
     # Create an example protocol buffer
     example = tf.train.Example(features=tf.train.Features(feature=feature))
