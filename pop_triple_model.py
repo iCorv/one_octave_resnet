@@ -9,11 +9,17 @@ from math import sqrt
 
 
 def conv_net_model_fn(features, labels, mode, params):
+    print(features.shape)
+    unstacked_features = tf.unstack(features, axis=1)
     if params['data_format'] == 'NCHW' or params['data_format'] == 'channels_first':
         # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
         # This provides a large performance boost on GPU. See
         # https://www.tensorflow.org/performance/performance_guide#data_formats
-        features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
+        unstacked_features[0] = tf.reshape(unstacked_features[0], [-1, params['num_channels'], params['frames'], params['freq_bins']])
+        unstacked_features[1] = tf.reshape(unstacked_features[1],
+                                           [-1, params['num_channels'], params['frames'], params['freq_bins']])
+        unstacked_features[2] = tf.reshape(unstacked_features[2],
+                                           [-1, params['num_channels'], params['frames'], params['freq_bins']])
     else:
         features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
 
@@ -31,7 +37,7 @@ def conv_net_model_fn(features, labels, mode, params):
 
     # unstack the three different labels
     unstacked_labels = tf.unstack(labels, axis=1)
-    unstacked_features = tf.unstack(features, axis=1)
+
 
 
     return conv_net_init(
