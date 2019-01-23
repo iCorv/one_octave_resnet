@@ -316,6 +316,8 @@ def tfrecord_triple_parser(serialized_example):
     example = tf.parse_single_example(
         serialized_example,
         features={"spec": tf.FixedLenFeature([num_features], tf.float32),
+                  "spec_onset": tf.FixedLenFeature([num_features], tf.float32),
+                  "spec_offset": tf.FixedLenFeature([num_features], tf.float32),
                   "frame_gt": tf.FixedLenFeature([num_labels], tf.int64),
                   "onset_gt": tf.FixedLenFeature([num_labels], tf.int64),
                   "offset_gt": tf.FixedLenFeature([num_labels], tf.int64)})
