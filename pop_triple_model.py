@@ -489,6 +489,7 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
     print(net.shape)
     net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
                                   data_format=data_format)
+    print(net.shape)
     net = tf.concat((feature_map_onset, net, feature_map_offset), axis=2)
 
     net = _building_block_v1(inputs=net, filters=128, training=is_training, projection_shortcut=projection_shortcut_2,
@@ -509,10 +510,17 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
     #net = tf.concat([feature_map_onset, net, feature_map_offset], axis=1)
     #print(net.shape)
 
+    net = tf.layers.dense(net, 4096, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+              factor=2.0, mode='FAN_AVG', uniform=True))
+    print(net.shape)
+
+    net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
+
     net = tf.layers.dense(net, 1024, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
               factor=2.0, mode='FAN_AVG', uniform=True))
     print(net.shape)
-    net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
+
+    net = tf.layers.dropout(net, 0.5, name='dropout3', training=is_training)
     net = tf.layers.dense(net, num_classes, activation=None, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
               factor=2.0, mode='FAN_AVG', uniform=True))
     print(net.shape)
