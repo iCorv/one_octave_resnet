@@ -328,7 +328,7 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv2_output[0], transpose_shape), 2))
             #tf.summary.image('conv2/output', grid, max_outputs=1)
             print(net.shape)
-            net = slim.max_pool2d(net, [3, 1], stride=[1, 1], scope=scope+'pool2', data_format=data_format)
+            net = slim.max_pool2d(net, [3, 1], stride=[2, 1], scope=scope+'pool2', data_format=data_format)
             print(net.shape)
             net = slim.dropout(net, 0.25, scope=scope+'dropout2', is_training=is_training)
 
@@ -338,7 +338,7 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             #tf.summary.image('conv3/output', grid, max_outputs=1)
             print(net.shape)
-            feature_map = slim.max_pool2d(net, [3, 1], stride=[1, 1], scope=scope+'pool3', data_format=data_format)
+            feature_map = slim.max_pool2d(net, [3, 1], stride=[2, 1], scope=scope+'pool3', data_format=data_format)
 
             net = slim.dropout(feature_map, 0.25, scope=scope+'dropout3', is_training=is_training)
 
@@ -482,7 +482,7 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
                                   data_format=data_format)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
@@ -491,7 +491,7 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
                              data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
                                   data_format=data_format)
     net = tf.concat((feature_map_onset, net, feature_map_offset), axis=2)
 
