@@ -149,14 +149,6 @@ def momentum_with_decay(
     return momentum_fn
 
 
-def weights_from_labels(labels):
-    labeled_examples = np.where(labels == 1.0)
-    weights = np.zeros(np.shape(labels))
-    weights[labeled_examples[0], :] = 1.0
-    weights[labeled_examples] = 2.0
-    return np.where(weights == 0.0, 0.25, weights)
-
-
 def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_fn, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32, num_classes=88):
     """Shared functionality for different model_fns.
 
