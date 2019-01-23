@@ -31,10 +31,11 @@ def conv_net_model_fn(features, labels, mode, params):
 
     # unstack the three different labels
     unstacked_labels = tf.unstack(labels, axis=1)
+    unstacked_features = tf.unstack(features, axis=1)
 
 
     return conv_net_init(
-        features=features,
+        features=unstacked_features,
         frame_gt=unstacked_labels[0],
         onset_gt=unstacked_labels[1],
         offset_gt=unstacked_labels[2],
@@ -186,12 +187,12 @@ def conv_net_init(features, frame_gt, onset_gt, offset_gt, mode, learning_rate_f
         onset_gt = tf.cast(onset_gt, dtype)
         offset_gt = tf.cast(offset_gt, dtype)
 
-    logits_onset, feature_map_onset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
+    logits_onset, feature_map_onset = conv_net_kelz(features[1], mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
                                  batch_size=batch_size, num_classes=1, scope='onset')
-    logits_offset, feature_map_offset = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
+    logits_offset, feature_map_offset = conv_net_kelz(features[2], mode == tf.estimator.ModeKeys.TRAIN, data_format='NCHW',
                                  batch_size=batch_size, num_classes=1, scope='offset')
 
-    logits = resnet(features, feature_map_onset, feature_map_offset, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
+    logits = resnet(features[0], feature_map_onset, feature_map_offset, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
 
 
     # Visualize conv1 kernels
@@ -325,22 +326,22 @@ def conv_net_kelz(inputs, is_training, data_format='NCHW', batch_size=8, num_cla
             print(net.shape)
             net = slim.dropout(net, 0.25, scope=scope+'dropout2', is_training=is_training)
 
-            feature_map = slim.conv2d(
+            net = slim.conv2d(
                 net, 64, [3, 3], scope=scope+'conv3', normalizer_fn=slim.batch_norm, padding='SAME', data_format=data_format)
             #conv3_output = tf.unstack(net, num=batch_size, axis=0)
             #grid = put_kernels_on_grid(tf.expand_dims(tf.transpose(conv3_output[0], transpose_shape), 2))
             #tf.summary.image('conv3/output', grid, max_outputs=1)
             print(net.shape)
-            net = slim.max_pool2d(feature_map, [3, 2], stride=[1, 2], scope=scope+'pool3', data_format=data_format)
+            feature_map = slim.max_pool2d(net, [3, 1], stride=[1, 1], scope=scope+'pool3', data_format=data_format)
 
-            net = slim.dropout(net, 0.25, scope=scope+'dropout3', is_training=is_training)
+            net = slim.dropout(feature_map, 0.25, scope=scope+'dropout3', is_training=is_training)
 
             # Flatten
             print(net.shape)
             # was  64*1*51
             net = tf.reshape(net, (-1, 64*1*38), scope+'flatten4')
             print(net.shape)
-            net = slim.fully_connected(net, 256, scope=scope+'fc5')
+            net = slim.fully_connected(net, 512, scope=scope+'fc5')
             print(net.shape)
             net = slim.dropout(net, 0.5, scope=scope+'dropout5', is_training=is_training)
             net = slim.fully_connected(net, num_classes, activation_fn=None, scope=scope+'fc6')
@@ -483,8 +484,10 @@ def resnet(inputs, feature_map_onset, feature_map_offset, is_training, data_form
     net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
                              data_format=data_format)
 
-    net += feature_map_onset
-    net += feature_map_offset
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+                                  data_format=data_format)
+    net = tf.concat((feature_map_onset, net, feature_map_offset), axis=2)
 
     net = _building_block_v1(inputs=net, filters=128, training=is_training, projection_shortcut=projection_shortcut_2,
                              strides=1, padding='SAME',

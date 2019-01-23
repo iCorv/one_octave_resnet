@@ -319,9 +319,15 @@ def tfrecord_triple_parser(serialized_example):
                   "frame_gt": tf.FixedLenFeature([num_labels], tf.int64),
                   "onset_gt": tf.FixedLenFeature([num_labels], tf.int64),
                   "offset_gt": tf.FixedLenFeature([num_labels], tf.int64)})
-    features = tf.cast(example['spec'], tf.float32)
+    features_frame = tf.cast(example['spec'], tf.float32)
+    features_onset = tf.cast(example['spec_onset'], tf.float32)
+    features_offset = tf.cast(example['spec_offset'], tf.float32)
     # Reshape spec data into the original shape
-    features = tf.reshape(features, feature_shape)
+    features_frame = tf.reshape(features_frame, feature_shape)
+    features_onset = tf.reshape(features_onset, feature_shape)
+    features_offset = tf.reshape(features_offset, feature_shape)
+    features = tf.stack((features_frame, features_onset, features_offset))
+
     frame_gt = tf.cast(example["frame_gt"], tf.int64)
     onset_gt = tf.cast(example["onset_gt"], tf.int64)
     offset_gt = tf.cast(example["offset_gt"], tf.int64)
