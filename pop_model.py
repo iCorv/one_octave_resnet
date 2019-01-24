@@ -192,7 +192,9 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
+    #logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
+
+    logits = deep_resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
 
     #logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size,
     #                       num_classes=num_classes)
@@ -484,14 +486,9 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
     ##########
-    # net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut,
-    #                          strides=1, padding='SAME', data_format=data_format)
-    #
-    # print(net.shape)
-    # net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
-    #                               data_format=data_format)
-    # print(net.shape)
-    # net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
+
+    # architecture like for model ResNet with HPCP and 15 frames
+
     ##########
     net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
                              data_format=data_format)
@@ -508,6 +505,121 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
     print(net.shape)
 
     net = tf.layers.dense(net, 512, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+              factor=2.0, mode='FAN_AVG', uniform=True))
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
+    net = tf.layers.dense(net, num_classes, activation=None, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+              factor=2.0, mode='FAN_AVG', uniform=True))
+    print(net.shape)
+    return net
+
+
+def deep_resnet(inputs, is_training, data_format='channels_last', num_classes=88):
+    """
+
+    :param inputs:
+    :param is_training:
+    :param data_format:
+    :param batch_size:
+    :param num_classes:
+    :return:
+    """
+
+    def projection_shortcut(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=48, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+
+    def projection_shortcut_2(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+
+    def projection_shortcut_3(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=96, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+
+    def projection_shortcut_4(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=128, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+
+    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
+                               data_format=data_format)
+    # 1. #############
+    print(net.shape)
+
+    net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+                                  data_format=data_format)
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
+    # 2. ############# only one with stride = 2 over frame dim
+
+    net = _building_block_v1(inputs=net, filters=48, training=is_training, projection_shortcut=projection_shortcut,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
+                                  data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
+    # 3. #############
+
+    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut_2,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+                                  data_format=data_format)
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
+    # 4. #############
+
+    net = _building_block_v1(inputs=net, filters=96, training=is_training, projection_shortcut=projection_shortcut_3,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+                                  data_format=data_format)
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout4', training=is_training)
+    # 5. #############
+
+    net = _building_block_v1(inputs=net, filters=96, training=is_training, projection_shortcut=None,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+                                  data_format=data_format)
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout5', training=is_training)
+
+    # 6. #############
+
+    net = _building_block_v1(inputs=net, filters=128, training=is_training, projection_shortcut=projection_shortcut_4,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
+                                  data_format=data_format)
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout6', training=is_training)
+
+
+
+
+    # Flatten
+
+    net = tf.layers.flatten(net)
+    print(net.shape)
+
+    net = tf.layers.dense(net, 4096, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
               factor=2.0, mode='FAN_AVG', uniform=True))
     print(net.shape)
     net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
