@@ -681,6 +681,10 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     # Flatten
     print(net.shape)
     dims = tf.shape(net)
+    print(dims[0])
+    print(dims[0])
+    print(net.shape[2].value)
+    print(net.shape[3].value)
     net = tf.reshape(
         net, (dims[0], dims[1], net.shape[2].value * net.shape[3].value),
         'flatten_end')
