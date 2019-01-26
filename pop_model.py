@@ -681,10 +681,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     # Flatten
     print(net.shape)
     dims = tf.shape(net)
-    print(dims[0])
-    print(net.shape[1].value)
-    print(net.shape[2].value)
-    print(net.shape[3].value)
+
     net = tf.reshape(
         net, (dims[0], net.shape[2].value, net.shape[1].value * net.shape[3].value),
         'flatten_end')
@@ -701,14 +698,14 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
         net = lstm_layer(
                         net,
                         128,
-                        32,
+                        128,
                         lengths=None,
                         stack_size=1,
                         use_cudnn=False,
                         is_training=is_training,
                         bidirectional=True)
         print(net.shape)
-        net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc2')
+        net = slim.fully_connected(tf.layers.flatten(net), num_classes, activation_fn=None, scope='fc2')
         print(net.shape)
 
     return net
