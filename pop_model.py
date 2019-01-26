@@ -643,7 +643,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
 
     def projection_shortcut(inputs):
         return conv2d_fixed_padding(
-            inputs=inputs, filters=48, kernel_size=1, strides=1, padding='SAME',
+            inputs=inputs, filters=96, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
 
     net = conv2d_fixed_padding(inputs=inputs, filters=48, kernel_size=3, strides=1, padding='SAME',
