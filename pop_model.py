@@ -643,40 +643,31 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
 
     def projection_shortcut(inputs):
         return conv2d_fixed_padding(
-            inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
+            inputs=inputs, filters=48, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
 
-    def projection_shortcut_2(inputs):
-        return conv2d_fixed_padding(
-            inputs=inputs, filters=96, kernel_size=1, strides=1, padding='SAME',
-            data_format=data_format)
-
-    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
+    net = conv2d_fixed_padding(inputs=inputs, filters=48, kernel_size=3, strides=1, padding='SAME',
                                data_format=data_format)
 
     print(net.shape)
 
-    net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
+    net = _building_block_v1(inputs=net, filters=48, training=is_training, projection_shortcut=None,
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
     net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
                                   data_format=data_format)
     print(net.shape)
-    net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
-    ##########
+    net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
 
-    # architecture like for model ResNet with HPCP and 15 frames
-
-    ##########
-    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
+    net = _building_block_v1(inputs=net, filters=96, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
                              data_format=data_format)
 
     print(net.shape)
     net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
                                   data_format=data_format)
 
-    net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
+    net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
 
     # Flatten
     print(net.shape)
@@ -691,9 +682,9 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
             activation_fn=tf.nn.relu,
             weights_initializer=tf.contrib.layers.variance_scaling_initializer(
                 factor=2.0, mode='FAN_AVG', uniform=True)):
-        net = slim.fully_connected(net, 1024, scope='fc1')
+        net = slim.fully_connected(net, 768, scope='fc1')
         print(net.shape)
-        net = slim.dropout(net, 0.5, scope='dropout5', is_training=is_training)
+        net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
 
         net = lstm_layer(
                         net,
@@ -705,7 +696,10 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                         is_training=is_training,
                         bidirectional=True)
         print(net.shape)
-        net = slim.fully_connected(tf.layers.flatten(net), num_classes, activation_fn=None, scope='fc2')
+        net = slim.fully_connected(tf.layers.flatten(net), 512, scope='fc2')
+        net = slim.dropout(net, 0.5, scope='dropout4', is_training=is_training)
+        print(net.shape)
+        net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc3')
         print(net.shape)
 
     return net
