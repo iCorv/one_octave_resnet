@@ -629,6 +629,209 @@ def deep_resnet(inputs, is_training, data_format='channels_last', num_classes=88
     return net
 
 
+def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88):
+    """
+
+    :param inputs:
+    :param is_training:
+    :param data_format:
+    :param batch_size:
+    :param num_classes:
+    :return:
+    """
+
+    def projection_shortcut(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+
+    def projection_shortcut_2(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=96, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
+
+    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
+                               data_format=data_format)
+
+    print(net.shape)
+
+    net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
+                                  data_format=data_format)
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
+    ##########
+
+    # architecture like for model ResNet with HPCP and 15 frames
+
+    ##########
+    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
+                             data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[2, 2], padding='VALID',
+                                  data_format=data_format)
+
+    net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
+
+    # Flatten
+    print(net.shape)
+    dims = tf.shape(net)
+    net = tf.reshape(
+        net, (dims[0], dims[1], net.shape[2].value * net.shape[3].value),
+        'flatten_end')
+
+
+
+    print(net.shape)
+
+    net = tf.layers.dense(net, 1024, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+              factor=2.0, mode='FAN_AVG', uniform=True))
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
+
+    net = lstm_layer(
+                    net,
+                    128,
+                    32,
+                    lengths=None,
+                    stack_size=1,
+                    use_cudnn=False,
+                    is_training=is_training,
+                    bidirectional=True)
+    print(net.shape)
+    net = tf.layers.dense(net, num_classes, activation=None,
+                          kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+                              factor=2.0, mode='FAN_AVG', uniform=True))
+    print(net.shape)
+
+    return net
+
+
+def cudnn_lstm_layer(inputs,
+                     batch_size,
+                     num_units,
+                     lengths=None,
+                     stack_size=1,
+                     rnn_dropout_drop_amt=0,
+                     is_training=True,
+                     bidirectional=True):
+    """Create a LSTM layer that uses cudnn."""
+    inputs_t = tf.transpose(inputs, [1, 0, 2])
+    if lengths is not None:
+        all_outputs = [inputs_t]
+        for i in range(stack_size):
+            with tf.variable_scope('stack_' + str(i)):
+                with tf.variable_scope('forward'):
+                    lstm_fw = tf.contrib.cudnn_rnn.CudnnLSTM(
+                        num_layers=1,
+                        num_units=num_units,
+                        direction='unidirectional',
+                        dropout=rnn_dropout_drop_amt,
+                        kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
+                        ),
+                        bias_initializer=tf.zeros_initializer(),
+                    )
+
+                c_fw = tf.zeros([1, batch_size, num_units], tf.float32)
+                h_fw = tf.zeros([1, batch_size, num_units], tf.float32)
+
+                outputs_fw, _ = lstm_fw(
+                    all_outputs[-1], (h_fw, c_fw), training=is_training)
+
+                combined_outputs = outputs_fw
+
+                if bidirectional:
+                    with tf.variable_scope('backward'):
+                        lstm_bw = tf.contrib.cudnn_rnn.CudnnLSTM(
+                            num_layers=1,
+                            num_units=num_units,
+                            direction='unidirectional',
+                            dropout=rnn_dropout_drop_amt,
+                            kernel_initializer=tf.contrib.layers
+                                .variance_scaling_initializer(),
+                            bias_initializer=tf.zeros_initializer(),
+                        )
+
+                    c_bw = tf.zeros([1, batch_size, num_units], tf.float32)
+                    h_bw = tf.zeros([1, batch_size, num_units], tf.float32)
+
+                    inputs_reversed = tf.reverse_sequence(
+                        all_outputs[-1], lengths, seq_axis=0, batch_axis=1)
+                    outputs_bw, _ = lstm_bw(
+                        inputs_reversed, (h_bw, c_bw), training=is_training)
+
+                    outputs_bw = tf.reverse_sequence(
+                        outputs_bw, lengths, seq_axis=0, batch_axis=1)
+
+                    combined_outputs = tf.concat([outputs_fw, outputs_bw], axis=2)
+
+                all_outputs.append(combined_outputs)
+
+        # for consistency with cudnn, here we just return the top of the stack,
+        # although this can easily be altered to do other things, including be
+        # more resnet like
+        return tf.transpose(all_outputs[-1], [1, 0, 2])
+    else:
+        lstm = tf.contrib.cudnn_rnn.CudnnLSTM(
+            num_layers=stack_size,
+            num_units=num_units,
+            direction='bidirectional' if bidirectional else 'unidirectional',
+            dropout=rnn_dropout_drop_amt,
+            kernel_initializer=tf.contrib.layers.variance_scaling_initializer(),
+            bias_initializer=tf.zeros_initializer(),
+        )
+        stack_multiplier = 2 if bidirectional else 1
+        c = tf.zeros([stack_multiplier * stack_size, batch_size, num_units],
+                     tf.float32)
+        h = tf.zeros([stack_multiplier * stack_size, batch_size, num_units],
+                     tf.float32)
+        outputs, _ = lstm(inputs_t, (h, c), training=is_training)
+        outputs = tf.transpose(outputs, [1, 0, 2])
+
+        return outputs
+
+
+def lstm_layer(inputs,
+               batch_size,
+               num_units,
+               lengths=None,
+               stack_size=1,
+               use_cudnn=False,
+               rnn_dropout_drop_amt=0,
+               is_training=True,
+               bidirectional=True):
+    """Create a LSTM layer using the specified backend."""
+    if use_cudnn:
+        return cudnn_lstm_layer(inputs, batch_size, num_units, lengths, stack_size,
+                                rnn_dropout_drop_amt, is_training, bidirectional)
+    else:
+        assert rnn_dropout_drop_amt == 0
+        cells_fw = [
+            tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell(num_units)
+            for _ in range(stack_size)
+        ]
+        cells_bw = [
+            tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell(num_units)
+            for _ in range(stack_size)
+        ]
+        with tf.variable_scope('cudnn_lstm'):
+            (outputs, unused_state_f,
+             unused_state_b) = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(
+                cells_fw,
+                cells_bw,
+                inputs,
+                dtype=tf.float32,
+                sequence_length=lengths,
+                parallel_iterations=1)
+
+        return outputs
+
+
+
 def log_loss(labels, predictions, epsilon=1e-7, scope=None, weights=None):
     """Calculate log losses.
         Same as tf.losses.log_loss except that this returns the individual losses
