@@ -696,10 +696,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                         is_training=is_training,
                         bidirectional=True)
         print(net.shape)
-        net = slim.fully_connected(tf.layers.flatten(net), 512, scope='fc2')
-        net = slim.dropout(net, 0.5, scope='dropout4', is_training=is_training)
-        print(net.shape)
-        net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc3')
+        net = slim.fully_connected(tf.layers.flatten(net), num_classes, activation_fn=None, scope='fc3')
         print(net.shape)
 
     return net
