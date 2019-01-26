@@ -685,29 +685,27 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
         net, (dims[0], dims[1], net.shape[2].value * net.shape[3].value),
         'flatten_end')
 
+    with slim.arg_scope(
+            [slim.fully_connected],
+            activation_fn=tf.nn.relu,
+            weights_initializer=tf.contrib.layers.variance_scaling_initializer(
+                factor=2.0, mode='FAN_AVG', uniform=True)):
+        net = slim.fully_connected(net, 1024, scope='fc1')
+        print(net.shape)
+        net = slim.dropout(net, 0.5, scope='dropout5', is_training=is_training)
 
-
-    print(net.shape)
-
-    net = tf.layers.dense(net, 1024, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
-              factor=2.0, mode='FAN_AVG', uniform=True))
-    print(net.shape)
-    net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
-
-    net = lstm_layer(
-                    net,
-                    128,
-                    32,
-                    lengths=None,
-                    stack_size=1,
-                    use_cudnn=False,
-                    is_training=is_training,
-                    bidirectional=True)
-    print(net.shape)
-    net = tf.layers.dense(net, num_classes, activation=None,
-                          kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
-                              factor=2.0, mode='FAN_AVG', uniform=True))
-    print(net.shape)
+        net = lstm_layer(
+                        net,
+                        128,
+                        32,
+                        lengths=None,
+                        stack_size=1,
+                        use_cudnn=False,
+                        is_training=is_training,
+                        bidirectional=True)
+        print(net.shape)
+        net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc2')
+        print(net.shape)
 
     return net
 
