@@ -715,11 +715,11 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
 
         net = lstm_layer(
                         net,
-                        batch_size=8,
+                        batch_size=128,
                         num_units=128,
                         lengths=None,
                         stack_size=1,
-                        use_cudnn=True,
+                        use_cudnn=False,
                         is_training=is_training,
                         bidirectional=True)
         print(net.shape)

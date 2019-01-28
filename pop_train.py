@@ -35,7 +35,7 @@ def main(_):
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
 
     estimator_config = tf.estimator.RunConfig(
-        save_checkpoints_secs=300,  # Save checkpoints every 50 steps.
+        save_checkpoints_secs=600,  # Save checkpoints every 50 steps.
         keep_checkpoint_max=50,  # Retain the 10 most recent checkpoints.
         log_step_count_steps=1000
     )
@@ -59,7 +59,7 @@ def main(_):
             input_fn=lambda: dataset.tfrecord_val_input_fn(val_dataset_tfrecord,
                                                            batch_size=hparams['batch_size'],
                                                            num_epochs=1),
-            steps=hparams['eval_steps'], throttle_secs=300)
+            steps=hparams['eval_steps'], throttle_secs=600)
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
     # Train the Model.
