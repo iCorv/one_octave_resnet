@@ -709,17 +709,17 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
             activation_fn=tf.nn.relu,
             weights_initializer=tf.contrib.layers.variance_scaling_initializer(
                 factor=2.0, mode='FAN_AVG', uniform=True)):
-        net = slim.fully_connected(net, 512, scope='fc1')
+        net = slim.fully_connected(net, 1024, scope='fc1')
         print(net.shape)
         net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
 
         net = lstm_layer(
                         net,
-                        128,
-                        128,
+                        batch_size=8,
+                        num_units=128,
                         lengths=None,
                         stack_size=1,
-                        use_cudnn=False,
+                        use_cudnn=True,
                         is_training=is_training,
                         bidirectional=True)
         print(net.shape)
