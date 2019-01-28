@@ -257,15 +257,21 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
 
-        learning_rate = learning_rate_fn(global_step)
-        momentum = momentum_fn(global_step)
+        #learning_rate = learning_rate_fn(global_step)
+        #momentum = momentum_fn(global_step)
+        learning_rate = tf.train.exponential_decay(
+            0.0006,
+            global_step,
+            10000,
+            0.98,
+            staircase=True)
 
         # Create a tensor named learning_rate for logging purposes
         tf.identity(learning_rate, name='learning_rate')
         tf.summary.scalar('learning_rate', learning_rate)
         # Create a tensor named momentum for logging purposes
-        tf.identity(momentum, name='momentum')
-        tf.summary.scalar('momentum', momentum)
+        #tf.identity(momentum, name='momentum')
+        #tf.summary.scalar('momentum', momentum)
 
         optimizer = tf.train.AdamOptimizer(learning_rate)
 
@@ -276,15 +282,20 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         #    momentum=momentum,
         #    use_nesterov=True
         #)
-        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        #update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-        with tf.control_dependencies(update_ops):
+        #with tf.control_dependencies(update_ops):
             #minimize_op = optimizer.minimize(loss, global_step)
-            gradients, variables = zip(*optimizer.compute_gradients(loss))
-            gradients, _ = tf.clip_by_global_norm(gradients, 3.0)
-            minimize_op = optimizer.apply_gradients(zip(gradients, variables), global_step=global_step)
-
-        train_op = tf.group(minimize_op, update_ops)
+            #gradients, variables = zip(*optimizer.compute_gradients(loss))
+            #gradients, _ = tf.clip_by_global_norm(gradients, 3.0)
+            #minimize_op = optimizer.apply_gradients(zip(gradients, variables), global_step=global_step)
+        train_op = slim.learning.create_train_op(
+            loss,
+            optimizer,
+            clip_gradient_norm=3.0,
+            summarize_gradients=True,
+            variables_to_train=None)
+        #train_op = tf.group(minimize_op, update_ops)
     else:
         train_op = None
 
