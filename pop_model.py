@@ -229,6 +229,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
 
+
     # loss_filter_fn = loss_filter_fn
     #
     # # Add weight decay to the loss.
@@ -257,16 +258,22 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         tf.identity(momentum, name='momentum')
         tf.summary.scalar('momentum', momentum)
 
+        optimizer = tf.train.AdamOptimizer(learning_rate)
+
+
         #optimizer = tf.train.AdamOptimizer(0.001)
-        optimizer = tf.train.MomentumOptimizer(
-            learning_rate=learning_rate,
-            momentum=momentum,
-            use_nesterov=True
-        )
+        #optimizer = tf.train.MomentumOptimizer(
+        #    learning_rate=learning_rate,
+        #    momentum=momentum,
+        #    use_nesterov=True
+        #)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
         with tf.control_dependencies(update_ops):
-            minimize_op = optimizer.minimize(loss, global_step)
+            #minimize_op = optimizer.minimize(loss, global_step)
+            gradients, variables = zip(*optimizer.compute_gradients(loss))
+            gradients, _ = tf.clip_by_global_norm(gradients, 3.0)
+            minimize_op = optimizer.apply_gradients(zip(gradients, variables), global_step=global_step)
 
         train_op = tf.group(minimize_op, update_ops)
     else:
@@ -643,15 +650,15 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
 
     def projection_shortcut(inputs):
         return conv2d_fixed_padding(
-            inputs=inputs, filters=96, kernel_size=1, strides=1, padding='SAME',
+            inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
 
-    net = conv2d_fixed_padding(inputs=inputs, filters=48, kernel_size=3, strides=1, padding='SAME',
+    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
                                data_format=data_format)
 
     print(net.shape)
 
-    net = _building_block_v1(inputs=net, filters=48, training=is_training, projection_shortcut=None,
+    net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
@@ -660,7 +667,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
 
-    net = _building_block_v1(inputs=net, filters=96, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
+    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
                              data_format=data_format)
 
     print(net.shape)
@@ -682,7 +689,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
             activation_fn=tf.nn.relu,
             weights_initializer=tf.contrib.layers.variance_scaling_initializer(
                 factor=2.0, mode='FAN_AVG', uniform=True)):
-        net = slim.fully_connected(net, 768, scope='fc1')
+        net = slim.fully_connected(net, 512, scope='fc1')
         print(net.shape)
         net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
 
