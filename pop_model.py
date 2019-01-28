@@ -226,8 +226,17 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
             predictions=predictions,
             export_outputs={'predictions': tf.estimator.export.PredictOutput(predictions)})
 
-    individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
-    loss = tf.reduce_mean(individual_loss)
+    #individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
+    #loss = tf.reduce_mean(individual_loss)
+
+    loss = tf.losses.sigmoid_cross_entropy(
+        labels,
+        logits,
+        weights=1.0,
+        label_smoothing=0,
+        scope="sigmoid_cross_entropy_loss",
+        reduction=tf.losses.Reduction.MEAN
+    )
 
 
     # loss_filter_fn = loss_filter_fn
