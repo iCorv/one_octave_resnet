@@ -197,35 +197,7 @@ def preprocess_fold_parallel(fold, mode, norm=False):
              total_examples_processed=np.sum(total_examples_processed))
 
 
-def preprocess_triple_fold_parallel(fold, mode, norm=False):
-    """Parallel preprocess an entire fold as defined in the preprocessing parameters.
-        This seems only to work on Win with Anaconda!
-        fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
-        mode - 'train', 'valid' or 'test' to address the correct config parameter
-    """
-    config = ppp.get_preprocessing_parameters(fold.value)
-    audio_config = config['audio_config']
-
-    # load fold
-    filenames = open(config[mode+'_fold'], 'r').readlines()
-    filenames = [f.strip() for f in filenames]
-
-    def parallel_loop(file):
-        # split file path string at "/" and take the last split, since it's the actual filename
-        num_ex_processed = write_file_to_triple_tfrecords(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
-                                                          ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                          config['context_frames'], config['is_hpcp'])
-        return num_ex_processed
-
-    num_cores = multiprocessing.cpu_count()
-
-    total_examples_processed = Parallel(n_jobs=num_cores)(delayed(parallel_loop)(file) for file in filenames)
-    print("Examples processed: " + str(np.sum(total_examples_processed)))
-    np.savez(config['tfrecords_' + mode + '_fold'] + "total_examples_processed",
-             total_examples_processed=np.sum(total_examples_processed))
-
-
-def preprocess_triple_fold(fold, mode, norm=False):
+def preprocess_non_overlap_fold(fold, mode, norm=False):
     """Preprocess an entire fold as defined in the preprocessing parameters.
         fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
         mode - 'train', 'valid' or 'test' to address the correct config parameter
@@ -241,9 +213,9 @@ def preprocess_triple_fold(fold, mode, norm=False):
 
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
-        num_ex_processed = write_file_to_triple_tfrecords(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
-                                                          ".tfrecords", config['audio_path'], file, audio_config, norm,
-                                                          config['context_frames'], config['is_hpcp'])
+        num_ex_processed = write_file_to_non_overlap_tfrecords(config['tfrecords_'+mode+'_fold'] + file.split('/')[-1] +
+                                                   ".tfrecords", config['audio_path'], file, audio_config, norm,
+                                                   config['context_frames'], config['is_hpcp'])
         total_examples_processed = total_examples_processed + num_ex_processed
 
     print("Examples processed: " + str(total_examples_processed))
@@ -278,7 +250,12 @@ def write_file_to_tfrecords(write_file, base_dir, read_file, audio_config, norm,
     return total_examples_processed
 
 
-def write_file_to_triple_tfrecords(write_file, base_dir, read_file, audio_config, norm, context_frames, is_hpcp):
+def chunks(sequence, length):
+    for index in range(0, len(sequence), length):
+        yield sequence[index:index + length]
+
+
+def write_file_to_non_overlap_tfrecords(write_file, base_dir, read_file, audio_config, norm, context_frames, is_hpcp):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     writer = tf.python_io.TFRecordWriter(write_file)
     if is_hpcp:
@@ -287,21 +264,23 @@ def write_file_to_triple_tfrecords(write_file, base_dir, read_file, audio_config
         spectrogram = wav_to_spec(base_dir, read_file, audio_config)
 
     print(spectrogram.shape)
-    #frame_gt, onset_gt, offset_gt = midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'],
-    #                                                           spectrogram.shape[0])
     ground_truth = midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0])
-
     total_examples_processed = 0
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
-    pre_post_run = context_frames*2 + 1
-    offset = 2*context_frames
-    for frame in range(pre_post_run, spectrogram.shape[0] - pre_post_run):
-        example = features_to_triple_example(spectrogram[frame - context_frames:frame + context_frames + 1, :],
-                                             spectrogram[frame - offset:frame + 1, :],
-                                             spectrogram[frame:frame + offset + 1, :],
-                                             ground_truth[frame, :], ground_truth[frame-1, :], ground_truth[frame+1, :])
+
+    #split_spec = np.array_split(spectrogram, int(spectrogram.shape[0] / 2000), axis=0)
+    #split_gt = np.array_split(ground_truth, int(spectrogram.shape[0] / 2000), axis=0)
+
+    split_spec = list(chunks(spectrogram, 2000))
+    split_gt = list(chunks(ground_truth, 2000))
+
+    #print(split_spec[1].shape)
+    #print(split_gt[0].shape)
+
+    for ex, gt in zip(split_spec[:-1], split_gt[:-1]):
+        example = features_to_non_overlap_example(ex, gt)
 
         # Serialize to string and write on the file
         writer.write(example.SerializeToString())
@@ -322,15 +301,11 @@ def features_to_example(spectrogram, ground_truth):
     return example
 
 
-def features_to_triple_example(spectrogram, onset_spec, offset_spec, frame_gt, onset_gt, offset_gt):
+def features_to_non_overlap_example(spectrogram, ground_truth):
     """Build an example from spectrogram and ground truth data."""
     # Create a feature
-    feature = {"frame_gt": _int64_feature(frame_gt),
-               "onset_gt": _int64_feature(onset_gt),
-               "offset_gt": _int64_feature(offset_gt),
-               "spec": _float_feature(spectrogram.ravel()),
-               "spec_onset": _float_feature(onset_spec.ravel()),
-               "spec_offset": _float_feature(offset_spec.ravel())}
+    feature = {"label": _int64_feature(ground_truth.ravel()),
+               "spec": _float_feature(spectrogram.ravel())}
 
     # Create an example protocol buffer
     example = tf.train.Example(features=tf.train.Features(feature=feature))
