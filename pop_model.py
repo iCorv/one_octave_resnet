@@ -723,7 +723,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                         is_training=is_training,
                         bidirectional=True)
         print(net.shape)
-        net = tf.slice(net, [0, 8, 0], [-1, 8, -1])
+        net = tf.slice(net, [0, 8, 0], [-1, 1, -1])
         print(net.shape)
         net = slim.fully_connected(tf.layers.flatten(net), num_classes, activation_fn=None, scope='fc3')
         print(net.shape)
