@@ -673,8 +673,8 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
             inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
 
-    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
-                               data_format=data_format)
+    # net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
+    #                            data_format=data_format)
 
     # print(net.shape)
     #
@@ -697,35 +697,35 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     # net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
 
     # Flatten
-    print(net.shape)
-    dims = tf.shape(net)
-
-    net = tf.reshape(
-        net, (dims[0], net.shape[2].value, net.shape[1].value * net.shape[3].value),
-        'flatten_end')
-    print(net.shape)
+    # print(net.shape)
+    # dims = tf.shape(net)
+    #
+    # net = tf.reshape(
+    #     net, (dims[0], net.shape[2].value, net.shape[1].value * net.shape[3].value),
+    #     'flatten_end')
+    # print(net.shape)
     with slim.arg_scope(
             [slim.fully_connected],
             activation_fn=tf.nn.relu,
             weights_initializer=tf.contrib.layers.variance_scaling_initializer(
                 factor=2.0, mode='FAN_AVG', uniform=True)):
-        net = slim.fully_connected(net, 1024, scope='fc1')
-        print(net.shape)
-        net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
+        # net = slim.fully_connected(net, 1024, scope='fc1')
+        # print(net.shape)
+        # net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
 
         net = lstm_layer(
-                        net,
-                        batch_size=128,
-                        num_units=128,
+                        inputs,
+                        batch_size=8,
+                        num_units=256,
                         lengths=None,
                         stack_size=1,
                         use_cudnn=False,
                         is_training=is_training,
                         bidirectional=True)
+        # print(net.shape)
+        #net = tf.slice(net, [0, 10, 0], [-1, 1, -1])
         print(net.shape)
-        net = tf.slice(net, [0, 10, 0], [-1, 1, -1])
-        print(net.shape)
-        net = slim.fully_connected(tf.layers.flatten(net), num_classes, activation_fn=None, scope='fc3')
+        net = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc3')
         print(net.shape)
 
     return net

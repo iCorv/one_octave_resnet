@@ -16,7 +16,7 @@ DEFAULT_DTYPE = tf.float32
 num_examples = 4194573
 num_val_examples = 1569045
 num_test_examples = 1569045
-batch_size = 128
+batch_size = 8
 batches_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 26
 total_train_steps = train_epochs * batches_per_epoch
@@ -83,7 +83,7 @@ def get_hyper_parameters(net):
                   'momentum': 1.0,
                   'momentum_cycle': [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
                   # [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+2))][0:30] + [momentum for momentum in frange(0.85, 0.95, (0.95-0.85)/(30+2))][0:31],
-                  'frames': 21,
+                  'frames': 2000,
                   'freq_bins': 76,
                   'num_channels': 1,
                   'num_classes': 88,

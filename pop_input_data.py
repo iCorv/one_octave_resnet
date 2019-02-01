@@ -241,7 +241,7 @@ FIELD_DEFAULTS = [[0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0
                   [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.], [0.],
                   [0]]  # sets field types
 
-feature_shape = [21, 76, 1]
+feature_shape = [2000, 76, 1]
 
 num_labels = 88
 num_features = feature_shape[0] * feature_shape[1] * feature_shape[2]
@@ -311,31 +311,18 @@ def tfrecord_parser(serialized_example):
     return features, label
 
 
-def tfrecord_triple_parser(serialized_example):
+def tfrecord_non_overlap_parser(serialized_example):
     """Parses a single tf.Example into spectrogram and label tensors."""
     example = tf.parse_single_example(
         serialized_example,
         features={"spec": tf.FixedLenFeature([num_features], tf.float32),
-                  "spec_onset": tf.FixedLenFeature([num_features], tf.float32),
-                  "spec_offset": tf.FixedLenFeature([num_features], tf.float32),
-                  "frame_gt": tf.FixedLenFeature([num_labels], tf.int64),
-                  "onset_gt": tf.FixedLenFeature([num_labels], tf.int64),
-                  "offset_gt": tf.FixedLenFeature([num_labels], tf.int64)})
-    features_frame = tf.cast(example['spec'], tf.float32)
-    features_onset = tf.cast(example['spec_onset'], tf.float32)
-    features_offset = tf.cast(example['spec_offset'], tf.float32)
+                  "label": tf.FixedLenFeature([2000*num_labels], tf.int64)})
+    features = tf.cast(example['spec'], tf.float32)
     # Reshape spec data into the original shape
-    features_frame = tf.reshape(features_frame, feature_shape)
-    features_onset = tf.reshape(features_onset, feature_shape)
-    features_offset = tf.reshape(features_offset, feature_shape)
-    features = tf.stack((features_frame, features_onset, features_offset))
-
-    frame_gt = tf.cast(example["frame_gt"], tf.int64)
-    onset_gt = tf.cast(example["onset_gt"], tf.int64)
-    offset_gt = tf.cast(example["offset_gt"], tf.int64)
-    labels = tf.stack((frame_gt, onset_gt, offset_gt))
-
-    return features, labels
+    features = tf.reshape(features, feature_shape)
+    label = tf.cast(example["label"], tf.int64)
+    label = tf.reshape(label, [2000, 88])
+    return features, label
 
 
 def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
@@ -347,7 +334,7 @@ def tfrecord_train_input_fn(filepath, batch_size, num_epochs):
     # dataset = dataset.shuffle(100000)
     # dataset = dataset.repeat(num_epochs)
     dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(10000, num_epochs))
-    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_parser, batch_size))
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_non_overlap_parser, batch_size))
     # dataset = dataset.map(tfrecord_train_parser)
     # dataset = dataset.batch(batch_size)
     dataset = dataset.prefetch(batch_size)
@@ -364,7 +351,7 @@ def tfrecord_val_input_fn(filepath, batch_size, num_epochs):
     # dataset = dataset.map(tfrecord_train_parser)
     # dataset = dataset.batch(batch_size)
     dataset = dataset.apply(tf.contrib.data.shuffle_and_repeat(10000, num_epochs))
-    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_parser, batch_size))
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(tfrecord_non_overlap_parser, batch_size))
     dataset = dataset.prefetch(batch_size)
 
     return dataset
@@ -375,7 +362,7 @@ def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
 
     # Map the parser over dataset, and batch results by up to batch_size
     dataset = dataset.repeat(num_epochs)
-    dataset = dataset.map(tfrecord_parser)
+    dataset = dataset.map(tfrecord_non_overlap_parser)
     dataset = dataset.batch(batch_size)
 
     return dataset
