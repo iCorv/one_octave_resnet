@@ -13,7 +13,7 @@ DEFAULT_DTYPE = tf.float32
 # Context - 10
 # fold_1: train - 4194573, valid - 749017, test - 1569045
 
-num_examples = 4194573
+num_examples = 2008
 num_val_examples = 1569045
 num_test_examples = 1569045
 batch_size = 8
