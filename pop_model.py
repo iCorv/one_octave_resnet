@@ -703,7 +703,9 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     # net = tf.reshape(
     #     net, (dims[0], net.shape[2].value, net.shape[1].value * net.shape[3].value),
     #     'flatten_end')
-    # print(net.shape)
+    print(inputs.shape)
+    net = tf.squeeze(inputs)
+    print(net.shape)
     with slim.arg_scope(
             [slim.fully_connected],
             activation_fn=tf.nn.relu,
@@ -714,7 +716,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
         # net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
 
         net = lstm_layer(
-                        inputs,
+                        net,
                         batch_size=8,
                         num_units=256,
                         lengths=None,
