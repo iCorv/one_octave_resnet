@@ -682,7 +682,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 2], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 1], padding='VALID',
                                   data_format=data_format)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
@@ -691,7 +691,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                              data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 1], strides=[1, 1], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 1], padding='VALID',
                                   data_format=data_format)
 
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
