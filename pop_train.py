@@ -37,7 +37,7 @@ def main(_):
     estimator_config = tf.estimator.RunConfig(
         save_checkpoints_secs=300,  # Save checkpoints every 50 steps.
         keep_checkpoint_max=50,  # Retain the 10 most recent checkpoints.
-        log_step_count_steps=10
+        log_step_count_steps=30
     )
     classifier = tf.estimator.Estimator(
         model_fn=pop_model.conv_net_model_fn,
