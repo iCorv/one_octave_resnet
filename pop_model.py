@@ -704,7 +704,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     #     net, (dims[0], net.shape[2].value, net.shape[1].value * net.shape[3].value),
     #     'flatten_end')
     print(inputs.shape)
-    net = tf.squeeze(inputs)
+    net = tf.squeeze(inputs, axis=1)
     print(net.shape)
     with slim.arg_scope(
             [slim.fully_connected],
