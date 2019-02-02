@@ -226,7 +226,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
             predictions=predictions,
             export_outputs={'predictions': tf.estimator.export.PredictOutput(predictions)})
 
-    individual_loss = log_loss(labels, predictions['probabilities'], epsilon=0.0)
+    individual_loss = log_loss(labels, predictions['probabilities'], epsilon=clip_norm)
     #individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
 
@@ -720,7 +720,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                         net,
                         batch_size=8,
                         num_units=256,
-                        lengths=[2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
+                        lengths=None, # needs a vector of length batch size with the entries defining the length of each sequence. In cas sequences differ in length
                         stack_size=1,
                         use_cudnn=True,
                         is_training=is_training,
