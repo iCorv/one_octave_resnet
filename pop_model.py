@@ -226,7 +226,8 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
             predictions=predictions,
             export_outputs={'predictions': tf.estimator.export.PredictOutput(predictions)})
 
-    individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
+    individual_loss = log_loss(labels, predictions['probabilities'], epsilon=0.0)
+    #individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
     loss = tf.reduce_mean(individual_loss)
 
     #loss = tf.losses.sigmoid_cross_entropy(
@@ -682,7 +683,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 1], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 2], padding='VALID',
                                   data_format=data_format)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
@@ -691,7 +692,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                              data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 1], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 2], padding='VALID',
                                   data_format=data_format)
 
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
