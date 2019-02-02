@@ -720,9 +720,9 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                         net,
                         batch_size=8,
                         num_units=256,
-                        lengths=2000,
+                        lengths=[2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
                         stack_size=1,
-                        use_cudnn=False,
+                        use_cudnn=True,
                         is_training=is_training,
                         bidirectional=True)
         # print(net.shape)
