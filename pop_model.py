@@ -722,7 +722,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
                         num_units=256,
                         lengths=2000,
                         stack_size=1,
-                        use_cudnn=True,
+                        use_cudnn=False,
                         is_training=is_training,
                         bidirectional=True)
         # print(net.shape)
@@ -743,8 +743,7 @@ def cudnn_lstm_layer(inputs,
                      is_training=True,
                      bidirectional=True):
     """Create a LSTM layer that uses cudnn."""
-    #inputs_t = tf.transpose(inputs, [1, 0, 2])
-    inputs_t = inputs
+    inputs_t = tf.transpose(inputs, [1, 0, 2])
     if lengths is not None:
         all_outputs = [inputs_t]
         for i in range(stack_size):
@@ -798,7 +797,7 @@ def cudnn_lstm_layer(inputs,
         # for consistency with cudnn, here we just return the top of the stack,
         # although this can easily be altered to do other things, including be
         # more resnet like
-        return all_outputs[-1] #tf.transpose(all_outputs[-1], [1, 0, 2])
+        return tf.transpose(all_outputs[-1], [1, 0, 2])
     else:
         lstm = tf.contrib.cudnn_rnn.CudnnLSTM(
             num_layers=stack_size,
