@@ -745,8 +745,7 @@ def conv_net(inputs):
             activation_fn=tf.nn.relu,
             weights_initializer=tf.contrib.layers.variance_scaling_initializer(
                 factor=2.0, mode='FAN_AVG', uniform=True)):
-        print(inputs.shape)
-        net = tf.transpose(tf.squeeze(inputs), [0, 2, 1])
+        net = inputs
         print(net.shape)
         i = 0
         for (conv_temporal_size, conv_freq_size,
@@ -756,12 +755,12 @@ def conv_net(inputs):
                 net,
                 num_filters, [conv_temporal_size, conv_freq_size],
                 scope='conv' + str(i),
-                normalizer_fn=slim.batch_norm)
+                normalizer_fn=slim.batch_norm, data_format="NCHW")
             if freq_pool_size > 1:
                 net = slim.max_pool2d(
                     net, [1, freq_pool_size],
                     stride=[1, freq_pool_size],
-                    scope='pool' + str(i))
+                    scope='pool' + str(i), data_format="NCHW")
             if dropout_amt < 1:
                 net = slim.dropout(net, dropout_amt, scope='dropout' + str(i))
             i += 1
