@@ -66,6 +66,56 @@ def import_tfrecord(filepath):
         plt.show()
 
 
+def import_non_overlap_tfrecord(filepath):
+    #dataset = tf.data.TFRecordDataset(filepath)
+    input_shape = [2000, 229, 1]
+    num_labels = 88
+
+    # Extract features from single example
+    #spec, labels = pop_input_data.tfrecord_train_parser(next_example)
+    #spec = tf.slice(spec, [0, 0, 1], [5, 231, 1])
+    #dataset = pop_input_data.tfrecord_test_input_fn(filepath, 1, 1)
+
+    dataset = pop_input_data.tfrecord_test_input_fn(filepath, 1, 1)
+
+    # Make dataset iteratable.
+    iterator = dataset.make_one_shot_iterator()
+    next_example = iterator.get_next()
+    spec = next_example[0]
+    labels = next_example[1]
+
+    print(spec.shape)
+    f, (ax1, ax2) = plt.subplots(2, 1, sharey=False)
+
+    # Actual session to run the graph.
+    with tf.Session() as sess:
+        spec_tensor, label_text = sess.run([spec, labels])
+
+        np_spec = np.squeeze(spec_tensor).T
+        # print(np.shape(np_spec))
+
+        # Show the labels
+        np_label = np.squeeze(label_text).T
+        # print(label_text)
+
+
+
+
+
+        #np_spec = np.clip(signal.convolve2d(np_spec, [[-1, -1, -1],[-1, 8, -1],[-1, -1, -1]], boundary='symm', mode='same'), 0.0, None)
+        print(np.max(np_spec))
+        print(np.min(np_spec))
+        print(np.shape(np_spec))
+        ax1.pcolormesh(np_spec[:, :])
+        ax1.set_title("Octave-wise HPCP (4x fft-size)")
+
+        ax2.pcolormesh(np_label[:, :])
+        locs, l = plt.yticks()
+        # plt.yticks(locs, np.arange(21, 108, 1))
+        plt.grid(False)
+        plt.show()
+
+
 def import_single_example(filepath):
     #dataset = tf.data.TFRecordDataset(filepath)
 
@@ -180,4 +230,4 @@ def show_record(filepath):
 #show_record(["/Users/Jaedicke/tensorflow/one_octave_resnet/training/29_train.tfrecords"])
 #show_record(["D:/Users/cjaedicke/one_octave_resnet/maps_mus_train/100_train.tfrecords"])
 
-import_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_ISOL_CH0.1_F_AkPnBcht.tfrecords"])
+import_non_overlap_tfrecord(["./tfrecords-dataset/sigtia-configuration2-splits/fold_benchmark/valid/MAPS_ISOL_CH0.1_F_AkPnBcht.tfrecords"])
