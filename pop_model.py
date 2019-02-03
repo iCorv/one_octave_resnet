@@ -745,8 +745,8 @@ def conv_net(inputs):
             activation_fn=tf.nn.relu,
             weights_initializer=tf.contrib.layers.variance_scaling_initializer(
                 factor=2.0, mode='FAN_AVG', uniform=True)):
-
-        net = inputs
+        print(inputs.shape)
+        net = tf.transpose(tf.squeeze(inputs), [0, 2, 1])
         print(net.shape)
         i = 0
         for (conv_temporal_size, conv_freq_size,
