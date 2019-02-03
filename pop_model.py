@@ -13,8 +13,8 @@ def conv_net_model_fn(features, labels, mode, params):
         # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
         # This provides a large performance boost on GPU. See
         # https://www.tensorflow.org/performance/performance_guide#data_formats
-        # features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
-        features = tf.transpose(features, [0, 3, 1, 2])
+        features = tf.reshape(features, [-1, params['num_channels'], params['frames'], params['freq_bins']])
+        #features = tf.transpose(features, [0, 3, 1, 2])
     else:
         features = tf.reshape(features, [-1, params['frames'], params['freq_bins'], params['num_channels']])
 
