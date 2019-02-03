@@ -765,6 +765,7 @@ def conv_net(inputs):
                 net = slim.dropout(net, dropout_amt, scope='dropout' + str(i))
             i += 1
 
+        print(net)
         net = tf.transpose(net, [0, 2, 3, 1])
         # Flatten while preserving batch and time dimensions.
         print(net.shape)
