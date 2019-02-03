@@ -747,6 +747,7 @@ def conv_net(inputs):
                 factor=2.0, mode='FAN_AVG', uniform=True)):
 
         net = inputs
+        print(net.shape)
         i = 0
         for (conv_temporal_size, conv_freq_size,
              num_filters, freq_pool_size, dropout_amt) in zip([3, 3, 3], [3, 3, 3], [48, 48, 96], [1, 2, 2],
@@ -765,7 +766,7 @@ def conv_net(inputs):
                 net = slim.dropout(net, dropout_amt, scope='dropout' + str(i))
             i += 1
 
-        print(net)
+        print(net.shape)
         net = tf.transpose(net, [0, 2, 3, 1])
         # Flatten while preserving batch and time dimensions.
         print(net.shape)
