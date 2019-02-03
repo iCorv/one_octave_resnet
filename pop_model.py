@@ -755,18 +755,18 @@ def conv_net(inputs):
                 net,
                 num_filters, [conv_temporal_size, conv_freq_size],
                 scope='conv' + str(i),
-                normalizer_fn=slim.batch_norm, data_format="NCHW")
+                normalizer_fn=slim.batch_norm, data_format="NHWC")
             if freq_pool_size > 1:
                 net = slim.max_pool2d(
                     net, [1, freq_pool_size],
                     stride=[1, freq_pool_size],
-                    scope='pool' + str(i), data_format="NCHW")
+                    scope='pool' + str(i), data_format="NHWC")
             if dropout_amt < 1:
                 net = slim.dropout(net, dropout_amt, scope='dropout' + str(i))
             i += 1
 
-        print(net.shape)
-        net = tf.transpose(net, [0, 2, 3, 1])
+        #print(net.shape)
+        #net = tf.transpose(net, [0, 2, 3, 1])
         # Flatten while preserving batch and time dimensions.
         print(net.shape)
         dims = tf.shape(net)
