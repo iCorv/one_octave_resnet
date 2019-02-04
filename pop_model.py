@@ -262,7 +262,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         #learning_rate = learning_rate_fn(global_step)
         #momentum = momentum_fn(global_step)
         learning_rate = tf.train.exponential_decay(
-            0.002,
+            0.001,
             global_step,
             5000,
             0.98,
@@ -672,15 +672,15 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
 
     def projection_shortcut(skip_input):
         return conv2d_fixed_padding(
-            inputs=skip_input, filters=64, kernel_size=1, strides=1, padding='SAME',
+            inputs=skip_input, filters=96, kernel_size=1, strides=1, padding='SAME',
             data_format=data_format)
 
-    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
+    net = conv2d_fixed_padding(inputs=inputs, filters=48, kernel_size=3, strides=1, padding='SAME',
                                data_format=data_format)
 
     print(net.shape)
 
-    net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
+    net = _building_block_v1(inputs=net, filters=48, training=is_training, projection_shortcut=None,
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
@@ -689,7 +689,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
 
-    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
+    net = _building_block_v1(inputs=net, filters=96, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
                              data_format=data_format)
 
     print(net.shape)
@@ -713,7 +713,7 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
             activation_fn=tf.nn.relu,
             weights_initializer=tf.contrib.layers.variance_scaling_initializer(
                 factor=2.0, mode='FAN_AVG', uniform=True)):
-        net = slim.fully_connected(net, 512, scope='fc1')
+        net = slim.fully_connected(net, 768, scope='fc1')
         print(net.shape)
         net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
 
