@@ -670,54 +670,54 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     :return:
     """
 
-    # def projection_shortcut(skip_input):
-    #     return conv2d_fixed_padding(
-    #         inputs=skip_input, filters=64, kernel_size=1, strides=1, padding='SAME',
-    #         data_format=data_format)
-    #
-    # net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
-    #                            data_format=data_format)
-    #
-    # print(net.shape)
-    #
-    # net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
-    #                          strides=1, padding='SAME', data_format=data_format)
-    #
-    # print(net.shape)
-    # net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 2], padding='VALID',
-    #                               data_format=data_format)
-    # print(net.shape)
-    # net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
-    #
-    # net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
-    #                          data_format=data_format)
-    #
-    # print(net.shape)
-    # net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 2], padding='VALID',
-    #                               data_format=data_format)
-    #
-    # net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
-    #
-    # #Flatten
-    # print(net.shape)
-    # dims = tf.shape(net)
-    #
-    # net = tf.reshape(
-    #     net, (dims[0], dims[2], net.shape[1].value * net.shape[3].value),
-    #     'flatten_end')
-    # #print(inputs.shape)
-    # #net = tf.squeeze(inputs, axis=1)
-    # print(net.shape)
-    # with slim.arg_scope(
-    #         [slim.fully_connected],
-    #         activation_fn=tf.nn.relu,
-    #         weights_initializer=tf.contrib.layers.variance_scaling_initializer(
-    #             factor=2.0, mode='FAN_AVG', uniform=True)):
-    #     net = slim.fully_connected(net, 512, scope='fc1')
-    #     print(net.shape)
-    #     net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
+    def projection_shortcut(skip_input):
+        return conv2d_fixed_padding(
+            inputs=skip_input, filters=64, kernel_size=1, strides=1, padding='SAME',
+            data_format=data_format)
 
-    net = conv_net(inputs)
+    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
+                               data_format=data_format)
+
+    print(net.shape)
+
+    net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
+                             strides=1, padding='SAME', data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 2], padding='VALID',
+                                  data_format=data_format)
+    print(net.shape)
+    net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
+
+    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
+                             data_format=data_format)
+
+    print(net.shape)
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[1, 2], strides=[1, 2], padding='VALID',
+                                  data_format=data_format)
+
+    net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
+
+    #Flatten
+    print(net.shape)
+    dims = tf.shape(net)
+
+    net = tf.reshape(
+        net, (dims[0], dims[1], net.shape[2].value * net.shape[3].value),
+        'flatten_end')
+    #print(inputs.shape)
+    #net = tf.squeeze(inputs, axis=1)
+    print(net.shape)
+    with slim.arg_scope(
+            [slim.fully_connected],
+            activation_fn=tf.nn.relu,
+            weights_initializer=tf.contrib.layers.variance_scaling_initializer(
+                factor=2.0, mode='FAN_AVG', uniform=True)):
+        net = slim.fully_connected(net, 512, scope='fc1')
+        print(net.shape)
+        net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
+
+    #net = conv_net(inputs)
 
     net = lstm_layer(
         net,
