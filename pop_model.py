@@ -262,7 +262,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         #learning_rate = learning_rate_fn(global_step)
         #momentum = momentum_fn(global_step)
         learning_rate = tf.train.exponential_decay(
-            0.001,
+            0.006,
             global_step,
             5000,
             0.98,
