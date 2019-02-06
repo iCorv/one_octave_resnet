@@ -18,7 +18,7 @@ num_val_examples = 752
 num_test_examples = 752
 batch_size = 8
 batches_per_epoch = int(round(num_examples/batch_size))
-train_epochs = 200
+train_epochs = 150
 total_train_steps = train_epochs * batches_per_epoch
 
 
@@ -84,7 +84,7 @@ def get_hyper_parameters(net):
                   'momentum_cycle': [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
                   # [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+2))][0:30] + [momentum for momentum in frange(0.85, 0.95, (0.95-0.85)/(30+2))][0:31],
                   'frames': 2000,
-                  'freq_bins': 229,
+                  'freq_bins': 76,
                   'num_channels': 1,
                   'num_classes': 88,
                   'num_examples': num_examples,
