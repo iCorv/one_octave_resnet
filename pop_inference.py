@@ -45,8 +45,8 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
 
 
 def serving_input_fn():
-    features = tf.placeholder(dtype=tf.float32, shape=[5, 229], name='features')
-    return tf.estimator.export.TensorServingInputReceiver(features, features)
+    x = tf.placeholder(dtype=tf.float32, shape=[5, 229], name='features')
+    return tf.estimator.export.TensorServingInputReceiver(x, x)
 
 
 def build_predictor(net, model_dir):
