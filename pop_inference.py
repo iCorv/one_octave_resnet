@@ -43,10 +43,11 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
 
     savemat(write_file, {"features": note_activation, "labels": ground_truth})
 
-
-def serving_input_fn():
-    x = tf.placeholder(dtype=tf.float32, shape=[5, 229], name='features')
-    return tf.estimator.export.TensorServingInputReceiver(x, x)
+def get_serving_input_fn(frames, bins):
+    def serving_input_fn():
+        x = tf.placeholder(dtype=tf.float32, shape=[frames, bins], name='features')
+        return tf.estimator.export.TensorServingInputReceiver(x, x)
+    return serving_input_fn
 
 
 def build_predictor(net, model_dir):
@@ -58,7 +59,7 @@ def build_predictor(net, model_dir):
         params=hparams)
 
     estimator_predictor = tf.contrib.predictor.from_estimator(classifier,
-                                                              serving_input_fn,
+                                                              get_serving_input_fn(hparams['frames'], hparams['freq_bins']),
                                                               output_key='predictions')
     return estimator_predictor
 
