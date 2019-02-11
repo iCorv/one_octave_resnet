@@ -362,7 +362,8 @@ def tfrecord_test_input_fn(filepath, batch_size, num_epochs):
 
     # Map the parser over dataset, and batch results by up to batch_size
     dataset = dataset.repeat(num_epochs)
-    dataset = dataset.map(tfrecord_non_overlap_parser)
+    # dataset = dataset.map(tfrecord_non_overlap_parser)
+    dataset = dataset.map(tfrecord_parser)
     dataset = dataset.batch(batch_size)
 
     return dataset
