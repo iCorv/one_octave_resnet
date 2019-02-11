@@ -58,7 +58,7 @@ def build_predictor(net, model_dir):
         params=hparams)
 
     estimator_predictor = tf.contrib.predictor.from_estimator(classifier,
-                                                              serving_input_fn(),
+                                                              serving_input_fn,
                                                               output_key='predictions')
     return estimator_predictor
 
