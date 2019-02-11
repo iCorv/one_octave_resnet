@@ -7,7 +7,7 @@ import configurations.pop_preprocessing_parameters as ppp
 from scipy.io import savemat
 
 
-def convert_fold_to_note_activation(fold, mode, net, model_dir, norm=False):
+def convert_fold_to_note_activation(fold, mode, net, model_dir, save_dir, norm=False):
     """Preprocess an entire fold as defined in the preprocessing parameters and classify its note activations.
         fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
         mode - 'train', 'valid' or 'test' to address the correct config parameter
@@ -15,6 +15,7 @@ def convert_fold_to_note_activation(fold, mode, net, model_dir, norm=False):
         net - The network used for classification, e.g. 'ConvNet, 'ResNet_v1'
         model_dir - e.g. "./model_ResNet_fold_4/". For a specific checkpoint, change the checkpoint number in the
         chekpoint file from the model folder.
+        save_dir - folder were to save note activations, e.g. "./note_activations/"
     """
     config = ppp.get_preprocessing_parameters(fold.value)
     audio_config = config['audio_config']
@@ -27,14 +28,14 @@ def convert_fold_to_note_activation(fold, mode, net, model_dir, norm=False):
 
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
-        write_note_activation_to_mat(config['note_activation_folder'] + file.split('/')[-1], config['audio_path'], file,
-                                     audio_config, norm, config['context_frames'], predictor, config['is_chroma'])
+        write_note_activation_to_mat(save_dir + file.split('/')[-1], config['audio_path'], file,
+                                     audio_config, norm, config['context_frames'], predictor)
 
 
-def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, norm, context_frames, predictor, is_chroma):
+def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, norm, context_frames, predictor):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     spectrogram = prep.wav_to_spec(base_dir, read_file, audio_config)
-    ground_truth = prep.midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0], is_chroma)
+    ground_truth = prep.midi_to_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0])
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
@@ -43,39 +44,8 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
     savemat(write_file, {"features": note_activation, "labels": ground_truth})
 
 
-def convert_fold_to_chroma(fold, mode, norm=False):
-    """Preprocess an entire fold as defined in the preprocessing parameters and classify its chroma
-        fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
-        mode - 'train', 'valid' or 'test' to address the correct config parameter
-    """
-    config = ppp.get_preprocessing_parameters(fold.value)
-    audio_config = config['audio_config']
-
-    # load fold
-    filenames = open(config[mode+'_fold'], 'r').readlines()
-    filenames = [f.strip() for f in filenames]
-
-    predictor = build_predictor()
-
-    for file in filenames:
-        # split file path string at "/" and take the last split, since it's the actual filename
-        write_chroma_to_npz(config['chroma_folder'] + file.split('/')[-1], config['audio_path'], file, audio_config,
-                            norm, config['context_frames'], predictor)
-
-
-def write_chroma_to_npz(write_file, base_dir, read_file, audio_config, norm, context_frames, predictor):
-    """Transforms a wav and mid file to features and writes them to a tfrecords file."""
-    spectrogram = prep.wav_to_spec(base_dir, read_file, audio_config)
-    # re-scale spectrogram to the range [0, 1]
-    if norm:
-        spectrogram = np.divide(spectrogram, np.max(spectrogram))
-    chroma = spectrogram_to_chroma(spectrogram, context_frames, predictor)
-
-    np.savez(write_file, chroma=chroma)
-
-
-def serving_input_fn():
-    features = tf.placeholder(dtype=tf.float32, shape=[5, 229], name='features')
+def serving_input_fn(frames, bins):
+    features = tf.placeholder(dtype=tf.float32, shape=[frames, bins], name='features')
     return tf.estimator.export.TensorServingInputReceiver(features, features)
 
 
@@ -84,10 +54,12 @@ def build_predictor(net, model_dir):
     classifier = tf.estimator.Estimator(
         model_fn=pop_model.conv_net_model_fn,
         model_dir=model_dir,
-        #warm_start_from=model_dir,
+        # warm_start_from=model_dir,
         params=hparams)
 
-    estimator_predictor = tf.contrib.predictor.from_estimator(classifier, serving_input_fn, output_key='predictions')
+    estimator_predictor = tf.contrib.predictor.from_estimator(classifier,
+                                                              serving_input_fn(hparams['frames'], hparams['bins']),
+                                                              output_key='predictions')
     return estimator_predictor
 
 

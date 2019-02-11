@@ -54,7 +54,9 @@ def conv_net_model_fn(features, labels, mode, params):
         data_format=params['data_format'],
         batch_size=params['batch_size'],
         dtype=params['dtype'],
-        num_classes=params['num_classes']
+        num_classes=params['num_classes'],
+        architecture=params['use_architecture'],
+        use_rnn=params['use_rnn']
     )
 
 
@@ -159,7 +161,7 @@ def weights_from_labels(labels):
     return np.where(weights == 0.0, 0.25, weights)
 
 
-def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weight_decay, momentum_fn, clip_norm, data_format, batch_size, dtype=tf.float32, num_classes=88):
+def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weight_decay, momentum_fn, clip_norm, data_format, batch_size, architecture, use_rnn, dtype=tf.float32, num_classes=88):
     """Shared functionality for different model_fns.
 
     Initializes the ConvNet representing the model layers
@@ -193,13 +195,16 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode != tf.estimator.ModeKeys.PREDICT:
         labels = tf.cast(labels, dtype)
 
-    #logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
-    logits = resnet_rnn(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
-
-    #logits = deep_resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, num_classes=num_classes)
-
-    #logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format, batch_size=batch_size,
-    #                       num_classes=num_classes)
+    if architecture == 'resnet':
+        if use_rnn:
+            logits = resnet_rnn(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+                                num_classes=num_classes)
+        else:
+            logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+                            num_classes=num_classes)
+    else:
+        logits = conv_net_kelz(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+                               batch_size=batch_size, num_classes=num_classes)
 
 
     # Visualize conv1 kernels
@@ -227,19 +232,13 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
             predictions=predictions,
             export_outputs={'predictions': tf.estimator.export.PredictOutput(predictions)})
 
-    individual_loss = log_loss(labels, predictions['probabilities'], epsilon=clip_norm)
-    #individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0-clip_norm), epsilon=0.0)
+    if use_rnn:
+        individual_loss = log_loss(labels, predictions['probabilities'], epsilon=clip_norm)
+    else:
+        individual_loss = log_loss(labels, tf.clip_by_value(predictions['probabilities'], clip_norm, 1.0 - clip_norm),
+                                   epsilon=0.0)
+
     loss = tf.reduce_mean(individual_loss)
-
-    #loss = tf.losses.sigmoid_cross_entropy(
-    #    labels,
-    #    logits,
-    #    weights=1.0,
-    #    label_smoothing=0,
-    #    scope="sigmoid_cross_entropy_loss",
-    #    reduction=tf.losses.Reduction.MEAN
-    #)
-
 
     # loss_filter_fn = loss_filter_fn
     #
@@ -259,14 +258,16 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
     if mode == tf.estimator.ModeKeys.TRAIN:
         global_step = tf.train.get_or_create_global_step()
 
-        #learning_rate = learning_rate_fn(global_step)
-        #momentum = momentum_fn(global_step)
-        learning_rate = tf.train.exponential_decay(
-            0.0006,
-            global_step,
-            5000,
-            0.98,
-            staircase=True)
+        if use_rnn:
+            learning_rate = tf.train.exponential_decay(
+                0.0006,
+                global_step,
+                5000,
+                0.98,
+                staircase=True)
+        else:
+            learning_rate = learning_rate_fn(global_step)
+            momentum = momentum_fn(global_step)
 
         # Create a tensor named learning_rate for logging purposes
         tf.identity(learning_rate, name='learning_rate')
@@ -275,29 +276,27 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
         #tf.identity(momentum, name='momentum')
         #tf.summary.scalar('momentum', momentum)
 
-        optimizer = tf.train.AdamOptimizer(learning_rate)
+        if use_rnn:
+            optimizer = tf.train.AdamOptimizer(learning_rate)
+        else:
+            optimizer = tf.train.MomentumOptimizer(
+                learning_rate=learning_rate,
+                momentum=momentum,
+                use_nesterov=True
+            )
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-
-        #optimizer = tf.train.AdamOptimizer(0.001)
-        #optimizer = tf.train.MomentumOptimizer(
-        #    learning_rate=learning_rate,
-        #    momentum=momentum,
-        #    use_nesterov=True
-        #)
-        #update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-
-        #with tf.control_dependencies(update_ops):
-            #minimize_op = optimizer.minimize(loss, global_step)
-            #gradients, variables = zip(*optimizer.compute_gradients(loss))
-            #gradients, _ = tf.clip_by_global_norm(gradients, 3.0)
-            #minimize_op = optimizer.apply_gradients(zip(gradients, variables), global_step=global_step)
-        train_op = slim.learning.create_train_op(
-            loss,
-            optimizer,
-            clip_gradient_norm=3.0,
-            summarize_gradients=True,
-            variables_to_train=None)
-        #train_op = tf.group(minimize_op, update_ops)
+        if use_rnn:
+            train_op = slim.learning.create_train_op(
+                loss,
+                optimizer,
+                clip_gradient_norm=3.0,
+                summarize_gradients=True,
+                variables_to_train=None)
+        else:
+            with tf.control_dependencies(update_ops):
+                minimize_op = optimizer.minimize(loss, global_step)
+            train_op = tf.group(minimize_op, update_ops)
     else:
         train_op = None
 
@@ -374,7 +373,7 @@ def conv_net_kelz(inputs, is_training, data_format='NHWC', batch_size=8, num_cla
             # Flatten
             print(net.shape)
             # was  64*1*51
-            net = tf.reshape(net, (-1, 64*1*20), 'flatten4')
+            net = tf.reshape(net, (-1, 64*1*55), 'flatten4')
             print(net.shape)
             net = slim.fully_connected(net, 512, scope='fc5')
             print(net.shape)
@@ -535,121 +534,6 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
     print(net.shape)
 
     net = tf.layers.dense(net, 512, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
-              factor=2.0, mode='FAN_AVG', uniform=True))
-    print(net.shape)
-    net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
-    net = tf.layers.dense(net, num_classes, activation=None, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
-              factor=2.0, mode='FAN_AVG', uniform=True))
-    print(net.shape)
-    return net
-
-
-def deep_resnet(inputs, is_training, data_format='channels_last', num_classes=88):
-    """
-
-    :param inputs:
-    :param is_training:
-    :param data_format:
-    :param batch_size:
-    :param num_classes:
-    :return:
-    """
-
-    def projection_shortcut(inputs):
-        return conv2d_fixed_padding(
-            inputs=inputs, filters=48, kernel_size=1, strides=1, padding='SAME',
-            data_format=data_format)
-
-    def projection_shortcut_2(inputs):
-        return conv2d_fixed_padding(
-            inputs=inputs, filters=64, kernel_size=1, strides=1, padding='SAME',
-            data_format=data_format)
-
-    def projection_shortcut_3(inputs):
-        return conv2d_fixed_padding(
-            inputs=inputs, filters=96, kernel_size=1, strides=1, padding='SAME',
-            data_format=data_format)
-
-    def projection_shortcut_4(inputs):
-        return conv2d_fixed_padding(
-            inputs=inputs, filters=128, kernel_size=1, strides=1, padding='SAME',
-            data_format=data_format)
-
-    net = conv2d_fixed_padding(inputs=inputs, filters=32, kernel_size=3, strides=1, padding='SAME',
-                               data_format=data_format)
-    # 1. #############
-    print(net.shape)
-
-    net = _building_block_v1(inputs=net, filters=32, training=is_training, projection_shortcut=None,
-                             strides=1, padding='SAME', data_format=data_format)
-
-    print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
-                                  data_format=data_format)
-    print(net.shape)
-    net = tf.layers.dropout(net, 0.25, name='dropout1', training=is_training)
-    # 2. ############# only one with stride = 2 over frame dim
-
-    net = _building_block_v1(inputs=net, filters=48, training=is_training, projection_shortcut=projection_shortcut,
-                             strides=1, padding='SAME', data_format=data_format)
-
-    print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
-                                  data_format=data_format)
-
-    print(net.shape)
-    net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
-    # 3. #############
-
-    net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut_2,
-                             strides=1, padding='SAME', data_format=data_format)
-
-    print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
-                                  data_format=data_format)
-    print(net.shape)
-    net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
-    # 4. #############
-
-    net = _building_block_v1(inputs=net, filters=96, training=is_training, projection_shortcut=projection_shortcut_3,
-                             strides=1, padding='SAME', data_format=data_format)
-
-    print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
-                                  data_format=data_format)
-    print(net.shape)
-    net = tf.layers.dropout(net, 0.25, name='dropout4', training=is_training)
-    # 5. #############
-
-    net = _building_block_v1(inputs=net, filters=96, training=is_training, projection_shortcut=None,
-                             strides=1, padding='SAME', data_format=data_format)
-
-    print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
-                                  data_format=data_format)
-    print(net.shape)
-    net = tf.layers.dropout(net, 0.25, name='dropout5', training=is_training)
-
-    # 6. #############
-
-    net = _building_block_v1(inputs=net, filters=128, training=is_training, projection_shortcut=projection_shortcut_4,
-                             strides=1, padding='SAME', data_format=data_format)
-
-    print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[1, 1], padding='VALID',
-                                  data_format=data_format)
-    print(net.shape)
-    net = tf.layers.dropout(net, 0.25, name='dropout6', training=is_training)
-
-
-
-
-    # Flatten
-
-    net = tf.layers.flatten(net)
-    print(net.shape)
-
-    net = tf.layers.dense(net, 4096, activation=tf.nn.relu, kernel_initializer=tf.contrib.layers.variance_scaling_initializer(
               factor=2.0, mode='FAN_AVG', uniform=True))
     print(net.shape)
     net = tf.layers.dropout(net, 0.5, name='dropout2', training=is_training)
