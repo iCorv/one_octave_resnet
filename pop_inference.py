@@ -6,6 +6,7 @@ import pop_preprocessing as prep
 import configurations.pop_preprocessing_parameters as ppp
 from scipy.io import savemat
 
+hparams = {}
 
 def convert_fold_to_note_activation(fold, mode, net, model_dir, save_dir, norm=False):
     """Preprocess an entire fold as defined in the preprocessing parameters and classify its note activations.
@@ -44,9 +45,11 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
     savemat(write_file, {"features": note_activation, "labels": ground_truth})
 
 
-def serving_input_fn(frames, bins):
-    features = tf.placeholder(dtype=tf.float32, shape=[frames, bins], name='features')
-    return tf.estimator.export.TensorServingInputReceiver(features, features)
+def get_serving_input_fn(frames, bins):
+    def serving_input_fn():
+        features = tf.placeholder(dtype=tf.float32, shape=[frames, bins], name='features')
+        return tf.estimator.export.TensorServingInputReceiver(features, features)
+    return serving_input_fn()
 
 
 def build_predictor(net, model_dir):
@@ -58,7 +61,7 @@ def build_predictor(net, model_dir):
         params=hparams)
 
     estimator_predictor = tf.contrib.predictor.from_estimator(classifier,
-                                                              serving_input_fn(hparams['frames'], hparams['freq_bins']),
+                                                              get_serving_input_fn(hparams['frames'], hparams['freq_bins']),
                                                               output_key='predictions')
     return estimator_predictor
 
