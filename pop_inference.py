@@ -24,7 +24,7 @@ def convert_fold_to_note_activation(fold, mode, net, model_dir, save_dir, norm=F
     audio_config = config['audio_config']
 
     # load fold
-    filenames = open(config[mode+'_fold'], 'r').readlines()
+    filenames = open(config[mode + '_fold'], 'r').readlines()
     filenames = [f.strip() for f in filenames]
 
     predictor = build_predictor(net, model_dir)
@@ -46,10 +46,12 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
 
     savemat(write_file, {"features": note_activation, "labels": ground_truth})
 
+
 def get_note_activation(base_dir, read_file, audio_config, norm, context_frames, predictor):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     spectrogram = prep.wav_to_spec(base_dir, read_file, audio_config)
-    gt_frame, gt_onset, gt_offset = prep.midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'], spectrogram.shape[0])
+    gt_frame, gt_onset, gt_offset = prep.midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'],
+                                                                    spectrogram.shape[0])
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
@@ -75,7 +77,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     filenames = [f.strip() for f in filenames]
 
     predictor = build_predictor(net, model_dir)
-    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0 / audio_config['fps'], post_max=1.0 / audio_config['fps'],
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0 / audio_config['fps'],
+                                                          post_max=1.0 / audio_config['fps'],
                                                           delay=0.0, combine=0.03, smooth=0.0, fps=audio_config['fps'])
     frame_wise_metrics = []
     frame_wise_onset_metrics = []
@@ -86,31 +89,51 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     index = 0
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
-        note_activation, gt_frame, gt_onset, gt_offset = get_note_activation(config['audio_path'], file, audio_config, norm, config['context_frames'], predictor)
+        note_activation, gt_frame, gt_onset, gt_offset = get_note_activation(config['audio_path'], file, audio_config,
+                                                                             norm, config['context_frames'], predictor)
         frames = np.greater_equal(note_activation, 0.5)
-        #p_frame, r_frame, f_frame, a_frame = util.eval_framewise(note_activation, gt_frame)
+        # p_frame, r_frame, f_frame, a_frame = util.eval_framewise(note_activation, gt_frame)
         frame_wise_metrics.append(util.eval_frame_wise(note_activation, gt_frame))
         # multiply note activation with ground truth in order to blend out the rest of the activation fn
-        #p_onset, r_onset, f_onset, a_onset = util.eval_frame_wise(np.multiply(note_activation, gt_onset), gt_onset)
+        # p_onset, r_onset, f_onset, a_onset = util.eval_frame_wise(np.multiply(note_activation, gt_onset), gt_onset)
         frame_wise_onset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_onset), gt_onset))
-        #p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
+        # p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
-        #print(proc(note_activation))
-        ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame, frames_per_second=audio_config['fps'],
+        # print(proc(note_activation))
+        ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame,
+                                                                         frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21)
-        est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'], min_midi_pitch=21)
+        est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
+                                                                         min_midi_pitch=21)
 
-        precision, recall, f_measure, _ = mir_eval.transcription.precision_recall_f1_overlap(ref_intervals, ref_pitches, est_intervals, est_pitches)
+        precision, \
+        recall, \
+        f_measure, _ = mir_eval.transcription.precision_recall_f1_overlap(ref_intervals,
+                                                                          util.midi_to_hz(
+                                                                              ref_pitches),
+                                                                          est_intervals,
+                                                                          util.midi_to_hz(
+                                                                              est_pitches),
+                                                                          offset_ratio=None)
+        precision_with_offsets, \
+        recall_with_offsets, \
+        f_measure_with_offsets, _ = mir_eval.transcription.precision_recall_f1_overlap(
+            ref_intervals,
+            util.midi_to_hz(
+                ref_pitches),
+            est_intervals,
+            util.midi_to_hz(
+                est_pitches))
         print(precision)
         print(recall)
         print(f_measure)
 
-        #print(p_onset)
-        #print(p_offset)
-        #print("frame: " + str(frame_wise_metrics[index]))
-        #print("onset: " + str(frame_wise_onset_metrics[index]))
-        #print("offset: " + str(frame_wise_offset_metrics[index]))
+        # print(p_onset)
+        # print(p_offset)
+        # print("frame: " + str(frame_wise_metrics[index]))
+        # print("onset: " + str(frame_wise_onset_metrics[index]))
+        # print("offset: " + str(frame_wise_offset_metrics[index]))
         index += 1
     mean_frame_wise = util.mean_eval_frame_wise(frame_wise_metrics, num_pieces)
     var_frame_wise = util.var_eval_frame_wise(frame_wise_metrics, mean_frame_wise, num_pieces)
@@ -129,7 +152,6 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
 
     print(mean_frame_wise_offset)
     print(var_frame_wise_offset)
-
 
 
 def get_serving_input_fn(frames, bins):
@@ -167,5 +189,3 @@ def spectrogram_to_note_activation(spec, context_frames, estimator_predictor):
         note_activation[frame, :] = get_activation(spec[frame - context_frames:frame + context_frames + 1, :],
                                                    estimator_predictor)
     return note_activation
-
-
