@@ -5,6 +5,7 @@ import numpy as np
 import pop_preprocessing as prep
 import configurations.pop_preprocessing_parameters as ppp
 import pop_utility as util
+import madmom
 from scipy.io import savemat
 
 
@@ -73,16 +74,19 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     filenames = [f.strip() for f in filenames]
 
     predictor = build_predictor(net, model_dir)
+    #note_eval = madmom.evaluation.notes.NoteEvaluation(window=0.1)
 
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
         note_activation, gt_frame, gt_onset, gt_offset = get_note_activation(config['audio_path'], file, audio_config, norm, config['context_frames'], predictor)
         p_frame, r_frame, f_frame, a_frame = util.eval_framewise(note_activation, gt_frame)
+        # multiply note activation with ground truth in order to blend out the rest of the activation fn
         p_onset, r_onset, f_onset, a_onset = util.eval_framewise(np.multiply(note_activation, gt_onset), gt_onset)
         p_offset, r_offset, f_offset, a_offset = util.eval_framewise(np.multiply(note_activation, gt_offset), gt_offset)
         print("frame F1: " + str(f_frame))
         print("onset F1: " + str(f_onset))
         print("offset F1: " + str(f_offset))
+        print(madmom.evaluation.notes.NoteEvaluation(note_activation, gt_frame, window=0.1).tostring())
 
 
 def get_serving_input_fn(frames, bins):
