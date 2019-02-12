@@ -121,6 +121,6 @@ def pianoroll_to_interval_sequence(frames,
     total_time = len(frames) * frame_length_seconds
     # make sure last note ends before end of piece
     if est_pitches.size is not 0:
-        assert total_time >= est_intervals[-1][1]
+        assert total_time >= est_intervals[-1, -1]
 
     return est_intervals, est_pitches
