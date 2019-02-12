@@ -100,10 +100,10 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         # p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
-        # print(proc(note_activation))
+        onset_predictions = proc(note_activation)
         ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame,
                                                                          frames_per_second=audio_config['fps'],
-                                                                         min_midi_pitch=21)
+                                                                         min_midi_pitch=21, onset_predictions=onset_predictions)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21)
 

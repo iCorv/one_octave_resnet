@@ -18,8 +18,6 @@ def midi_to_hz(midi_num, fref=440.0):
 
 
 def eval_frame_wise(predictions, targets, thresh=0.5):
-    """
-    """
     if predictions.shape != targets.shape:
         raise ValueError('predictions.shape {} != targets.shape {} !'.format(predictions.shape, targets.shape))
 
@@ -74,9 +72,16 @@ def var_eval_frame_wise(frame_wise_metrics, mean_frame_wise, num_pieces):
     return var_frame_wise
 
 
+def piano_roll_rep(onset_frames, midi_pitches, piano_roll_shape):
+    piano_roll = np.zeros(piano_roll_shape)
+    piano_roll[midi_pitches, onset_frames] = 1
+    return piano_roll
+
+
 def pianoroll_to_interval_sequence(frames,
                                    frames_per_second,
-                                   min_midi_pitch=21):
+                                   min_midi_pitch=21,
+                                   onset_predictions=None):
     """Convert frames to an interval sequence."""
     frame_length_seconds = 1 / frames_per_second
 
@@ -88,6 +93,11 @@ def pianoroll_to_interval_sequence(frames,
     # Add silent frame at the end so we can do a final loop and terminate any
     # notes that are still active.
     frames = np.append(frames, [np.zeros(frames[0].shape)], 0)
+
+    if onset_predictions is not None:
+        onset_predictions = piano_roll_rep(onset_frames=(onset_predictions[:, 0] / frame_length_seconds).astype(int),
+                                        midi_pitches=onset_predictions[:, 1].astype(int) - 21,
+                                        piano_roll_shape=np.shape(frames))
 
     def end_pitch(pitch, end_frame):
         """End an active pitch."""
@@ -101,10 +111,33 @@ def pianoroll_to_interval_sequence(frames,
 
         return e_intervals, e_pitches
 
+    # def process_active_pitch(pitch, i):
+    #     """Process a pitch being active in a given frame."""
+    #     if pitch not in pitch_start_step:
+    #         pitch_start_step[pitch] = i
+
     def process_active_pitch(pitch, i):
         """Process a pitch being active in a given frame."""
         if pitch not in pitch_start_step:
-            pitch_start_step[pitch] = i
+            if onset_predictions is not None:
+                # If onset predictions were supplied, only allow a new note to start
+                # if we've predicted an onset.
+                if onset_predictions[i, pitch]:
+                    pitch_start_step[pitch] = i
+                else:
+                    # Even though the frame is active, the onset predictor doesn't
+                    # say there should be an onset, so ignore it.
+                    pass
+            else:
+                pitch_start_step[pitch] = i
+        else:
+            if onset_predictions is not None:
+                # pitch is already active, but if this is a new onset, we should end
+                # the note and start a new one.
+                if (onset_predictions[i, pitch] and
+                        not onset_predictions[i - 1, pitch]):
+                    end_pitch(pitch, i)
+                    pitch_start_step[pitch] = i
 
     for i, frame in enumerate(frames):
         for pitch, active in enumerate(frame):
@@ -125,3 +158,4 @@ def pianoroll_to_interval_sequence(frames,
         assert total_time >= est_intervals[-1, -1]
 
     return est_intervals, est_pitches
+
