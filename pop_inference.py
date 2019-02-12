@@ -96,7 +96,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
 
         #print(proc(note_activation))
 
-        ref_intervals, ref_pitches = util.pianoroll_to_note_sequence(note_activation, frames_per_second=audio_config['fps'], min_midi_pitch=21)
+        ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(note_activation, frames_per_second=audio_config['fps'], min_midi_pitch=21)
         print(ref_intervals)
         print(ref_pitches)
 
