@@ -103,7 +103,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         onset_predictions = proc(note_activation)
         ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame,
                                                                          frames_per_second=audio_config['fps'],
-                                                                         min_midi_pitch=21, onset_predictions=gt_onset)
+                                                                         min_midi_pitch=21)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21, onset_predictions=onset_predictions)
 
