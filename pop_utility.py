@@ -111,9 +111,9 @@ def pianoroll_to_interval_sequence(frames,
             if active:
                 process_active_pitch(pitch, i)
             elif pitch in pitch_start_step:
-                ref_i, ref_p = end_pitch(pitch, i)
-                est_pitches = np.append(est_pitches, ref_p, axis=0)
-                est_intervals = np.append(est_intervals, ref_i, axis=0)
+                est_i, est_p = end_pitch(pitch, i)
+                est_pitches = np.append(est_pitches, est_p, axis=0)
+                est_intervals = np.append(est_intervals, est_i, axis=0)
 
     # remove first default entry
     est_pitches = est_pitches[1:]

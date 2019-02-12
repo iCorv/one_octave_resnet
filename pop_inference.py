@@ -86,6 +86,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
         note_activation, gt_frame, gt_onset, gt_offset = get_note_activation(config['audio_path'], file, audio_config, norm, config['context_frames'], predictor)
+        frames = np.greater_equal(note_activation, 0.5)
         #p_frame, r_frame, f_frame, a_frame = util.eval_framewise(note_activation, gt_frame)
         frame_wise_metrics.append(util.eval_frame_wise(note_activation, gt_frame))
         # multiply note activation with ground truth in order to blend out the rest of the activation fn
@@ -96,7 +97,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
 
         #print(proc(note_activation))
 
-        est_intervals, est_pitches = util.pianoroll_to_interval_sequence(note_activation, frames_per_second=audio_config['fps'], min_midi_pitch=21)
+        est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'], min_midi_pitch=21)
         print(est_intervals)
         print(est_pitches)
 
