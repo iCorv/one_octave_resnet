@@ -78,6 +78,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     frame_wise_onset_metrics = []
     frame_wise_offset_metrics = []
 
+    filenames = filenames[1:4]
+
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
         note_activation, gt_frame, gt_onset, gt_offset = get_note_activation(config['audio_path'], file, audio_config, norm, config['context_frames'], predictor)
@@ -89,11 +91,15 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         #p_offset, r_offset, f_offset, a_offset = util.eval_framewise(np.multiply(note_activation, gt_offset), gt_offset)
         frame_wise_offset_metrics.append(util.eval_framewise(np.multiply(note_activation, gt_offset), gt_offset))
 
-        print(frame_wise_metrics[0][0])
+
 
         #print("frame F1: " + str(f_frame))
         #print("onset F1: " + str(f_onset))
         #print("offset F1: " + str(f_offset))
+    mean_frame_wise_f = sum([f[0] for f in frame_wise_metrics])/len(frame_wise_metrics)
+    var_frame_wise_f = sum([(f[0] - mean_frame_wise_f) ** 2 for f in frame_wise_metrics])/len(frame_wise_metrics)
+    print(mean_frame_wise_f)
+    print(var_frame_wise_f)
 
 
 
