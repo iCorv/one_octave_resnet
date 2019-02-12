@@ -118,6 +118,7 @@ def pianoroll_to_interval_sequence(frames,
     # remove first default entry
     est_pitches = est_pitches[1:]
     est_intervals = est_intervals[1:]
+
     total_time = len(frames) * frame_length_seconds
     # make sure last note ends before end of piece
     if est_pitches.size is not 0:

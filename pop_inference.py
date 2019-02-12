@@ -6,6 +6,7 @@ import pop_preprocessing as prep
 import configurations.pop_preprocessing_parameters as ppp
 import pop_utility as util
 import madmom
+import mir_eval
 from scipy.io import savemat
 
 
@@ -96,10 +97,14 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
         #print(proc(note_activation))
-
+        ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame, frames_per_second=audio_config['fps'],
+                                                                         min_midi_pitch=21)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'], min_midi_pitch=21)
-        print(est_intervals)
-        print(est_pitches)
+
+        (precision,recall,f_measure) = mir_eval.transcription.precision_recall_f1_overlap(ref_intervals, ref_pitches, est_intervals, est_pitches)
+        print(precision)
+        print(recall)
+        print(f_measure)
 
         #print(p_onset)
         #print(p_offset)
