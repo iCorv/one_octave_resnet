@@ -17,7 +17,7 @@ def midi_to_hz(midi_num, fref=440.0):
     return np.float_power(2, ((midi_num-69)/12)) * fref
 
 
-def eval_framewise(predictions, targets, thresh=0.5):
+def eval_frame_wise(predictions, targets, thresh=0.5):
     """
     """
     if predictions.shape != targets.shape:
@@ -58,3 +58,17 @@ def prf_framewise(tp, fp, tn, fn):
         a = tp / (tp + fp + fn)
 
     return p, r, f, a
+
+
+def mean_eval_frame_wise(frame_wise_metrics, num_pieces):
+    mean_frame_wise = (sum([f[0] for f in frame_wise_metrics]) / num_pieces,
+                       sum([f[1] for f in frame_wise_metrics]) / num_pieces,
+                       sum([f[2] for f in frame_wise_metrics]) / num_pieces)
+    return mean_frame_wise
+
+
+def var_eval_frame_wise(frame_wise_metrics, mean_frame_wise, num_pieces):
+    var_frame_wise = (sum([(f[0] - mean_frame_wise[0]) ** 2 for f in frame_wise_metrics]) / num_pieces,
+                      sum([(f[1] - mean_frame_wise[1]) ** 2 for f in frame_wise_metrics]) / num_pieces,
+                      sum([(f[2] - mean_frame_wise[2]) ** 2 for f in frame_wise_metrics]) / num_pieces)
+    return var_frame_wise

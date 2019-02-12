@@ -78,36 +78,44 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     frame_wise_onset_metrics = []
     frame_wise_offset_metrics = []
 
-    filenames = filenames[1:4]
+    filenames = filenames[0:4]
     num_pieces = len(filenames)
     index = 0
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
         note_activation, gt_frame, gt_onset, gt_offset = get_note_activation(config['audio_path'], file, audio_config, norm, config['context_frames'], predictor)
         #p_frame, r_frame, f_frame, a_frame = util.eval_framewise(note_activation, gt_frame)
-        frame_wise_metrics.append(util.eval_framewise(note_activation, gt_frame))
+        frame_wise_metrics.append(util.eval_frame_wise(note_activation, gt_frame))
         # multiply note activation with ground truth in order to blend out the rest of the activation fn
-        p_onset, r_onset, f_onset, a_onset = util.eval_framewise(np.multiply(note_activation, gt_onset), gt_onset)
-        frame_wise_onset_metrics.append(util.eval_framewise(np.multiply(note_activation, gt_onset), gt_onset))
-        p_offset, r_offset, f_offset, a_offset = util.eval_framewise(np.multiply(note_activation, gt_offset), gt_offset)
-        frame_wise_offset_metrics.append(util.eval_framewise(np.multiply(note_activation, gt_offset), gt_offset))
+        #p_onset, r_onset, f_onset, a_onset = util.eval_frame_wise(np.multiply(note_activation, gt_onset), gt_onset)
+        frame_wise_onset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_onset), gt_onset))
+        #p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
+        frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
 
-        print(p_onset)
-        print(p_offset)
-        print("frame: " + str(frame_wise_metrics[index]))
-        print("onset: " + str(frame_wise_onset_metrics[index]))
-        print("offset: " + str(frame_wise_offset_metrics[index]))
+        #print(p_onset)
+        #print(p_offset)
+        #print("frame: " + str(frame_wise_metrics[index]))
+        #print("onset: " + str(frame_wise_onset_metrics[index]))
+        #print("offset: " + str(frame_wise_offset_metrics[index]))
         index += 1
-    mean_frame_wise = (sum([f[0] for f in frame_wise_metrics]) / num_pieces,
-                       sum([f[1] for f in frame_wise_metrics]) / num_pieces,
-                       sum([f[2] for f in frame_wise_metrics]) / num_pieces)
-    var_frame_wise = (sum([(f[0] - mean_frame_wise[0]) ** 2 for f in frame_wise_metrics]) / num_pieces,
-                      sum([(f[1] - mean_frame_wise[1]) ** 2 for f in frame_wise_metrics]) / num_pieces,
-                      sum([(f[2] - mean_frame_wise[2]) ** 2 for f in frame_wise_metrics]) / num_pieces)
+    mean_frame_wise = util.mean_eval_frame_wise(frame_wise_metrics, num_pieces)
+    var_frame_wise = util.var_eval_frame_wise(frame_wise_metrics, mean_frame_wise, num_pieces)
+
+    mean_frame_wise_onset = util.mean_eval_frame_wise(frame_wise_onset_metrics, num_pieces)
+    var_frame_wise_onset = util.var_eval_frame_wise(frame_wise_onset_metrics, mean_frame_wise_onset, num_pieces)
+
+    mean_frame_wise_offset = util.mean_eval_frame_wise(frame_wise_offset_metrics, num_pieces)
+    var_frame_wise_offset = util.var_eval_frame_wise(frame_wise_offset_metrics, mean_frame_wise_offset, num_pieces)
 
     print(mean_frame_wise)
     print(var_frame_wise)
+
+    print(mean_frame_wise_onset)
+    print(var_frame_wise_onset)
+
+    print(mean_frame_wise_offset)
+    print(var_frame_wise_offset)
 
 
 
