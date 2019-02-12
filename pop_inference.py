@@ -101,7 +101,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
                                                                          min_midi_pitch=21)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'], min_midi_pitch=21)
 
-        (precision,recall,f_measure) = mir_eval.transcription.precision_recall_f1_overlap(ref_intervals, ref_pitches, est_intervals, est_pitches)
+        precision, recall, f_measure = mir_eval.transcription.precision_recall_f1_overlap(ref_intervals, ref_pitches, est_intervals, est_pitches)
         print(precision)
         print(recall)
         print(f_measure)
