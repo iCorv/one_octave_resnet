@@ -94,7 +94,12 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         #p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
-        print(proc(note_activation))
+        #print(proc(note_activation))
+
+        ref_intervals, ref_pitches = util.pianoroll_to_note_sequence(note_activation, frames_per_second=audio_config['fps'], min_midi_pitch=21)
+        print(ref_intervals)
+        print(ref_pitches)
+
         #print(p_onset)
         #print(p_offset)
         #print("frame: " + str(frame_wise_metrics[index]))
