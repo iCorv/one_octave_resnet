@@ -70,7 +70,7 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     return note_activation, gt_frame, gt_onset, gt_offset
 
 
-def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
+def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, norm=False):
     """Error metrics for an entire fold as defined in the preprocessing parameters.
         fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
         mode - 'train', 'valid' or 'test' to address the correct config parameter
@@ -79,6 +79,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         model_dir - e.g. "./model_ResNet_fold_4/". For a specific checkpoint, change the checkpoint number in the
         chekpoint file from the model folder.
         save_dir - folder were to save note activations, e.g. "./note_activations/"
+        save_file - name of the save file which ends with .txt
     """
     config = ppp.get_preprocessing_parameters(fold.value)
     audio_config = config['audio_config']
@@ -161,6 +162,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
 
 
         index += 1
+
+    # frame-wise metrics (precision/recall/f1-score
     mean_frame_wise = util.mean_eval_frame_wise(frame_wise_metrics, num_pieces)
     var_frame_wise = util.var_eval_frame_wise(frame_wise_metrics, mean_frame_wise, num_pieces)
 
@@ -170,13 +173,54 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     mean_frame_wise_offset = util.mean_eval_frame_wise(frame_wise_offset_metrics, num_pieces)
     var_frame_wise_offset = util.var_eval_frame_wise(frame_wise_offset_metrics, mean_frame_wise_offset, num_pieces)
 
+    # note metrics w/o onset predictions (precision/recall/f1-score
     mean_note_wise_onset_metrics = util.mean_eval_frame_wise(note_wise_onset_metrics, num_pieces)
     var_note_wise_onset_metrics = util.var_eval_frame_wise(note_wise_onset_metrics, mean_note_wise_onset_metrics, num_pieces)
 
-    print(mean_note_wise_onset_metrics)
-    print(var_note_wise_onset_metrics)
+    mean_note_wise_onset_offset_metrics = util.mean_eval_frame_wise(note_wise_onset_offset_metrics, num_pieces)
+    var_note_wise_onset_offset_metrics = util.var_eval_frame_wise(note_wise_onset_offset_metrics, mean_note_wise_onset_offset_metrics,
+                                                           num_pieces)
+
+    # note metrics w/ onset predictions (precision/recall/f1-score
+    mean_note_wise_onset_metrics_with_onset_pred = util.mean_eval_frame_wise(note_wise_onset_metrics_with_onset_pred, num_pieces)
+    var_note_wise_onset_metrics_with_onset_pred = util.var_eval_frame_wise(note_wise_onset_metrics_with_onset_pred, mean_note_wise_onset_metrics_with_onset_pred, num_pieces)
+
+    mean_note_wise_onset_offset_metrics_with_onset_pred = util.mean_eval_frame_wise(note_wise_onset_offset_metrics_with_onset_pred, num_pieces)
+    var_note_wise_onset_offset_metrics_with_onset_pred = util.var_eval_frame_wise(note_wise_onset_offset_metrics_with_onset_pred, mean_note_wise_onset_offset_metrics_with_onset_pred,
+                                                           num_pieces)
 
 
+    # write all metrics to file
+    file = open(save_dir + save_file, "w")
+    file.write("frame-wise metrics (precision/recall/f1-score")
+    file.write("mean: "+ str(mean_frame_wise))
+    file.write("var: " + str(var_frame_wise))
+    file.write("mean (onset only): "+ str(mean_frame_wise_onset))
+    file.write("var (onset only): " + str(var_frame_wise_onset))
+    file.write("mean (offset only): "+ str(mean_frame_wise_offset))
+    file.write("var (offset only): " + str(var_frame_wise_offset))
+
+    file.write("")
+    file.write("-----------------------------------------------------------------")
+    file.write("")
+    file.write("note metrics w/o onset predictions (precision/recall/f1-score")
+
+    file.write("mean (w/o offset): " + str(mean_note_wise_onset_metrics))
+    file.write("var (w/o offset): " + str(var_note_wise_onset_metrics))
+    file.write("mean (w/ offset): " + str(mean_note_wise_onset_offset_metrics))
+    file.write("var (w/ offset): " + str(var_note_wise_onset_offset_metrics))
+
+    file.write("")
+    file.write("-----------------------------------------------------------------")
+    file.write("")
+    file.write("note metrics w/ onset predictions (precision/recall/f1-score")
+
+    file.write("mean (w/o offset): " + str(mean_note_wise_onset_metrics_with_onset_pred))
+    file.write("var (w/o offset): " + str(var_note_wise_onset_metrics_with_onset_pred))
+    file.write("mean (w/ offset): " + str(mean_note_wise_onset_offset_metrics_with_onset_pred))
+    file.write("var (w/ offset): " + str(var_note_wise_onset_offset_metrics_with_onset_pred))
+
+    file.close()
 
 
 def get_serving_input_fn(frames, bins):
