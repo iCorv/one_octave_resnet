@@ -6,6 +6,7 @@ import pop_preprocessing as prep
 import configurations.pop_preprocessing_parameters as ppp
 import pop_utility as util
 import madmom
+import os
 import mir_eval
 from scipy.io import savemat
 
@@ -55,7 +56,12 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
-    onset_predictions = madmom.features.onsets.superflux(spectrogram, diff_frames=None, diff_max_bins=3)
+    rnn_processor = madmom.features.notes.RNNPianoNoteProcessor()
+    rnn_act_fn = rnn_processor(os.path.join(base_dir, read_file + '.wav'))
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0 / audio_config['fps'],
+                                                          post_max=1.0 / audio_config['fps'],
+                                                          delay=0.0, combine=0.03, smooth=0.0, fps=audio_config['fps'])
+    onset_predictions = proc(rnn_act_fn)
     print(np.shape(onset_predictions))
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
     return note_activation, gt_frame, gt_onset, gt_offset, onset_predictions
@@ -107,7 +113,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
                                                                          frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21, onset_predictions=gt_onset, convert_onset_predictions=False)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
-                                                                         min_midi_pitch=21, onset_predictions=onset_predictions, convert_onset_predictions=False)
+                                                                         min_midi_pitch=21, onset_predictions=onset_predictions, convert_onset_predictions=True)
 
         precision, \
         recall, \
