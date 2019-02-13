@@ -114,7 +114,10 @@ def pianoroll_to_interval_sequence(frames,
     def end_pitch(pitch, end_frame):
         """End an active pitch."""
         start_time = pitch_start_step[pitch] * frame_length_seconds
-        end_time = end_frame * frame_length_seconds
+        if offset_predictions is not None:
+            end_time = end_frame * frame_length_seconds
+        else:
+            end_time = (end_frame - 1) * frame_length_seconds
 
         e_intervals = [[start_time, end_time]]
         e_pitches = [pitch + min_midi_pitch]
