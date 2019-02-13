@@ -77,9 +77,9 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     filenames = [f.strip() for f in filenames]
 
     predictor = build_predictor(net, model_dir)
-    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, pre_max=1.0 / audio_config['fps'],
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.9, pre_max=1.0 / audio_config['fps'],
                                                           post_max=1.0 / audio_config['fps'],
-                                                          delay=0.0, combine=0.03, smooth=0.5, fps=audio_config['fps'])
+                                                          delay=0.0, combine=0.09, smooth=0.0, fps=audio_config['fps'])
     frame_wise_metrics = []
     frame_wise_onset_metrics = []
     frame_wise_offset_metrics = []
@@ -124,8 +124,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
                                                                                        util.midi_to_hz(est_pitches))
         #print(precision)
         #print(recall)
-        print("F1 (Note)" + str(f_measure))
-        print("F1 (Note /w offset)" + str(f_measure_with_offsets))
+        print("F1 (Note):           " + str(f_measure))
+        print("F1 (Note /w offset): " + str(f_measure_with_offsets))
 
         # print(p_onset)
         # print(p_offset)
