@@ -88,7 +88,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     filenames = [f.strip() for f in filenames]
 
     predictor = build_predictor(net, model_dir)
-    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.3, fps=100)
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.0, fps=100)
     frame_wise_metrics = []
     frame_wise_onset_metrics = []
     frame_wise_offset_metrics = []
