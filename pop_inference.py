@@ -110,6 +110,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
         #onset_predictions = proc(note_activation)
+        print(np.sum(np.sum(gt_onset)))
         ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame,
                                                                          frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21, onset_predictions=gt_onset, convert_onset_predictions=False)
