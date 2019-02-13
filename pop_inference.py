@@ -112,7 +112,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         offset_predictions = note_activation[1:] - note_activation[0:-1]
         offset_predictions = np.append([np.zeros(offset_predictions[0].shape)], offset_predictions, 0)
         print(np.max(np.max(offset_predictions)))
-        offset_predictions = proc(offset_predictions*-1)
+        #offset_predictions = proc(offset_predictions*-1)
+        offset_predictions = np.greater_equal(offset_predictions*-1, 0.5)
         print(np.shape(offset_predictions))
 
         print(np.sum(np.sum(gt_onset)))
