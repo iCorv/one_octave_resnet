@@ -105,7 +105,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         # p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
-        offset_predictions = np.logical_xor(frames[1:], frames[0:-1])
+        offset_predictions = frames[1:].astype(int) - frames[0:-1].astype(int)
         offset_predictions = np.append([np.zeros(offset_predictions[0].shape)], offset_predictions, 0)
 
         print(np.sum(np.sum(gt_onset)))
