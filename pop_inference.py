@@ -58,7 +58,7 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
     rnn_processor = madmom.features.notes.RNNPianoNoteProcessor()
     rnn_act_fn = rnn_processor(os.path.join(base_dir, read_file + '.wav'))
-    print(rnn_act_fn.shape)
+
     proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
     onset_predictions = proc(rnn_act_fn)
 
@@ -88,7 +88,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     filenames = [f.strip() for f in filenames]
 
     predictor = build_predictor(net, model_dir)
-    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, fps=100)
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
     frame_wise_metrics = []
     frame_wise_onset_metrics = []
     frame_wise_offset_metrics = []
@@ -111,7 +111,9 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
 
         offset_predictions = note_activation[1:] - note_activation[0:-1]
         offset_predictions = np.append([np.zeros(offset_predictions[0].shape)], offset_predictions, 0)
+        print(np.max(np.max(offset_predictions)))
         offset_predictions = proc(offset_predictions*-1)
+        print(np.shape(offset_predictions))
 
         print(np.sum(np.sum(gt_onset)))
         print(np.sum(np.sum(gt_offset)))
