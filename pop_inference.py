@@ -59,7 +59,7 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     rnn_processor = madmom.features.notes.RNNPianoNoteProcessor()
     rnn_act_fn = rnn_processor(os.path.join(base_dir, read_file + '.wav'))
     print(rnn_act_fn.shape)
-    proc = madmom.features.notes.NotePeakPickingProcessor(fps=100)
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.4, fps=100)
     onset_predictions = proc(rnn_act_fn)
     print(np.shape(onset_predictions))
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
