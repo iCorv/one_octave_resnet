@@ -68,7 +68,7 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
 
     max_act_fn = np.max(np.max(rnn_act_fn))
     print(max_act_fn)
-    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=max_act_fn-(max_act_fn/2.0), fps=100)
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=max_act_fn-(max_act_fn*3./4.), fps=100)
     offset_predictions = proc(rnn_act_fn)
     print(np.shape(onset_predictions))
     print(np.shape(offset_predictions))
