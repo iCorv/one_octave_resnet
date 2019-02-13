@@ -105,13 +105,15 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         # p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
-        #onset_predictions = proc(note_activation)
+        offset_predictions = frames[1:] ^ frames[0:-1]
+        offset_predictions = np.append([np.zeros(offset_predictions[0].shape)], offset_predictions, 0)
+
         print(np.sum(np.sum(gt_onset)))
         ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame,
                                                                          frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21, onset_predictions=gt_onset, offset_predictions=gt_offset, convert_onset_predictions=False)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
-                                                                         min_midi_pitch=21, onset_predictions=onset_predictions, offset_predictions=frames[1:] ^ frames[0:-1], convert_onset_predictions=True)
+                                                                         min_midi_pitch=21, onset_predictions=onset_predictions, offset_predictions=offset_predictions, convert_onset_predictions=True)
 
         precision, \
         recall, \
