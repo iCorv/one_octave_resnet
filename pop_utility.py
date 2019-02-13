@@ -101,6 +101,7 @@ def pianoroll_to_interval_sequence(frames,
                                         piano_roll_shape=np.shape(frames))
         # Ensure that any frame with an onset prediction is considered active.
         frames = np.logical_or(frames, onset_predictions)
+        onset_predictions = np.flipud(onset_predictions)
     elif onset_predictions is not None and not convert_onset_predictions:
         onset_predictions = np.append(onset_predictions, [np.zeros(onset_predictions[0].shape)], 0)
 
