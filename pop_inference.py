@@ -59,7 +59,7 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     rnn_processor = madmom.features.notes.RNNPianoNoteProcessor()
     rnn_act_fn = rnn_processor(os.path.join(base_dir, read_file + '.wav'))
     print(rnn_act_fn.shape)
-    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.08, fps=100)
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.2, fps=100)
     onset_predictions = proc(rnn_act_fn)
     print(np.shape(onset_predictions))
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
@@ -111,7 +111,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
                                                                          frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21, onset_predictions=gt_onset, convert_onset_predictions=False)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
-                                                                         min_midi_pitch=21, onset_predictions=onset_predictions, convert_onset_predictions=True)
+                                                                         min_midi_pitch=21, onset_predictions=None, convert_onset_predictions=True)
 
         precision, \
         recall, \
