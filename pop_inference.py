@@ -125,7 +125,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         #print(precision)
         #print(recall)
         print("F1 (Note)" + str(f_measure))
-        print("F1 (Note /w offset)" + str(f_measure_with_offset))
+        print("F1 (Note /w offset)" + str(f_measure_with_offsets))
 
         # print(p_onset)
         # print(p_offset)
