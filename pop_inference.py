@@ -102,7 +102,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     note_wise_onset_metrics_with_onset_pred = []
     note_wise_onset_offset_metrics_with_onset_pred = []
 
-    filenames = filenames[0:2]
+    #filenames = filenames[0:2]
     num_pieces = len(filenames)
     index = 0
     for file in filenames:
@@ -160,8 +160,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
                                                                                                  util.midi_to_hz(
                                                                                                      est_pitches_onset_red)))
 
-
         index += 1
+        print(index)
 
     # frame-wise metrics (precision/recall/f1-score
     mean_frame_wise = util.mean_eval_frame_wise(frame_wise_metrics, num_pieces)
