@@ -119,7 +119,7 @@ def pianoroll_to_interval_sequence(frames,
         else:
             end_time = (end_frame - 1) * frame_length_seconds
 
-        if (end_time - start_time) * 1000 >= 0.0:
+        if (end_time - start_time) * 1000 >= 1000.0:
             e_intervals = [[start_time, end_time]]
             e_pitches = [pitch + min_midi_pitch]
         else:
