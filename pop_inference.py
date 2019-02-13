@@ -61,9 +61,12 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     print(rnn_act_fn.shape)
     proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
     onset_predictions = proc(rnn_act_fn)
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=-0.1, fps=100)
+    offset_predictions = proc(rnn_act_fn * (-1))
     print(np.shape(onset_predictions))
+    print(np.shape(offset_predictions))
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
-    return note_activation, gt_frame, gt_onset, gt_offset, onset_predictions
+    return note_activation, gt_frame, gt_onset, gt_offset, onset_predictions, offset_predictions
 
 
 def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
@@ -94,7 +97,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     index = 0
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
-        note_activation, gt_frame, gt_onset, gt_offset, onset_predictions = get_note_activation(config['audio_path'], file, audio_config,
+        note_activation, gt_frame, gt_onset, gt_offset, onset_predictions, offset_predictions = get_note_activation(config['audio_path'], file, audio_config,
                                                                              norm, config['context_frames'], predictor)
         frames = np.greater_equal(note_activation, 0.5)
         # p_frame, r_frame, f_frame, a_frame = util.eval_framewise(note_activation, gt_frame)
@@ -105,10 +108,11 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         # p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
-        offset_predictions = (frames[1:].astype(int) - frames[0:-1].astype(int)).astype(bool)
-        offset_predictions = np.append([np.zeros(offset_predictions[0].shape)], offset_predictions, 0)
+        #offset_predictions = (frames[1:].astype(int) - frames[0:-1].astype(int)).astype(bool)
+        #offset_predictions = np.append([np.zeros(offset_predictions[0].shape)], offset_predictions, 0)
 
         print(np.sum(np.sum(gt_onset)))
+        print(np.sum(np.sum(gt_offset)))
         ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame,
                                                                          frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21, onset_predictions=gt_onset, offset_predictions=gt_offset, convert_onset_predictions=False)

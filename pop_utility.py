@@ -105,7 +105,13 @@ def pianoroll_to_interval_sequence(frames,
     elif onset_predictions is not None and not convert_onset_predictions:
         onset_predictions = np.append(onset_predictions, [np.zeros(onset_predictions[0].shape)], 0)
 
-    if offset_predictions is not None:
+    if offset_predictions is not None and convert_onset_predictions:
+        offset_predictions = piano_roll_rep(onset_frames=(offset_predictions[:, 0] / frame_length_seconds).astype(int),
+                                           midi_pitches=offset_predictions[:, 1].astype(int) - 21,
+                                           piano_roll_shape=np.shape(frames))
+        # If the frame and offset are both on, then turn it off
+        frames[np.where(np.logical_and(frames > 0, offset_predictions > 0))] = 0
+    elif offset_predictions is not None and not convert_onset_predictions:
         offset_predictions = np.append(offset_predictions,
                                        [np.zeros(offset_predictions[0].shape)], 0)
         # If the frame and offset are both on, then turn it off
