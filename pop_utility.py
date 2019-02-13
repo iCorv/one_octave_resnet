@@ -82,6 +82,7 @@ def pianoroll_to_interval_sequence(frames,
                                    frames_per_second,
                                    min_midi_pitch=21,
                                    onset_predictions=None,
+                                   offset_predictions=None,
                                    convert_onset_predictions=False):
     """Convert frames to an interval sequence."""
     frame_length_seconds = 1 / frames_per_second
@@ -103,6 +104,12 @@ def pianoroll_to_interval_sequence(frames,
         frames = np.logical_or(frames, onset_predictions)
     elif onset_predictions is not None and not convert_onset_predictions:
         onset_predictions = np.append(onset_predictions, [np.zeros(onset_predictions[0].shape)], 0)
+
+    if offset_predictions is not None:
+        offset_predictions = np.append(offset_predictions,
+                                       [np.zeros(offset_predictions[0].shape)], 0)
+        # If the frame and offset are both on, then turn it off
+        frames[np.where(np.logical_and(frames > 0, offset_predictions > 0))] = 0
 
     def end_pitch(pitch, end_frame):
         """End an active pitch."""

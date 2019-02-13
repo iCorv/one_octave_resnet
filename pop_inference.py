@@ -109,9 +109,9 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         print(np.sum(np.sum(gt_onset)))
         ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame,
                                                                          frames_per_second=audio_config['fps'],
-                                                                         min_midi_pitch=21, onset_predictions=gt_onset, convert_onset_predictions=False)
+                                                                         min_midi_pitch=21, onset_predictions=gt_onset, offset_predictions=gt_offset, convert_onset_predictions=False)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
-                                                                         min_midi_pitch=21, onset_predictions=None, convert_onset_predictions=True)
+                                                                         min_midi_pitch=21, onset_predictions=onset_predictions, convert_onset_predictions=True)
 
         precision, \
         recall, \
