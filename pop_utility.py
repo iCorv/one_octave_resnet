@@ -114,13 +114,17 @@ def pianoroll_to_interval_sequence(frames,
     def end_pitch(pitch, end_frame):
         """End an active pitch."""
         start_time = pitch_start_step[pitch] * frame_length_seconds
-        if offset_predictions is not None or end_frame <= 1:
+        if offset_predictions is not None:
             end_time = end_frame * frame_length_seconds
         else:
             end_time = (end_frame - 1) * frame_length_seconds
 
-        e_intervals = [[start_time, end_time]]
-        e_pitches = [pitch + min_midi_pitch]
+        if (end_time - start_time) * 1000 >= 0.0:
+            e_intervals = [[start_time, end_time]]
+            e_pitches = [pitch + min_midi_pitch]
+        else:
+            e_intervals = None
+            e_pitches = None
 
         del pitch_start_step[pitch]
 
@@ -160,8 +164,9 @@ def pianoroll_to_interval_sequence(frames,
                 process_active_pitch(pitch, i)
             elif pitch in pitch_start_step:
                 est_i, est_p = end_pitch(pitch, i)
-                est_pitches = np.append(est_pitches, est_p, axis=0)
-                est_intervals = np.append(est_intervals, est_i, axis=0)
+                if est_i is not None:
+                    est_pitches = np.append(est_pitches, est_p, axis=0)
+                    est_intervals = np.append(est_intervals, est_i, axis=0)
 
     # remove first default entry
     est_pitches = est_pitches[1:]
