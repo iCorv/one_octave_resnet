@@ -61,19 +61,13 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     print(rnn_act_fn.shape)
     proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
     onset_predictions = proc(rnn_act_fn)
-    max_act_fn = np.max(np.max(rnn_act_fn))
-    print(max_act_fn)
 
-    rnn_act_fn = (rnn_act_fn * (-1))
 
-    max_act_fn = np.max(np.max(rnn_act_fn))
-    print(max_act_fn)
-    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.0, fps=100)
-    offset_predictions = proc(rnn_act_fn)
     print(np.shape(onset_predictions))
-    print(np.shape(offset_predictions))
+
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
-    return note_activation, gt_frame, gt_onset, gt_offset, onset_predictions, offset_predictions
+
+    return note_activation, gt_frame, gt_onset, gt_offset, onset_predictions
 
 
 def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
@@ -94,7 +88,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     filenames = [f.strip() for f in filenames]
 
     predictor = build_predictor(net, model_dir)
-    #proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.3, fps=100)
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.5, fps=100)
     frame_wise_metrics = []
     frame_wise_onset_metrics = []
     frame_wise_offset_metrics = []
@@ -104,7 +98,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
     index = 0
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
-        note_activation, gt_frame, gt_onset, gt_offset, onset_predictions, offset_predictions = get_note_activation(config['audio_path'], file, audio_config,
+        note_activation, gt_frame, gt_onset, gt_offset, onset_predictions = get_note_activation(config['audio_path'], file, audio_config,
                                                                              norm, config['context_frames'], predictor)
         frames = np.greater_equal(note_activation, 0.5)
         # p_frame, r_frame, f_frame, a_frame = util.eval_framewise(note_activation, gt_frame)
@@ -115,8 +109,9 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, norm=False):
         # p_offset, r_offset, f_offset, a_offset = util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset)
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
-        #offset_predictions = (frames[1:].astype(int) - frames[0:-1].astype(int)).astype(bool)
-        #offset_predictions = np.append([np.zeros(offset_predictions[0].shape)], offset_predictions, 0)
+        offset_predictions = note_activation[1:] - note_activation[0:-1]
+        offset_predictions = np.append([np.zeros(offset_predictions[0].shape)], offset_predictions, 0)
+        offset_predictions = proc(offset_predictions*-1)
 
         print(np.sum(np.sum(gt_onset)))
         print(np.sum(np.sum(gt_offset)))
