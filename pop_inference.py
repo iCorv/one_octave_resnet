@@ -102,7 +102,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     note_wise_onset_metrics_with_onset_pred = []
     note_wise_onset_offset_metrics_with_onset_pred = []
 
-    filenames = filenames[0:4]
+    filenames = filenames[0:2]
     num_pieces = len(filenames)
     index = 0
     for file in filenames:
@@ -192,13 +192,13 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
 
     # write all metrics to file
     file = open(save_dir + save_file, "w")
-    file.write("frame-wise metrics (precision/recall/f1-score")
-    file.write("mean: "+ str(mean_frame_wise))
-    file.write("var: " + str(var_frame_wise))
-    file.write("mean (onset only): "+ str(mean_frame_wise_onset))
-    file.write("var (onset only): " + str(var_frame_wise_onset))
-    file.write("mean (offset only): "+ str(mean_frame_wise_offset))
-    file.write("var (offset only): " + str(var_frame_wise_offset))
+    file.write("frame-wise metrics (precision/recall/f1-score \n")
+    file.write("mean: "+ str(mean_frame_wise) + "\n")
+    file.write("var: " + str(var_frame_wise) + "\n")
+    file.write("mean (onset only): "+ str(mean_frame_wise_onset) + "\n")
+    file.write("var (onset only): " + str(var_frame_wise_onset) + "\n")
+    file.write("mean (offset only): "+ str(mean_frame_wise_offset) + "\n")
+    file.write("var (offset only): " + str(var_frame_wise_offset) + "\n")
 
     file.write("")
     file.write("-----------------------------------------------------------------")
