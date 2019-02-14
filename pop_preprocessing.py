@@ -114,13 +114,13 @@ def midi_to_triple_groundtruth(base_dir, filename, dt, n_frames):
         label = pitch - 21
         frame_gt[frame_start:frame_end, label] = 1
         onset_gt[frame_start, label] = 1
-        if onset_gt + 1 < frame_end:
+        if frame_start + 1 < frame_end:
             onset_plus_1_gt[frame_start+1, label] = 1
-        if onset_gt + 2 < frame_end:
+        if frame_start + 2 < frame_end:
             onset_plus_2_gt[frame_start+2, label] = 1
-        if onset_gt + 3 < frame_end:
+        if frame_start + 3 < frame_end:
             onset_plus_3_gt[frame_start+3, label] = 1
-        if onset_gt + 4 < frame_end:
+        if frame_start + 4 < frame_end:
             onset_plus_4_gt[frame_start+4, label] = 1
         offset_gt[frame_end, label] = 1
     return frame_gt, onset_gt, offset_gt, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt
