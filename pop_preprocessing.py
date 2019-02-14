@@ -106,6 +106,8 @@ def midi_to_triple_groundtruth(base_dir, filename, dt, n_frames):
     onset_plus_2_gt = np.zeros((n_frames, 88)).astype(np.int64)
     onset_plus_3_gt = np.zeros((n_frames, 88)).astype(np.int64)
     onset_plus_4_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_5_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_6_gt = np.zeros((n_frames, 88)).astype(np.int64)
     offset_gt = np.zeros((n_frames, 88)).astype(np.int64)
     for onset, _pitch, duration, velocity, _channel in notes:
         pitch = int(_pitch)
@@ -122,8 +124,12 @@ def midi_to_triple_groundtruth(base_dir, filename, dt, n_frames):
             onset_plus_3_gt[frame_start+3, label] = 1
         if frame_start + 4 < frame_end:
             onset_plus_4_gt[frame_start+4, label] = 1
+        if frame_start + 5 < frame_end:
+            onset_plus_5_gt[frame_start+5, label] = 1
+        if frame_start + 6 < frame_end:
+            onset_plus_6_gt[frame_start+6, label] = 1
         offset_gt[frame_end, label] = 1
-    return frame_gt, onset_gt, offset_gt, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt
+    return frame_gt, onset_gt, offset_gt, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt, onset_plus_5_gt, onset_plus_6_gt
 
 
 def midi_to_groundtruth(base_dir, filename, dt, n_frames, is_chroma=False):

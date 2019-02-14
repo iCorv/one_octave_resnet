@@ -57,7 +57,9 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     onset_plus_1_gt, \
     onset_plus_2_gt, \
     onset_plus_3_gt, \
-    onset_plus_4_gt = prep.midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'],
+    onset_plus_4_gt, \
+    onset_plus_5_gt, \
+    onset_plus_6_gt = prep.midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'],
                                                       spectrogram.shape[0])
     # re-scale spectrogram to the range [0, 1]
     if norm:
@@ -73,7 +75,7 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
 
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
 
-    return note_activation, gt_frame, gt_onset, gt_offset, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt
+    return note_activation, gt_frame, gt_onset, gt_offset, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt, onset_plus_5_gt, onset_plus_6_gt
 
 
 def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, norm=False):
@@ -110,6 +112,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     frame_wise_onset_plus_2_metrics = []
     frame_wise_onset_plus_3_metrics = []
     frame_wise_onset_plus_4_metrics = []
+    frame_wise_onset_plus_5_metrics = []
+    frame_wise_onset_plus_6_metrics = []
     frame_wise_offset_metrics = []
 
     note_wise_onset_metrics = []
@@ -123,7 +127,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     filenames = filenames[0:3]
     num_pieces = len(filenames)
     index = 0
-    onset_duration_heuristic = 5
+    onset_duration_heuristic = 2
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
         note_activation, \
@@ -132,7 +136,9 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
         onset_plus_1_gt, \
         onset_plus_2_gt, \
         onset_plus_3_gt, \
-        onset_plus_4_gt = get_note_activation(config['audio_path'], file, audio_config,
+        onset_plus_4_gt, \
+        onset_plus_5_gt, \
+        onset_plus_6_gt = get_note_activation(config['audio_path'], file, audio_config,
                                                                              norm, config['context_frames'], predictor)
         frames = np.greater_equal(note_activation, 0.5)
         # return precision, recall, f-score, accuracy (without TN)
@@ -143,6 +149,10 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
         frame_wise_onset_plus_2_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_2_gt), onset_plus_2_gt))
         frame_wise_onset_plus_3_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_3_gt), onset_plus_3_gt))
         frame_wise_onset_plus_4_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_4_gt), onset_plus_4_gt))
+        frame_wise_onset_plus_4_metrics.append(
+            util.eval_frame_wise(np.multiply(note_activation, onset_plus_5_gt), onset_plus_5_gt))
+        frame_wise_onset_plus_4_metrics.append(
+            util.eval_frame_wise(np.multiply(note_activation, onset_plus_6_gt), onset_plus_6_gt))
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
         rnn_act_fn = rnn_processor(os.path.join(config['audio_path'], file + '.wav'))
@@ -247,6 +257,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     mean_frame_wise_onset_plus_2 = util.mean_eval_frame_wise(frame_wise_onset_plus_2_metrics, num_pieces)
     mean_frame_wise_onset_plus_3 = util.mean_eval_frame_wise(frame_wise_onset_plus_3_metrics, num_pieces)
     mean_frame_wise_onset_plus_4 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
+    mean_frame_wise_onset_plus_5 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
+    mean_frame_wise_onset_plus_6 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
 
     mean_frame_wise_offset = util.mean_eval_frame_wise(frame_wise_offset_metrics, num_pieces)
 
@@ -280,6 +292,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     file.write("mean (onset + 2 only):   " + str(mean_frame_wise_onset_plus_2) + "\n")
     file.write("mean (onset + 3 only):   " + str(mean_frame_wise_onset_plus_3) + "\n")
     file.write("mean (onset + 4 only):   " + str(mean_frame_wise_onset_plus_4) + "\n")
+    file.write("mean (onset + 5 only):   " + str(mean_frame_wise_onset_plus_5) + "\n")
+    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_6) + "\n")
     file.write("mean (offset only):      " + str(mean_frame_wise_offset) + "\n")
 
     file.write("\n")
