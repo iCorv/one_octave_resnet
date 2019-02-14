@@ -510,20 +510,16 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
                              strides=1, padding='SAME', data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 1], strides=[2, 1], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[1, 2], padding='VALID', # (HPCP, 15 frames) pool_size=[3, 1], strides=[2, 1], (spec, 5 frames) pool_size=[3, 2], strides=[1, 2]
                                   data_format=data_format)
     print(net.shape)
     net = tf.layers.dropout(net, 0.25, name='dropout2', training=is_training)
-    ##########
 
-    # architecture like for model ResNet with HPCP and 15 frames
-
-    ##########
     net = _building_block_v1(inputs=net, filters=64, training=is_training, projection_shortcut=projection_shortcut, strides=1, padding='SAME',
                              data_format=data_format)
 
     print(net.shape)
-    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[2, 2], padding='VALID',
+    net = tf.layers.max_pooling2d(inputs=net, pool_size=[3, 2], strides=[1, 2], padding='VALID', # (HPCP, 15 frames) pool_size=[3, 2], strides=[2, 2], (spec, 5 frames) pool_size=[3, 2], strides=[1, 2]
                                   data_format=data_format)
 
     net = tf.layers.dropout(net, 0.25, name='dropout3', training=is_training)
@@ -601,8 +597,6 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
         print(net.shape)
         net = slim.dropout(net, 0.5, scope='dropout3', is_training=is_training)
 
-    #net = conv_net(inputs)
-
     net = lstm_layer(
         net,
         batch_size=8,
@@ -620,48 +614,6 @@ def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88)
     print(net.shape)
 
     return net
-
-
-def conv_net(inputs):
-    """Builds the ConvNet from Kelz 2016."""
-    with slim.arg_scope(
-            [slim.conv2d, slim.fully_connected],
-            activation_fn=tf.nn.relu,
-            weights_initializer=tf.contrib.layers.variance_scaling_initializer(
-                factor=2.0, mode='FAN_AVG', uniform=True)):
-        net = inputs
-        print(net.shape)
-        i = 0
-        for (conv_temporal_size, conv_freq_size,
-             num_filters, freq_pool_size, dropout_amt) in zip([3, 3, 3], [3, 3, 3], [48, 48, 96], [1, 2, 2],
-                                                              [1.0, 0.25, 0.25]):
-            net = slim.conv2d(
-                net,
-                num_filters, [conv_temporal_size, conv_freq_size],
-                scope='conv' + str(i),
-                normalizer_fn=slim.batch_norm, data_format="NHWC")
-            if freq_pool_size > 1:
-                net = slim.max_pool2d(
-                    net, [1, freq_pool_size],
-                    stride=[1, freq_pool_size],
-                    scope='pool' + str(i), data_format="NHWC")
-            if dropout_amt < 1:
-                net = slim.dropout(net, dropout_amt, scope='dropout' + str(i))
-            i += 1
-
-        #print(net.shape)
-        #net = tf.transpose(net, [0, 2, 3, 1])
-        # Flatten while preserving batch and time dimensions.
-        print(net.shape)
-        dims = tf.shape(net)
-        net = tf.reshape(
-            net, (dims[0], dims[1], net.shape[2].value * net.shape[3].value),
-            'flatten_end')
-        print(net.shape)
-        net = slim.fully_connected(net, 768, scope='fc_end')
-        net = slim.dropout(net, 0.5, scope='dropout_end')
-        print(net.shape)
-        return net
 
 
 def cudnn_lstm_layer(inputs,
