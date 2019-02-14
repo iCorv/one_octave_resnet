@@ -72,9 +72,13 @@ def var_eval_frame_wise(frame_wise_metrics, mean_frame_wise, num_pieces):
     return var_frame_wise
 
 
-def piano_roll_rep(onset_frames, midi_pitches, piano_roll_shape):
+def piano_roll_rep(onset_frames, midi_pitches, piano_roll_shape, onset_duration=None):
     piano_roll = np.zeros(piano_roll_shape)
-    piano_roll[onset_frames, midi_pitches] = 1
+    if onset_duration is not None:
+        for onset_frame, midi_pitch in zip(onset_frames, midi_pitches):
+            piano_roll[onset_frame:onset_frame+onset_duration, midi_pitch] = 1
+    else:
+        piano_roll[onset_frames, midi_pitches] = 1
     return piano_roll
 
 
@@ -82,8 +86,7 @@ def pianoroll_to_interval_sequence(frames,
                                    frames_per_second,
                                    min_midi_pitch=21,
                                    onset_predictions=None,
-                                   offset_predictions=None,
-                                   convert_onset_predictions=False):
+                                   offset_predictions=None):
     """Convert frames to an interval sequence."""
     frame_length_seconds = 1 / frames_per_second
 
@@ -96,14 +99,10 @@ def pianoroll_to_interval_sequence(frames,
     # notes that are still active.
     frames = np.append(frames, [np.zeros(frames[0].shape)], 0)
 
-    if onset_predictions is not None and convert_onset_predictions:
-        onset_predictions = piano_roll_rep(onset_frames=(onset_predictions[:, 0] / frame_length_seconds).astype(int),
-                                        midi_pitches=onset_predictions[:, 1].astype(int) - 21,
-                                        piano_roll_shape=np.shape(frames))
+    if onset_predictions is not None:
+        onset_predictions = np.append(onset_predictions, [np.zeros(onset_predictions[0].shape)], 0)
         # Ensure that any frame with an onset prediction is considered active.
         frames = np.logical_or(frames, onset_predictions)
-    elif onset_predictions is not None and not convert_onset_predictions:
-        onset_predictions = np.append(onset_predictions, [np.zeros(onset_predictions[0].shape)], 0)
 
     elif offset_predictions is not None:
         offset_predictions = np.append(offset_predictions,
@@ -174,5 +173,6 @@ def pianoroll_to_interval_sequence(frames,
     if est_pitches.size is not 0:
         assert total_time >= est_intervals[-1, -1]
 
+    # return intervals, pitches
     return est_intervals, est_pitches
 

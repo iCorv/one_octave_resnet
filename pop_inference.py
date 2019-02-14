@@ -51,8 +51,14 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
 def get_note_activation(base_dir, read_file, audio_config, norm, context_frames, predictor):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
     spectrogram = prep.wav_to_spec(base_dir, read_file, audio_config)
-    gt_frame, gt_onset, gt_offset = prep.midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'],
-                                                                    spectrogram.shape[0])
+    gt_frame, \
+    gt_onset, \
+    gt_offset, \
+    onset_plus_1_gt, \
+    onset_plus_2_gt, \
+    onset_plus_3_gt, \
+    onset_plus_4_gt = prep.midi_to_triple_groundtruth(base_dir, read_file, 1. / audio_config['fps'],
+                                                      spectrogram.shape[0])
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
@@ -67,7 +73,7 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
 
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
 
-    return note_activation, gt_frame, gt_onset, gt_offset
+    return note_activation, gt_frame, gt_onset, gt_offset, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt
 
 
 def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, norm=False):
@@ -97,7 +103,13 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
 
     # init lists
     frame_wise_metrics = []
+    frame_wise_metrics_with_onset_pred = []
+    frame_wise_metrics_with_onset_pred_heuristic = []
     frame_wise_onset_metrics = []
+    frame_wise_onset_plus_1_metrics = []
+    frame_wise_onset_plus_2_metrics = []
+    frame_wise_onset_plus_3_metrics = []
+    frame_wise_onset_plus_4_metrics = []
     frame_wise_offset_metrics = []
 
     note_wise_onset_metrics = []
@@ -105,41 +117,72 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
 
     note_wise_onset_metrics_with_onset_pred = []
     note_wise_onset_offset_metrics_with_onset_pred = []
+    note_wise_onset_metrics_with_onset_pred_heuristic = []
+    note_wise_onset_offset_metrics_with_onset_pred_heuristic = []
 
-    # filenames = filenames[0:2]
+    filenames = filenames[0:3]
     num_pieces = len(filenames)
     index = 0
+    onset_duration_heuristic = 3
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
-        note_activation, gt_frame, gt_onset, gt_offset = get_note_activation(config['audio_path'], file, audio_config,
+        note_activation, \
+        gt_frame, gt_onset, \
+        gt_offset, \
+        onset_plus_1_gt, \
+        onset_plus_2_gt, \
+        onset_plus_3_gt, \
+        onset_plus_4_gt = get_note_activation(config['audio_path'], file, audio_config,
                                                                              norm, config['context_frames'], predictor)
         frames = np.greater_equal(note_activation, 0.5)
         # return precision, recall, f-score, accuracy (without TN)
         frame_wise_metrics.append(util.eval_frame_wise(note_activation, gt_frame))
         # multiply note activation with ground truth in order to blend out the rest of the activation fn
         frame_wise_onset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_onset), gt_onset))
+        frame_wise_onset_plus_1_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_1_gt), onset_plus_1_gt))
+        frame_wise_onset_plus_2_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_2_gt), onset_plus_2_gt))
+        frame_wise_onset_plus_3_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_3_gt), onset_plus_3_gt))
+        frame_wise_onset_plus_4_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_4_gt), onset_plus_4_gt))
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
         rnn_act_fn = rnn_processor(os.path.join(config['audio_path'], file + '.wav'))
         onset_predictions = proc(rnn_act_fn)
 
+        onset_predictions = util.piano_roll_rep(onset_frames=(onset_predictions[:, 0] /
+                                                              (1. / audio_config['fps'])).astype(int),
+                                                midi_pitches=onset_predictions[:, 1].astype(int) - 21,
+                                                piano_roll_shape=np.shape(frames))
+
+
+        onset_predictions_with_heuristic = util.piano_roll_rep(onset_frames=(onset_predictions[:, 0] /
+                                                              (1. / audio_config['fps'])).astype(int),
+                                                midi_pitches=onset_predictions[:, 1].astype(int) - 21,
+                                                piano_roll_shape=np.shape(frames), onset_duration=onset_duration_heuristic)
+        frames_with_onset_heuristic = np.logical_or(frames, onset_predictions_with_heuristic)
+
+        frame_wise_metrics_with_onset_pred.append(util.eval_frame_wise(np.logical_or(frames, onset_predictions), gt_frame))
+        frame_wise_metrics_with_onset_pred_heuristic.append(util.eval_frame_wise(frames_with_onset_heuristic, gt_frame))
+
         ref_intervals, ref_pitches = util.pianoroll_to_interval_sequence(gt_frame,
                                                                          frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21, onset_predictions=gt_onset,
-                                                                         offset_predictions=None,
-                                                                         convert_onset_predictions=False)
+                                                                         offset_predictions=None)
         est_intervals, est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
                                                                          min_midi_pitch=21, onset_predictions=None,
-                                                                         offset_predictions=None,
-                                                                         convert_onset_predictions=True)
+                                                                         offset_predictions=None)
 
-        est_intervals_onset_pred, est_pitches_onset_red = util.pianoroll_to_interval_sequence(frames, frames_per_second=
+        est_intervals_onset_pred, est_pitches_onset_pred = util.pianoroll_to_interval_sequence(frames, frames_per_second=
         audio_config['fps'],
                                                                                               min_midi_pitch=21,
                                                                                               onset_predictions=onset_predictions,
-                                                                                              offset_predictions=None,
-                                                                                              convert_onset_predictions=True)
+                                                                                              offset_predictions=None)
 
+        est_intervals_onset_pred_heuristic, est_pitches_onset_pred_heuristic = util.pianoroll_to_interval_sequence(frames_with_onset_heuristic, frames_per_second=
+        audio_config['fps'],
+                                                                                              min_midi_pitch=21,
+                                                                                              onset_predictions=onset_predictions,
+                                                                                              offset_predictions=None)
+        # w/o onset predictions
         # return precision, recall, f-score, overlap_ratio
         note_wise_onset_metrics.append(mir_eval.transcription.precision_recall_f1_overlap(ref_intervals,
                                                                                           util.midi_to_hz(
@@ -155,13 +198,14 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
                                                                                                  util.midi_to_hz(
                                                                                                      est_pitches)))
 
+        # w/ onset predictions
         # return precision, recall, f-score, overlap_ratio
         note_wise_onset_metrics_with_onset_pred.append(mir_eval.transcription.precision_recall_f1_overlap(ref_intervals,
                                                                                                           util.midi_to_hz(
                                                                                                               ref_pitches),
                                                                                                           est_intervals_onset_pred,
                                                                                                           util.midi_to_hz(
-                                                                                                              est_pitches_onset_red),
+                                                                                                              est_pitches_onset_pred),
                                                                                                           offset_ratio=None))
         note_wise_onset_offset_metrics_with_onset_pred.append(
             mir_eval.transcription.precision_recall_f1_overlap(ref_intervals,
@@ -169,53 +213,74 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
                                                                    ref_pitches),
                                                                est_intervals_onset_pred,
                                                                util.midi_to_hz(
-                                                                   est_pitches_onset_red)))
+                                                                   est_pitches_onset_pred)))
+
+        # w/ onset predictions and heuristics
+        # return precision, recall, f-score, overlap_ratio
+        note_wise_onset_metrics_with_onset_pred_heuristic.append(mir_eval.transcription.precision_recall_f1_overlap(ref_intervals,
+                                                                                                          util.midi_to_hz(
+                                                                                                              ref_pitches),
+                                                                                                          est_intervals_onset_pred_heuristic,
+                                                                                                          util.midi_to_hz(
+                                                                                                              est_pitches_onset_pred_heuristic),
+                                                                                                          offset_ratio=None))
+        note_wise_onset_offset_metrics_with_onset_pred_heuristic.append(
+            mir_eval.transcription.precision_recall_f1_overlap(ref_intervals,
+                                                               util.midi_to_hz(
+                                                                   ref_pitches),
+                                                               est_intervals_onset_pred_heuristic,
+                                                               util.midi_to_hz(
+                                                                   est_pitches_onset_pred_heuristic)))
 
         index += 1
         print(index)
 
     # frame-wise metrics (precision/recall/f1-score
     mean_frame_wise = util.mean_eval_frame_wise(frame_wise_metrics, num_pieces)
-    var_frame_wise = util.var_eval_frame_wise(frame_wise_metrics, mean_frame_wise, num_pieces)
 
     mean_frame_wise_onset = util.mean_eval_frame_wise(frame_wise_onset_metrics, num_pieces)
-    var_frame_wise_onset = util.var_eval_frame_wise(frame_wise_onset_metrics, mean_frame_wise_onset, num_pieces)
+
+    mean_frame_wise_with_onset_pred = util.mean_eval_frame_wise(frame_wise_metrics_with_onset_pred, num_pieces)
+    mean_frame_wise_with_onset_pred_heuristic = util.mean_eval_frame_wise(frame_wise_metrics_with_onset_pred_heuristic, num_pieces)
+
+    mean_frame_wise_onset_plus_1 = util.mean_eval_frame_wise(frame_wise_onset_plus_1_metrics, num_pieces)
+    mean_frame_wise_onset_plus_2 = util.mean_eval_frame_wise(frame_wise_onset_plus_2_metrics, num_pieces)
+    mean_frame_wise_onset_plus_3 = util.mean_eval_frame_wise(frame_wise_onset_plus_3_metrics, num_pieces)
+    mean_frame_wise_onset_plus_4 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
 
     mean_frame_wise_offset = util.mean_eval_frame_wise(frame_wise_offset_metrics, num_pieces)
-    var_frame_wise_offset = util.var_eval_frame_wise(frame_wise_offset_metrics, mean_frame_wise_offset, num_pieces)
 
     # note metrics w/o onset predictions (precision/recall/f1-score
     mean_note_wise_onset_metrics = util.mean_eval_frame_wise(note_wise_onset_metrics, num_pieces)
-    var_note_wise_onset_metrics = util.var_eval_frame_wise(note_wise_onset_metrics, mean_note_wise_onset_metrics,
-                                                           num_pieces)
 
     mean_note_wise_onset_offset_metrics = util.mean_eval_frame_wise(note_wise_onset_offset_metrics, num_pieces)
-    var_note_wise_onset_offset_metrics = util.var_eval_frame_wise(note_wise_onset_offset_metrics,
-                                                                  mean_note_wise_onset_offset_metrics,
-                                                                  num_pieces)
 
     # note metrics w/ onset predictions (precision/recall/f1-score
     mean_note_wise_onset_metrics_with_onset_pred = util.mean_eval_frame_wise(note_wise_onset_metrics_with_onset_pred,
                                                                              num_pieces)
-    var_note_wise_onset_metrics_with_onset_pred = util.var_eval_frame_wise(note_wise_onset_metrics_with_onset_pred,
-                                                                           mean_note_wise_onset_metrics_with_onset_pred,
-                                                                           num_pieces)
 
     mean_note_wise_onset_offset_metrics_with_onset_pred = util.mean_eval_frame_wise(
         note_wise_onset_offset_metrics_with_onset_pred, num_pieces)
-    var_note_wise_onset_offset_metrics_with_onset_pred = util.var_eval_frame_wise(
-        note_wise_onset_offset_metrics_with_onset_pred, mean_note_wise_onset_offset_metrics_with_onset_pred,
-        num_pieces)
+
+    # note metrics w/ onset prediction heuristic (precision/recall/f1-score
+    mean_note_wise_onset_metrics_with_onset_pred_heuristic = util.mean_eval_frame_wise(note_wise_onset_metrics_with_onset_pred_heuristic,
+                                                                             num_pieces)
+
+    mean_note_wise_onset_offset_metrics_with_onset_pred_heuristic = util.mean_eval_frame_wise(
+        note_wise_onset_offset_metrics_with_onset_pred_heuristic, num_pieces)
 
     # write all metrics to file
     file = open(save_dir + save_file, "w")
     file.write("frame-wise metrics (precision/recall/f1-score) \n")
-    file.write("mean:               " + str(mean_frame_wise) + "\n")
-    file.write("var:                " + str(var_frame_wise) + "\n")
-    file.write("mean (onset only):  " + str(mean_frame_wise_onset) + "\n")
-    file.write("var (onset only):   " + str(var_frame_wise_onset) + "\n")
-    file.write("mean (offset only): " + str(mean_frame_wise_offset) + "\n")
-    file.write("var (offset only):  " + str(var_frame_wise_offset) + "\n")
+    file.write("mean:                    " + str(mean_frame_wise) + "\n")
+    file.write("mean (onset prediction): " + str(mean_frame_wise_with_onset_pred) + "\n")
+    file.write("mean (onset heuristic):  " + str(mean_frame_wise_with_onset_pred_heuristic) + "\n")
+    file.write("mean (onset only):       " + str(mean_frame_wise_onset) + "\n")
+    file.write("mean (onset + 1 only):   " + str(mean_frame_wise_onset_plus_1) + "\n")
+    file.write("mean (onset + 2 only):   " + str(mean_frame_wise_onset_plus_2) + "\n")
+    file.write("mean (onset + 3 only):   " + str(mean_frame_wise_onset_plus_3) + "\n")
+    file.write("mean (onset + 4 only):   " + str(mean_frame_wise_onset_plus_4) + "\n")
+    file.write("mean (offset only):      " + str(mean_frame_wise_offset) + "\n")
 
     file.write("\n")
     file.write("----------------------------------------------------------------- \n")
@@ -223,9 +288,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     file.write("note metrics w/o onset predictions (precision/recall/f1-score) \n")
 
     file.write("mean (w/o offset): " + str(mean_note_wise_onset_metrics) + "\n")
-    file.write("var (w/o offset):  " + str(var_note_wise_onset_metrics) + "\n")
     file.write("mean (w/ offset):  " + str(mean_note_wise_onset_offset_metrics) + "\n")
-    file.write("var (w/ offset):   " + str(var_note_wise_onset_offset_metrics) + "\n")
 
     file.write("\n")
     file.write("----------------------------------------------------------------- \n")
@@ -233,9 +296,15 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     file.write("note metrics w/ onset predictions (precision/recall/f1-score) \n")
 
     file.write("mean (w/o offset): " + str(mean_note_wise_onset_metrics_with_onset_pred) + "\n")
-    file.write("var (w/o offset):  " + str(var_note_wise_onset_metrics_with_onset_pred) + "\n")
     file.write("mean (w/ offset):  " + str(mean_note_wise_onset_offset_metrics_with_onset_pred) + "\n")
-    file.write("var (w/ offset):   " + str(var_note_wise_onset_offset_metrics_with_onset_pred) + "\n")
+
+    file.write("\n")
+    file.write("----------------------------------------------------------------- \n")
+    file.write("\n")
+    file.write("note metrics w/ onset predictions and heuristic (" + str(onset_duration_heuristic) + " frames) (precision/recall/f1-score) \n")
+
+    file.write("mean (w/o offset): " + str(mean_note_wise_onset_metrics_with_onset_pred_heuristic) + "\n")
+    file.write("mean (w/ offset):  " + str(mean_note_wise_onset_offset_metrics_with_onset_pred_heuristic) + "\n")
 
     file.close()
 
