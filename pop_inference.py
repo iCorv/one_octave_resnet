@@ -124,10 +124,10 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     note_wise_onset_metrics_with_onset_pred_heuristic = []
     note_wise_onset_offset_metrics_with_onset_pred_heuristic = []
 
-    filenames = filenames[0:3]
+    #filenames = filenames[0:3]
     num_pieces = len(filenames)
     index = 0
-    onset_duration_heuristic = 15
+    onset_duration_heuristic = 5
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
         note_activation, \
