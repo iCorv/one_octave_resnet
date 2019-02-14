@@ -156,17 +156,17 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
         rnn_act_fn = rnn_processor(os.path.join(config['audio_path'], file + '.wav'))
-        onset_predictions = proc(rnn_act_fn)
+        onset_predictions_timings = proc(rnn_act_fn)
 
-        onset_predictions = util.piano_roll_rep(onset_frames=(onset_predictions[:, 0] /
+        onset_predictions = util.piano_roll_rep(onset_frames=(onset_predictions_timings[:, 0] /
                                                               (1. / audio_config['fps'])).astype(int),
-                                                midi_pitches=onset_predictions[:, 1].astype(int) - 21,
+                                                midi_pitches=onset_predictions_timings[:, 1].astype(int) - 21,
                                                 piano_roll_shape=np.shape(frames))
         print(np.sum(np.sum(onset_predictions)))
 
-        onset_predictions_with_heuristic = util.piano_roll_rep(onset_frames=(onset_predictions[:, 0] /
+        onset_predictions_with_heuristic = util.piano_roll_rep(onset_frames=(onset_predictions_timings[:, 0] /
                                                               (1. / audio_config['fps'])).astype(int),
-                                                midi_pitches=onset_predictions[:, 1].astype(int) - 21,
+                                                midi_pitches=onset_predictions_timings[:, 1].astype(int) - 21,
                                                 piano_roll_shape=np.shape(frames), onset_duration=onset_duration_heuristic)
         print(np.sum(np.sum(onset_predictions_with_heuristic)))
         frames_with_onset_heuristic = np.logical_or(frames, onset_predictions_with_heuristic)
