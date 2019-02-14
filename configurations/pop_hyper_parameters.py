@@ -102,7 +102,7 @@ def get_hyper_parameters(net):
                   'eval_steps': int(round(num_val_examples / batch_size)),
                   'test_steps': int(round(num_test_examples / batch_size)),
                   'weight_decay': 1e-7,
-                  'data_format': 'channels_last',  # NHWC (channels last, faster on CPU) or NCHW (channels first, faster on GPU)
+                  'data_format': 'channels_first', # this has to be 'channels_last' in case the RNN is used!  # NHWC (channels last, faster on CPU) or NCHW (channels first, faster on GPU)
                   'train_epochs': train_epochs}
     else:
         config = {}
