@@ -124,10 +124,10 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     note_wise_onset_metrics_with_onset_pred_heuristic = []
     note_wise_onset_offset_metrics_with_onset_pred_heuristic = []
 
-    filenames = filenames[0:3]
+    filenames = filenames[0:5]
     num_pieces = len(filenames)
     index = 0
-    onset_duration_heuristic = 2
+    onset_duration_heuristic = 6
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
         note_activation, \
@@ -149,9 +149,9 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
         frame_wise_onset_plus_2_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_2_gt), onset_plus_2_gt))
         frame_wise_onset_plus_3_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_3_gt), onset_plus_3_gt))
         frame_wise_onset_plus_4_metrics.append(util.eval_frame_wise(np.multiply(note_activation, onset_plus_4_gt), onset_plus_4_gt))
-        frame_wise_onset_plus_4_metrics.append(
+        frame_wise_onset_plus_5_metrics.append(
             util.eval_frame_wise(np.multiply(note_activation, onset_plus_5_gt), onset_plus_5_gt))
-        frame_wise_onset_plus_4_metrics.append(
+        frame_wise_onset_plus_6_metrics.append(
             util.eval_frame_wise(np.multiply(note_activation, onset_plus_6_gt), onset_plus_6_gt))
         frame_wise_offset_metrics.append(util.eval_frame_wise(np.multiply(note_activation, gt_offset), gt_offset))
 
@@ -257,8 +257,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     mean_frame_wise_onset_plus_2 = util.mean_eval_frame_wise(frame_wise_onset_plus_2_metrics, num_pieces)
     mean_frame_wise_onset_plus_3 = util.mean_eval_frame_wise(frame_wise_onset_plus_3_metrics, num_pieces)
     mean_frame_wise_onset_plus_4 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
-    mean_frame_wise_onset_plus_5 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
-    mean_frame_wise_onset_plus_6 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
+    mean_frame_wise_onset_plus_5 = util.mean_eval_frame_wise(frame_wise_onset_plus_5_metrics, num_pieces)
+    mean_frame_wise_onset_plus_6 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
 
     mean_frame_wise_offset = util.mean_eval_frame_wise(frame_wise_offset_metrics, num_pieces)
 
