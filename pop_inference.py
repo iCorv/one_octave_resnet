@@ -127,7 +127,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     filenames = filenames[0:3]
     num_pieces = len(filenames)
     index = 0
-    onset_duration_heuristic = 5
+    onset_duration_heuristic = 10
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
         note_activation, \
@@ -162,13 +162,13 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
                                                               (1. / audio_config['fps'])).astype(int),
                                                 midi_pitches=onset_predictions_timings[:, 1].astype(int) - 21,
                                                 piano_roll_shape=np.shape(frames))
-        print(np.sum(np.sum(onset_predictions)))
+
 
         onset_predictions_with_heuristic = util.piano_roll_rep(onset_frames=(onset_predictions_timings[:, 0] /
                                                               (1. / audio_config['fps'])).astype(int),
                                                 midi_pitches=onset_predictions_timings[:, 1].astype(int) - 21,
                                                 piano_roll_shape=np.shape(frames), onset_duration=onset_duration_heuristic)
-        print(np.sum(np.sum(onset_predictions_with_heuristic)))
+
         frames_with_onset_heuristic = np.logical_or(frames, onset_predictions_with_heuristic)
 
         frame_wise_metrics_with_onset_pred.append(util.eval_frame_wise(np.logical_or(frames, onset_predictions), gt_frame))
