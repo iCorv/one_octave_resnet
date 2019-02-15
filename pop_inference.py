@@ -64,14 +64,6 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     # re-scale spectrogram to the range [0, 1]
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
-    #rnn_processor = madmom.features.notes.RNNPianoNoteProcessor()
-    #rnn_act_fn = rnn_processor(os.path.join(base_dir, read_file + '.wav'))
-
-    #proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
-    #onset_predictions = proc(rnn_act_fn)
-
-
-    #print(np.shape(onset_predictions))
 
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
 
@@ -323,6 +315,75 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
 
     file.close()
 
+
+def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_heuristic, norm=False):
+    config = ppp.get_preprocessing_parameters(0)
+    audio_config = config['audio_config']
+
+    # load fold
+    # filenames = open(audio_file, 'r').readlines()
+    # filenames = [f.strip() for f in filenames]
+
+    # build predictor
+    predictor = build_predictor(net, model_dir)
+    # init madmom peak picker
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
+    # init piano note processor for onset prediction
+    rnn_processor = madmom.features.notes.RNNPianoNoteProcessor()
+
+    spectrogram = prep.wav_to_spec("", audio_file, audio_config)
+
+    # re-scale spectrogram to the range [0, 1]
+    if norm:
+        spectrogram = np.divide(spectrogram, np.max(spectrogram))
+
+    note_activation = spectrogram_to_note_activation(spectrogram, config['context_frames'], predictor)
+    frames = np.greater_equal(note_activation, 0.5)
+
+    rnn_act_fn = rnn_processor(audio_file)
+    onset_predictions_timings = proc(rnn_act_fn)
+
+    onset_predictions = util.piano_roll_rep(onset_frames=(onset_predictions_timings[:, 0] /
+                                                          (1. / audio_config['fps'])).astype(int),
+                                            midi_pitches=onset_predictions_timings[:, 1].astype(int) - 21,
+                                            piano_roll_shape=np.shape(frames))
+
+    onset_predictions_with_heuristic = util.piano_roll_rep(onset_frames=(onset_predictions_timings[:, 0] /
+                                                                         (1. / audio_config['fps'])).astype(int),
+                                                           midi_pitches=onset_predictions_timings[:, 1].astype(
+                                                               int) - 21,
+                                                           piano_roll_shape=np.shape(frames),
+                                                           onset_duration=onset_duration_heuristic)
+
+    frames_with_onset = np.logical_or(frames, onset_predictions)
+    frames_with_onset_heuristic = np.logical_or(frames, onset_predictions_with_heuristic)
+
+    est_intervals, \
+    est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
+                                                      min_midi_pitch=21, onset_predictions=None,
+                                                      offset_predictions=None)
+
+    est_intervals_onset_pred, \
+    est_pitches_onset_pred = util.pianoroll_to_interval_sequence(frames_with_onset,
+                                                                 frames_per_second=audio_config['fps'],
+                                                                 min_midi_pitch=21,
+                                                                 onset_predictions=onset_predictions,
+                                                                 offset_predictions=None)
+
+    est_intervals_onset_pred_heuristic, \
+    est_pitches_onset_pred_heuristic = util.pianoroll_to_interval_sequence(
+        frames_with_onset_heuristic, frames_per_second=
+        audio_config['fps'],
+        min_midi_pitch=21,
+        onset_predictions=onset_predictions,
+        offset_predictions=None)
+    # convert intervals and pitches to ‘onset time’ ‘note number’ [‘duration’ [‘velocity’ [‘channel’]]] for digestion by madmom
+    notes = np.stack((est_intervals[:, 0], est_pitches, est_intervals[:, 1]-est_intervals[:, 0]), axis=1)
+    notes_onset_pred = np.stack((est_intervals_onset_pred[:, 0], est_pitches_onset_pred, est_intervals_onset_pred[:, 1] - est_intervals_onset_pred[:, 0]), axis=1)
+    notes_onset_pred_heuristic = np.stack((est_intervals_onset_pred_heuristic[:, 0], est_pitches_onset_pred_heuristic, est_intervals_onset_pred_heuristic[:, 1] - est_intervals_onset_pred_heuristic[:, 0]), axis=1)
+    madmom.io.midi.write_midi(notes, save_dir + audio_file.split('/')[-1] + "_noOnset", duration=0.6, velocity=100)
+    madmom.io.midi.write_midi(notes_onset_pred, save_dir + audio_file.split('/')[-1] + "_onsetPrediction", duration=0.6, velocity=100)
+    madmom.io.midi.write_midi(notes_onset_pred_heuristic, save_dir + audio_file.split('/')[-1] + "_onsetHeuristic", duration=0.6, velocity=100)
 
 def get_serving_input_fn(frames, bins):
     def serving_input_fn():
