@@ -388,7 +388,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
         frames_with_onset_heuristic, frames_per_second=
         audio_config['fps'],
         min_midi_pitch=21,
-        onset_predictions=onset_predictions,
+        onset_predictions=None,
         offset_predictions=None)
 
     # convert intervals and pitches to ‘onset time’ ‘note number’ [‘duration’ [‘velocity’ [‘channel’]]] for digestion by madmom
