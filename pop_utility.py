@@ -176,3 +176,7 @@ def pianoroll_to_interval_sequence(frames,
     # return intervals, pitches
     return est_intervals, est_pitches
 
+
+def chunks(sequence, length):
+    for index in range(0, len(sequence), length):
+        yield sequence[index:index + length]

@@ -341,9 +341,10 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
 
     # get note activation fn from model
     if use_rnn:
-        note_activation = get_activation(spectrogram, predictor)
+        note_activation = spectrogram_to_non_overlap_note_activation(spectrogram, config['context_frames'], predictor)
     else:
         note_activation = spectrogram_to_note_activation(spectrogram, config['context_frames'], predictor)
+    print(note_activation.shape)
     frames = np.greater_equal(note_activation, 0.5)
 
     # get note onset processor
@@ -436,3 +437,12 @@ def spectrogram_to_note_activation(spec, context_frames, estimator_predictor):
         note_activation[frame, :] = get_activation(spec[frame - context_frames:frame + context_frames + 1, :],
                                                    estimator_predictor)
     return note_activation
+
+
+def spectrogram_to_non_overlap_note_activation(spec, context_frames, estimator_predictor):
+    note_activation = np.zeros([1, 88])
+    split_spec = list(util.chunks(spec, context_frames))
+    for split in split_spec[-1]:
+        note_activation = np.append(note_activation, get_activation(split, estimator_predictor), axis=0)
+
+    return note_activation[1:]
