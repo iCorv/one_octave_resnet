@@ -107,7 +107,7 @@ def get_hyper_parameters(net):
     elif net == 'ResNet_v1_RNN':
         config = {'use_rnn': True,
                   'use_architecture': 'resnet',
-                  'batch_size': 8,
+                  'batch_size': 1,
                   'dtype': DEFAULT_DTYPE,
                   'clip_norm': 1e-7,
                   # initial learning rate
