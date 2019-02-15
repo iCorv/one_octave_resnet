@@ -197,7 +197,7 @@ def conv_net_init(features, labels, mode, learning_rate_fn, loss_filter_fn, weig
 
     if architecture == 'resnet':
         if use_rnn:
-            logits = resnet_rnn(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
+            logits = resnet_rnn(features, mode == tf.estimator.ModeKeys.TRAIN, batch_size=batch_size, data_format=data_format,
                                 num_classes=num_classes)
         else:
             logits = resnet(features, mode == tf.estimator.ModeKeys.TRAIN, data_format=data_format,
@@ -539,7 +539,7 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
     return net
 
 
-def resnet_rnn(inputs, is_training, data_format='channels_last', num_classes=88):
+def resnet_rnn(inputs, is_training, batch_size, data_format='channels_last', num_classes=88):
     """
 
     :param inputs:
