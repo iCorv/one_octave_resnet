@@ -341,7 +341,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
 
     # get note activation fn from model
     if use_rnn:
-        note_activation = spectrogram_to_non_overlap_note_activation(spectrogram, config['context_frames'], predictor)
+        note_activation = spectrogram_to_non_overlap_note_activation(spectrogram, 2000, predictor)
     else:
         note_activation = spectrogram_to_note_activation(spectrogram, config['context_frames'], predictor)
     print(note_activation.shape)
