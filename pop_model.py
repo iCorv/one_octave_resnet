@@ -539,7 +539,7 @@ def resnet(inputs, is_training, data_format='channels_last', num_classes=88):
     return net
 
 
-def resnet_rnn(inputs, is_training, batch_size, data_format='channels_last', num_classes=88):
+def resnet_rnn(inputs, is_training, batch_size=8, data_format='channels_last', num_classes=88):
     """
 
     :param inputs:
@@ -599,7 +599,7 @@ def resnet_rnn(inputs, is_training, batch_size, data_format='channels_last', num
 
     net = lstm_layer(
         net,
-        batch_size=8,
+        batch_size=batch_size,
         num_units=256,
         lengths=None,
         # needs a vector of length batch size with the entries defining the length of each sequence. In case sequences differ in length
