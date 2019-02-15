@@ -381,9 +381,9 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     notes = np.stack((est_intervals[:, 0], est_pitches, est_intervals[:, 1]-est_intervals[:, 0]), axis=1)
     notes_onset_pred = np.stack((est_intervals_onset_pred[:, 0], est_pitches_onset_pred, est_intervals_onset_pred[:, 1] - est_intervals_onset_pred[:, 0]), axis=1)
     notes_onset_pred_heuristic = np.stack((est_intervals_onset_pred_heuristic[:, 0], est_pitches_onset_pred_heuristic, est_intervals_onset_pred_heuristic[:, 1] - est_intervals_onset_pred_heuristic[:, 0]), axis=1)
-    madmom.io.midi.write_midi(notes, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_noOnset", duration=0.6, velocity=100)
-    madmom.io.midi.write_midi(notes_onset_pred, save_dir + audio_file.split('/')[-1] + "_onsetPrediction", duration=0.6, velocity=100)
-    madmom.io.midi.write_midi(notes_onset_pred_heuristic, save_dir + audio_file.split('/')[-1] + "_onsetHeuristic", duration=0.6, velocity=100)
+    madmom.io.midi.write_midi(notes, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_noOnset.mid", duration=0.6, velocity=100)
+    madmom.io.midi.write_midi(notes_onset_pred, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_onsetPrediction.mid", duration=0.6, velocity=100)
+    madmom.io.midi.write_midi(notes_onset_pred_heuristic, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_onsetHeuristic.mid", duration=0.6, velocity=100)
 
 def get_serving_input_fn(frames, bins):
     def serving_input_fn():
