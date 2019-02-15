@@ -351,7 +351,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     rnn_act_fn = rnn_processor(audio_file)
 
     # predict onsets
-    onset_predictions_timings = proc(note_activation)
+    onset_predictions_timings = proc(rnn_act_fn)
 
     # transform onset predictions to piano roll representation
     onset_predictions = util.piano_roll_rep(onset_frames=(onset_predictions_timings[:, 0] /
@@ -388,7 +388,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
         frames_with_onset_heuristic, frames_per_second=
         audio_config['fps'],
         min_midi_pitch=21,
-        onset_predictions=None,
+        onset_predictions=onset_predictions,
         offset_predictions=None)
 
     # convert intervals and pitches to ‘onset time’ ‘note number’ [‘duration’ [‘velocity’ [‘channel’]]] for digestion by madmom
