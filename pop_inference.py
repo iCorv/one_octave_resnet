@@ -327,7 +327,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     # build predictor
     predictor = build_predictor(net, model_dir)
     # init madmom peak picker
-    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.01, fps=100)
+    proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
     # init piano note processor for onset prediction
     rnn_processor = madmom.features.notes.RNNPianoNoteProcessor()
 
@@ -351,7 +351,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     rnn_act_fn = rnn_processor(audio_file)
 
     # predict onsets
-    onset_predictions_timings = proc(rnn_act_fn)
+    onset_predictions_timings = proc(note_activation)
 
     # transform onset predictions to piano roll representation
     onset_predictions = util.piano_roll_rep(onset_frames=(onset_predictions_timings[:, 0] /

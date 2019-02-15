@@ -74,6 +74,8 @@ def var_eval_frame_wise(frame_wise_metrics, mean_frame_wise, num_pieces):
 
 def piano_roll_rep(onset_frames, midi_pitches, piano_roll_shape, onset_duration=None):
     piano_roll = np.zeros(piano_roll_shape)
+    if onset_frames[-1] >= piano_roll_shape[0]:
+        onset_frames = onset_frames[:-1]
     if onset_duration is not None:
         for onset_frame, midi_pitch in zip(onset_frames, midi_pitches):
             piano_roll[onset_frame:onset_frame+onset_duration, midi_pitch] = 1
