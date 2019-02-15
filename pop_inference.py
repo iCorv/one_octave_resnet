@@ -443,8 +443,8 @@ def spectrogram_to_non_overlap_note_activation(spec, context_frames, estimator_p
     note_activation = np.zeros([1, 88])
     split_spec = list(util.chunks(spec, context_frames))
     for split in split_spec[:-1]:
-        act_fn = get_activation(split, estimator_predictor)
-        print(act_fn.shape)
+        act_fn = np.squeeze(get_activation(split, estimator_predictor))
+        #print(act_fn.shape)
         note_activation = np.append(note_activation, act_fn, axis=0)
 
     return note_activation[1:]
