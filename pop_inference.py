@@ -316,7 +316,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     file.close()
 
 
-def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_heuristic, norm=False):
+def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_heuristic, norm=False, use_rnn=False):
     config = ppp.get_preprocessing_parameters(0)
     audio_config = config['audio_config']
 
@@ -337,12 +337,22 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
 
-    note_activation = spectrogram_to_note_activation(spectrogram, config['context_frames'], predictor)
+    print(spectrogram.shape)
+
+    # get note activation fn from model
+    if use_rnn:
+        note_activation = get_activation(spectrogram, predictor)
+    else:
+        note_activation = spectrogram_to_note_activation(spectrogram, config['context_frames'], predictor)
     frames = np.greater_equal(note_activation, 0.5)
 
+    # get note onset processor
     rnn_act_fn = rnn_processor(audio_file)
+
+    # predict onsets
     onset_predictions_timings = proc(rnn_act_fn)
 
+    # transform onset predictions to piano roll representation
     onset_predictions = util.piano_roll_rep(onset_frames=(onset_predictions_timings[:, 0] /
                                                           (1. / audio_config['fps'])).astype(int),
                                             midi_pitches=onset_predictions_timings[:, 1].astype(int) - 21,
@@ -355,9 +365,11 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
                                                            piano_roll_shape=np.shape(frames),
                                                            onset_duration=onset_duration_heuristic)
 
+    # add onset predictions and onset prediction with heuristic to transcription
     frames_with_onset = np.logical_or(frames, onset_predictions)
     frames_with_onset_heuristic = np.logical_or(frames, onset_predictions_with_heuristic)
 
+    # transform the pianoroll to a interval sequence
     est_intervals, \
     est_pitches = util.pianoroll_to_interval_sequence(frames, frames_per_second=audio_config['fps'],
                                                       min_midi_pitch=21, onset_predictions=None,
@@ -377,13 +389,17 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
         min_midi_pitch=21,
         onset_predictions=onset_predictions,
         offset_predictions=None)
+
     # convert intervals and pitches to ‘onset time’ ‘note number’ [‘duration’ [‘velocity’ [‘channel’]]] for digestion by madmom
     notes = np.stack((est_intervals[:, 0], est_pitches, est_intervals[:, 1]-est_intervals[:, 0]), axis=1)
     notes_onset_pred = np.stack((est_intervals_onset_pred[:, 0], est_pitches_onset_pred, est_intervals_onset_pred[:, 1] - est_intervals_onset_pred[:, 0]), axis=1)
     notes_onset_pred_heuristic = np.stack((est_intervals_onset_pred_heuristic[:, 0], est_pitches_onset_pred_heuristic, est_intervals_onset_pred_heuristic[:, 1] - est_intervals_onset_pred_heuristic[:, 0]), axis=1)
+
+    # save midi files
     madmom.io.midi.write_midi(notes, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_noOnset.mid", duration=0.6, velocity=100)
     madmom.io.midi.write_midi(notes_onset_pred, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_onsetPrediction.mid", duration=0.6, velocity=100)
     madmom.io.midi.write_midi(notes_onset_pred_heuristic, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_onsetHeuristic.mid", duration=0.6, velocity=100)
+
 
 def get_serving_input_fn(frames, bins):
     def serving_input_fn():
