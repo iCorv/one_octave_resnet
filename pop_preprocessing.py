@@ -58,7 +58,7 @@ def wav_to_hpcp(base_dir, filename):
     audio_options['fmax'] = fmax[0]
     hpcp = np.array(hpcp_processor(audio_filename, **audio_options))
 
-    for index in range(1, 6):
+    for index in range(1, len(fmin)-1):
         audio_options['fmin'] = fmin[index]
         audio_options['fmax'] = fmax[index]
         hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)), axis=1)

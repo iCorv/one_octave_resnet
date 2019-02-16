@@ -48,8 +48,8 @@ def get_hpcp_parameters():
               'fps': 100,
               'num_classes': 12,
               # dont use lowest piano octave, since the spectrogram does not provide enough information in the low freq
-              'fmin': [54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0],
-              'fmax': [106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9],
+              'fmin': [27.5, 54.0, 107.0, 215.0, 426.0, 856.0, 1701.0, 3423.0],
+              'fmax': [53.0, 106.0, 214.0, 425.0, 855.0, 1700.0, 3422.0, 6644.9],
               'fref': 440.0,
               'window': 1,
               'norm_filters': False,
