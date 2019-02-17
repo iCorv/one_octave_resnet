@@ -459,4 +459,5 @@ def spectrogram_to_non_overlap_note_activation(spec, context_frames, estimator_p
         #print(act_fn.shape)
         note_activation = np.append(note_activation, act_fn, axis=0)
 
-    return note_activation[1:spec.shape[0]+1]
+    #return note_activation[1:spec.shape[0]+1]
+    return note_activation[:spec.shape[0]]
