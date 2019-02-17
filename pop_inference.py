@@ -48,7 +48,7 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
     savemat(write_file, {"features": note_activation, "labels": ground_truth})
 
 
-def get_note_activation(base_dir, read_file, audio_config, norm, context_frames, predictor, is_hpcp=False):
+def get_note_activation(base_dir, read_file, audio_config, norm, context_frames, predictor, is_hpcp=False, use_rnn=False):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
 
     if is_hpcp:
@@ -72,6 +72,12 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
 
     note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
 
+    # get note activation fn from model
+    if use_rnn:
+        note_activation = spectrogram_to_non_overlap_note_activation(spectrogram, 2000, predictor)
+    else:
+        note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
+
     return note_activation, gt_frame, gt_onset, gt_offset, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt, onset_plus_5_gt, onset_plus_6_gt
 
 
@@ -94,7 +100,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     filenames = [f.strip() for f in filenames]
 
     # build predictor
-    predictor = build_predictor(net, model_dir)
+    predictor, hparams = build_predictor(net, model_dir)
     # init madmom peak picker
     proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
     # init piano note processor for onset prediction
@@ -136,7 +142,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
         onset_plus_4_gt, \
         onset_plus_5_gt, \
         onset_plus_6_gt = get_note_activation(config['audio_path'], file, audio_config,
-                                                                             norm, config['context_frames'], predictor, config['is_hpcp'])
+                                                                             norm, config['context_frames'], predictor, config['is_hpcp'], use_rnn=hparams['use_rnn'])
+
         frames = np.greater_equal(note_activation, 0.5)
         # return precision, recall, f-score, accuracy (without TN)
         frame_wise_metrics.append(util.eval_frame_wise(note_activation, gt_frame))
@@ -325,12 +332,8 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     config = ppp.get_preprocessing_parameters(0)
     audio_config = config['audio_config']
 
-    # load fold
-    # filenames = open(audio_file, 'r').readlines()
-    # filenames = [f.strip() for f in filenames]
-
     # build predictor
-    predictor = build_predictor(net, model_dir)
+    predictor, hparams = build_predictor(net, model_dir)
     # init madmom peak picker
     proc = madmom.features.notes.NotePeakPickingProcessor(threshold=0.1, fps=100)
     # init piano note processor for onset prediction
@@ -346,7 +349,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
 
     # get note activation fn from model
     if use_rnn:
-        note_activation = spectrogram_to_non_overlap_note_activation(spectrogram, 2000, predictor)
+        note_activation = spectrogram_to_non_overlap_note_activation(spectrogram, hparams['frames'], predictor)
     else:
         note_activation = spectrogram_to_note_activation(spectrogram, config['context_frames'], predictor)
     print(note_activation.shape)
@@ -427,7 +430,7 @@ def build_predictor(net, model_dir):
                                                               get_serving_input_fn(hparams['frames'],
                                                                                    hparams['freq_bins']),
                                                               output_key='predictions')
-    return estimator_predictor
+    return estimator_predictor, hparams
 
 
 def get_activation(features, estimator_predictor):
