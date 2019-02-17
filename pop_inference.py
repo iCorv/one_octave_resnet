@@ -70,7 +70,7 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
 
-    note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
+    #note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
 
     # get note activation fn from model
     if use_rnn:
