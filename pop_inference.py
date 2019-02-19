@@ -127,7 +127,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     note_wise_onset_metrics_with_onset_pred_heuristic = []
     note_wise_onset_offset_metrics_with_onset_pred_heuristic = []
 
-    #filenames = filenames[0:3]
+    filenames = filenames[0:1]
     num_pieces = len(filenames)
     index = 0
     onset_duration_heuristic = 10
