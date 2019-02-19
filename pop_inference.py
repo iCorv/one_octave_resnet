@@ -409,7 +409,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     madmom.io.midi.write_midi(notes_onset_pred, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_onsetPrediction.mid", duration=0.6, velocity=100)
     madmom.io.midi.write_midi(notes_onset_pred_heuristic, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_onsetHeuristic.mid", duration=0.6, velocity=100)
 
-    savemat(save_dir + (audio_file.split('/')[-1]).split('.')[0], {"note_activation": note_activation, "spec": spectrogram})
+    savemat(save_dir + (audio_file.split('/')[-1]).split('.')[0], {"note_activation": note_activation, "spec": spectrogram, "onset_act_fn": rnn_act_fn})
 
 
 def get_serving_input_fn(frames, bins):
