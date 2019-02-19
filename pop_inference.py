@@ -9,6 +9,7 @@ import madmom
 import os
 import mir_eval
 from scipy.io import savemat
+from scipy import signal
 
 
 def convert_fold_to_note_activation(fold, mode, net, model_dir, save_dir, norm=False):
@@ -345,14 +346,17 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     if norm:
         spectrogram = np.divide(spectrogram, np.max(spectrogram))
 
-    print(spectrogram.shape)
+
 
     # get note activation fn from model
     if use_rnn:
         note_activation = spectrogram_to_non_overlap_note_activation(spectrogram, hparams['frames'], predictor)
     else:
         note_activation = spectrogram_to_note_activation(spectrogram, config['context_frames'], predictor)
-    print(note_activation.shape)
+
+    win = signal.hann(5)
+    note_activation = signal.convolve(note_activation, win, mode='same') / sum(win)
+
     frames = np.greater_equal(note_activation, 0.5)
 
     # get note onset processor
