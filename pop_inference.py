@@ -444,7 +444,7 @@ def spectrogram_to_note_activation(spec, context_frames, estimator_predictor):
     for frame in range(context_frames, spec.shape[0] - context_frames):
         note_activation[frame, :] = get_activation(spec[frame - context_frames:frame + context_frames + 1, :],
                                                    estimator_predictor)
-    return note_activation
+    return np.append(note_activation[5:], np.zeros([spec.shape[5], 88]), axis=0)
 
 
 def spectrogram_to_non_overlap_note_activation(spec, context_frames, estimator_predictor):
