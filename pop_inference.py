@@ -127,7 +127,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     note_wise_onset_metrics_with_onset_pred_heuristic = []
     note_wise_onset_offset_metrics_with_onset_pred_heuristic = []
 
-    filenames = filenames[0:3]
+    #filenames = filenames[0:3]
     num_pieces = len(filenames)
     index = 0
     onset_duration_heuristic = 10
@@ -444,7 +444,7 @@ def spectrogram_to_note_activation(spec, context_frames, estimator_predictor):
     for frame in range(context_frames, spec.shape[0] - context_frames):
         note_activation[frame, :] = get_activation(spec[frame - context_frames:frame + context_frames + 1, :],
                                                    estimator_predictor)
-    return np.append(note_activation[2:], np.zeros([2, 88]), axis=0)
+    return np.append(note_activation[3:], np.zeros([3, 88]), axis=0)
     #return note_activation
 
 
@@ -461,4 +461,4 @@ def spectrogram_to_non_overlap_note_activation(spec, context_frames, estimator_p
         note_activation = np.append(note_activation, act_fn, axis=0)
 
     #return note_activation[1:spec.shape[0]+1]
-    return note_activation[7:spec.shape[0]+7]
+    return note_activation[5:spec.shape[0]+5]
