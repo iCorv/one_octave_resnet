@@ -356,7 +356,7 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
 
     frames = np.greater_equal(note_activation, 0.5)
     # smooth out activation fn
-    win = signal.hann(50)
+    win = signal.hann(3)
     for idx in range(0, 88):
         frames[:, idx] = signal.convolve(frames[:, idx], win, mode='same') / sum(win)
 
