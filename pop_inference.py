@@ -409,6 +409,8 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     madmom.io.midi.write_midi(notes_onset_pred, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_onsetPrediction.mid", duration=0.6, velocity=100)
     madmom.io.midi.write_midi(notes_onset_pred_heuristic, save_dir + (audio_file.split('/')[-1]).split('.')[0] + "_onsetHeuristic.mid", duration=0.6, velocity=100)
 
+    savemat(save_dir + (audio_file.split('/')[-1]).split('.')[0], {"note_activation": note_activation, "spec": spectrogram})
+
 
 def get_serving_input_fn(frames, bins):
     def serving_input_fn():
@@ -444,7 +446,7 @@ def spectrogram_to_note_activation(spec, context_frames, estimator_predictor):
     for frame in range(context_frames, spec.shape[0] - context_frames):
         note_activation[frame, :] = get_activation(spec[frame - context_frames:frame + context_frames + 1, :],
                                                    estimator_predictor)
-    return np.append(note_activation[3:], np.zeros([3, 88]), axis=0)
+    return np.append(note_activation[8:], np.zeros([8, 88]), axis=0)
     #return note_activation
 
 
