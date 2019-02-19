@@ -136,7 +136,7 @@ def pianoroll_to_interval_sequence(frames,
     def process_active_pitch(pitch, i):
         """Process a pitch being active in a given frame."""
         if pitch not in pitch_start_step:
-            if onset_predictions is not None:
+            if False: #onset_predictions is not None:
                 # If onset predictions were supplied, only allow a new note to start
                 # if we've predicted an onset.
                 if onset_predictions[i, pitch]:
