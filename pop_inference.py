@@ -354,11 +354,11 @@ def transcribe_piano_piece(audio_file, net, model_dir, save_dir, onset_duration_
     else:
         note_activation = spectrogram_to_note_activation(spectrogram, config['context_frames'], predictor)
 
-    frames = np.greater_equal(note_activation, 0.5)
+    #frames = np.greater_equal(note_activation, 0.5)
     # smooth out activation fn
-    win = signal.hann(3)
-    for idx in range(0, 88):
-        frames[:, idx] = signal.convolve(frames[:, idx], win, mode='same') / sum(win)
+    #win = signal.hann(3)
+    #for idx in range(0, 88):
+    #    frames[:, idx] = signal.convolve(frames[:, idx], win, mode='same') / sum(win)
 
     frames = np.greater_equal(note_activation, 0.5)
 
