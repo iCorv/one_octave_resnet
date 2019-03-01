@@ -20,8 +20,8 @@ DEFAULT_DTYPE = tf.float32
 # fold_1: train - 2188, valid - , test - 812
 
 num_examples = 2188
-num_val_examples = 812
-num_test_examples = 812
+num_val_examples = 800
+num_test_examples = 800
 batch_size = 8 # 128 for conv, 8 for RNN
 batches_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 150
