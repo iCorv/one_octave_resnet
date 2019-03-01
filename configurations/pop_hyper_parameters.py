@@ -107,7 +107,7 @@ def get_hyper_parameters(net):
     elif net == 'ResNet_v1_RNN':
         config = {'use_rnn': True,
                   'use_architecture': 'resnet',
-                  'batch_size': 1,
+                  'batch_size': 8, # change to 1 for inference, else 8
                   'dtype': DEFAULT_DTYPE,
                   'clip_norm': 1e-7,
                   # initial learning rate
@@ -126,7 +126,7 @@ def get_hyper_parameters(net):
                   'momentum_cycle': [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
                   # [momentum for momentum in frange(0.95, 0.85, (0.95-0.85)/(30+2))][0:30] + [momentum for momentum in frange(0.85, 0.95, (0.95-0.85)/(30+2))][0:31],
                   'frames': 2000,
-                  'freq_bins': 229, # 76 for octave-wise HPCP, 229 for log spec
+                  'freq_bins': 199, # 76 for octave-wise HPCP, 229 for log spec
                   'num_channels': 1,
                   'num_classes': 88,
                   'num_examples': num_examples,

@@ -44,6 +44,7 @@ def wav_to_spec(base_dir, filename, _audio_options):
 
     # it's necessary to cast this to np.array, b/c the madmom-class holds references to way too much memory
     spectrogram = np.array(spec_type(audio_filename, **audio_options))
+
     return spectrogram
 
 
