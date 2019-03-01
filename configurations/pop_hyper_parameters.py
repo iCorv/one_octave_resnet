@@ -16,9 +16,12 @@ DEFAULT_DTYPE = tf.float32
 # RNN with 2000 frames
 # fold_1: train - 2008, valid - , test - 752
 
-num_examples = 2008
-num_val_examples = 752
-num_test_examples = 752
+# RNN with 2000 frames using also zero padded remainder
+# fold_1: train - 2188, valid - , test - 812
+
+num_examples = 2188
+num_val_examples = 812
+num_test_examples = 812
 batch_size = 8 # 128 for conv, 8 for RNN
 batches_per_epoch = int(round(num_examples/batch_size))
 train_epochs = 150
