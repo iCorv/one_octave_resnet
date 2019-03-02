@@ -28,8 +28,8 @@ def get_preprocessing_parameters(fold_num):
                                'fft_size': 4096,
                                'fps': 100,
                                'num_bands': 48,
-                               'fmin': 30.0,
-                               'fmax': 8000.0,
+                               'fmin': 10.0, # 30
+                               'fmax': 5000.0, # 8000
                                'fref': 440.0,
                                'norm_filters': True,
                                'unique_filters': True,

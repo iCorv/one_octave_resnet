@@ -38,14 +38,31 @@ class Fold(Enum):
 
 def wav_to_spec(base_dir, filename, _audio_options):
     """Transforms the contents of a wav file into a series of spec frames."""
+    # audio_filename = os.path.join(base_dir, filename + '.wav')
+    #
+    # spec_type, audio_options = get_spec_processor(_audio_options, madmom.audio.spectrogram)
+    #
+    # # it's necessary to cast this to np.array, b/c the madmom-class holds references to way too much memory
+    # spectrogram = np.array(spec_type(audio_filename, **audio_options))
+    #
+    # return spectrogram
     audio_filename = os.path.join(base_dir, filename + '.wav')
 
     spec_type, audio_options = get_spec_processor(_audio_options, madmom.audio.spectrogram)
 
-    # it's necessary to cast this to np.array, b/c the madmom-class holds references to way too much memory
-    spectrogram = np.array(spec_type(audio_filename, **audio_options))
 
-    return spectrogram
+    spectrogram = spec_type(audio_filename, **audio_options)
+
+    superflux_proc = madmom.audio.spectrogram.SpectrogramDifferenceProcessor(diff_max_bins=3)
+    superflux_freq = superflux_proc(spectrogram.T)
+    superflux_freq = superflux_freq.T
+
+    superflux_time = superflux_proc(spectrogram)
+    # it's necessary to cast this to np.array, b/c the madmom-class holds references to way too much memory
+    comb = np.array(spectrogram + superflux_time + superflux_freq)
+    comb = comb / np.max(np.max(comb))
+    comb = np.clip(comb, a_min=0.001, a_max=1.0)
+    return comb
 
 
 def wav_to_hpcp(base_dir, filename):
