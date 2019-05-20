@@ -126,6 +126,15 @@ def midi_to_triple_groundtruth(base_dir, filename, dt, n_frames):
     onset_plus_4_gt = np.zeros((n_frames, 88)).astype(np.int64)
     onset_plus_5_gt = np.zeros((n_frames, 88)).astype(np.int64)
     onset_plus_6_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_7_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_8_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_9_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_10_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_11_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_12_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_13_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_14_gt = np.zeros((n_frames, 88)).astype(np.int64)
+    onset_plus_15_gt = np.zeros((n_frames, 88)).astype(np.int64)
     offset_gt = np.zeros((n_frames, 88)).astype(np.int64)
     for onset, _pitch, duration, velocity, _channel in notes:
         pitch = int(_pitch)
@@ -146,8 +155,28 @@ def midi_to_triple_groundtruth(base_dir, filename, dt, n_frames):
             onset_plus_5_gt[frame_start+5, label] = 1
         if frame_start + 6 < frame_end:
             onset_plus_6_gt[frame_start+6, label] = 1
+        if frame_start + 7 < frame_end:
+            onset_plus_7_gt[frame_start+7, label] = 1
+        if frame_start + 8 < frame_end:
+            onset_plus_8_gt[frame_start+8, label] = 1
+        if frame_start + 9 < frame_end:
+            onset_plus_9_gt[frame_start+9, label] = 1
+        if frame_start + 10 < frame_end:
+            onset_plus_10_gt[frame_start+10, label] = 1
+        if frame_start + 11 < frame_end:
+            onset_plus_11_gt[frame_start+11, label] = 1
+        if frame_start + 12 < frame_end:
+            onset_plus_12_gt[frame_start+12, label] = 1
+        if frame_start + 13 < frame_end:
+            onset_plus_13_gt[frame_start+13, label] = 1
+        if frame_start + 14 < frame_end:
+            onset_plus_14_gt[frame_start+14, label] = 1
+        if frame_start + 15 < frame_end:
+            onset_plus_15_gt[frame_start+15, label] = 1
         offset_gt[frame_end, label] = 1
-    return frame_gt, onset_gt, offset_gt, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt, onset_plus_5_gt, onset_plus_6_gt
+    return frame_gt, onset_gt, offset_gt, onset_plus_1_gt, onset_plus_2_gt, onset_plus_3_gt, onset_plus_4_gt, \
+           onset_plus_5_gt, onset_plus_6_gt, onset_plus_7_gt, onset_plus_8_gt, onset_plus_9_gt, onset_plus_10_gt, \
+           onset_plus_11_gt, onset_plus_12_gt, onset_plus_13_gt, onset_plus_14_gt, onset_plus_15_gt
 
 
 def midi_to_groundtruth(base_dir, filename, dt, n_frames, is_chroma=False):
