@@ -18,7 +18,7 @@ def get_preprocessing_parameters(fold_num):
               'chord_folder': './tfrecords-dataset/chords/',
               'chord_fold': './splits/chord-splits/train',
               'chroma_folder': './chroma/',
-              'context_frames': 2000,
+              'context_frames': 5, # 2000
               'is_chroma': False,
               'is_hpcp': False,
               'audio_config': {'num_channels': 1,
