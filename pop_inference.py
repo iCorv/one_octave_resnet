@@ -312,15 +312,15 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     mean_frame_wise_onset_plus_4 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
     mean_frame_wise_onset_plus_5 = util.mean_eval_frame_wise(frame_wise_onset_plus_5_metrics, num_pieces)
     mean_frame_wise_onset_plus_6 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_7 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_8 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_9 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_10 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_11 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_12 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_13 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_14 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
-    mean_frame_wise_onset_plus_15 = util.mean_eval_frame_wise(frame_wise_onset_plus_6_metrics, num_pieces)
+    mean_frame_wise_onset_plus_7 = util.mean_eval_frame_wise(frame_wise_onset_plus_7_metrics, num_pieces)
+    mean_frame_wise_onset_plus_8 = util.mean_eval_frame_wise(frame_wise_onset_plus_8_metrics, num_pieces)
+    mean_frame_wise_onset_plus_9 = util.mean_eval_frame_wise(frame_wise_onset_plus_9_metrics, num_pieces)
+    mean_frame_wise_onset_plus_10 = util.mean_eval_frame_wise(frame_wise_onset_plus_10_metrics, num_pieces)
+    mean_frame_wise_onset_plus_11 = util.mean_eval_frame_wise(frame_wise_onset_plus_11_metrics, num_pieces)
+    mean_frame_wise_onset_plus_12 = util.mean_eval_frame_wise(frame_wise_onset_plus_12_metrics, num_pieces)
+    mean_frame_wise_onset_plus_13 = util.mean_eval_frame_wise(frame_wise_onset_plus_13_metrics, num_pieces)
+    mean_frame_wise_onset_plus_14 = util.mean_eval_frame_wise(frame_wise_onset_plus_14_metrics, num_pieces)
+    mean_frame_wise_onset_plus_15 = util.mean_eval_frame_wise(frame_wise_onset_plus_15_metrics, num_pieces)
 
     mean_frame_wise_offset = util.mean_eval_frame_wise(frame_wise_offset_metrics, num_pieces)
 
@@ -356,15 +356,15 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     file.write("mean (onset + 4 only):   " + str(mean_frame_wise_onset_plus_4) + "\n")
     file.write("mean (onset + 5 only):   " + str(mean_frame_wise_onset_plus_5) + "\n")
     file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_6) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_7) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_8) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_9) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_10) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_11) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_12) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_13) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_14) + "\n")
-    file.write("mean (onset + 6 only):   " + str(mean_frame_wise_onset_plus_15) + "\n")
+    file.write("mean (onset + 7 only):   " + str(mean_frame_wise_onset_plus_7) + "\n")
+    file.write("mean (onset + 8 only):   " + str(mean_frame_wise_onset_plus_8) + "\n")
+    file.write("mean (onset + 9 only):   " + str(mean_frame_wise_onset_plus_9) + "\n")
+    file.write("mean (onset + 10 only):   " + str(mean_frame_wise_onset_plus_10) + "\n")
+    file.write("mean (onset + 11 only):   " + str(mean_frame_wise_onset_plus_11) + "\n")
+    file.write("mean (onset + 12 only):   " + str(mean_frame_wise_onset_plus_12) + "\n")
+    file.write("mean (onset + 13 only):   " + str(mean_frame_wise_onset_plus_13) + "\n")
+    file.write("mean (onset + 14 only):   " + str(mean_frame_wise_onset_plus_14) + "\n")
+    file.write("mean (onset + 15 only):   " + str(mean_frame_wise_onset_plus_15) + "\n")
     file.write("mean (offset only):      " + str(mean_frame_wise_offset) + "\n")
 
     file.write("\n")
@@ -518,8 +518,8 @@ def spectrogram_to_note_activation(spec, context_frames, estimator_predictor):
     for frame in range(context_frames, spec.shape[0] - context_frames):
         note_activation[frame, :] = get_activation(spec[frame - context_frames:frame + context_frames + 1, :],
                                                    estimator_predictor)
-    #return np.append(note_activation[8:], np.zeros([8, 88]), axis=0)
-    return note_activation
+    return np.append(note_activation[8:], np.zeros([8, 88]), axis=0)
+    #return note_activation
 
 
 def spectrogram_to_non_overlap_note_activation(spec, context_frames, estimator_predictor):
