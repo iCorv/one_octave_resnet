@@ -137,7 +137,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
 
     #filenames = filenames[0:3]
     num_pieces = len(filenames)
-    index = 0
+    file_num = 0
     onset_duration_heuristic = 10
     for file in filenames:
         # split file path string at "/" and take the last split, since it's the actual filename
@@ -269,8 +269,8 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
                                                                util.midi_to_hz(
                                                                    est_pitches_onset_pred_heuristic)))
 
-        index += 1
-        print(index)
+        file_num += 1
+        print(file_num)
 
     # frame-wise metrics (precision/recall/f1-score
     mean_frame_wise = util.mean_eval_frame_wise(frame_wise_metrics, num_pieces)
@@ -282,7 +282,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
 
     mean_frame_wise_onset_plus = []
     for index in range(0, n_onset_plus):
-        mean_frame_wise_onset_plus = util.mean_eval_frame_wise(frame_wise_onset_plus_metrics[index], num_pieces)
+        mean_frame_wise_onset_plus.append(util.mean_eval_frame_wise(frame_wise_onset_plus_metrics[index], num_pieces))
     # mean_frame_wise_onset_plus_2 = util.mean_eval_frame_wise(frame_wise_onset_plus_2_metrics, num_pieces)
     # mean_frame_wise_onset_plus_3 = util.mean_eval_frame_wise(frame_wise_onset_plus_3_metrics, num_pieces)
     # mean_frame_wise_onset_plus_4 = util.mean_eval_frame_wise(frame_wise_onset_plus_4_metrics, num_pieces)
