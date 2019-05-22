@@ -432,8 +432,8 @@ def spectrogram_to_note_activation(spec, context_frames, estimator_predictor):
         note_activation[frame, :] = get_activation(spec[frame - context_frames:frame + context_frames + 1, :],
                                                    estimator_predictor)
     #return np.append(note_activation[8:], np.zeros([8, 88]), axis=0) # for ResNet
-    # return np.append(note_activation[8:], np.zeros([8, 88]), axis=0) # for CNN
-    return np.append(note_activation[8:], np.zeros([8, 88]), axis=0)
+    # return np.append(note_activation[3:], np.zeros([3, 88]), axis=0) # for CNN
+    return np.append(note_activation[3:], np.zeros([3, 88]), axis=0)
     #return note_activation
 
 
