@@ -67,6 +67,37 @@ def wav_to_spec(base_dir, filename, _audio_options):
     return comb
 
 
+# def wav_to_hpcp(base_dir, filename):
+#     """Transforms the contents of a wav file into a series of octave-wise HPCP frames."""
+#     audio_filename = os.path.join(base_dir, filename + '.wav')
+#     audio_options = ppp.get_hpcp_parameters()
+#     fmin = audio_options['fmin']
+#     fmax = audio_options['fmax']
+#     hpcp_processor = getattr(madmom.audio.chroma, 'HarmonicPitchClassProfile')
+#     audio_options['fmin'] = fmin[0]
+#     audio_options['fmax'] = fmax[0]
+#     hpcp = np.array(hpcp_processor(audio_filename, **audio_options))
+#
+#     for index in range(1, len(fmin)-1):
+#         audio_options['fmin'] = fmin[index]
+#         audio_options['fmax'] = fmax[index]
+#         hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)), axis=1)
+#     audio_options['fmin'] = fmin[-1]
+#     audio_options['fmax'] = fmax[-1]
+#     # last octave is only used up to 12/3
+#     hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)[:, :int(audio_options['num_classes']
+#                                                                                             / 3)]), axis=1)
+#     # post-processing,
+#     # normalize hpcp by max value per frame. Add a small value to avoid division by zero
+#     # norm_vec = np.max(hpcp, axis=1) + 1e-7
+#     # hpcp = hpcp/norm_vec[:, None]
+#
+#     hpcp = np.log10(hpcp + 1.0)
+#
+#     hpcp = hpcp/np.max(hpcp)
+#     return hpcp
+
+
 def wav_to_hpcp(base_dir, filename):
     """Transforms the contents of a wav file into a series of octave-wise HPCP frames."""
     audio_filename = os.path.join(base_dir, filename + '.wav')
@@ -78,7 +109,7 @@ def wav_to_hpcp(base_dir, filename):
     audio_options['fmax'] = fmax[0]
     hpcp = np.array(hpcp_processor(audio_filename, **audio_options))
 
-    for index in range(1, len(fmin)-1):
+    for index in range(1, 6):
         audio_options['fmin'] = fmin[index]
         audio_options['fmax'] = fmax[index]
         hpcp = np.append(hpcp, np.array(hpcp_processor(audio_filename, **audio_options)), axis=1)
