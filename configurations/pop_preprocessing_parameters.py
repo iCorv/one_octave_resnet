@@ -20,7 +20,7 @@ def get_preprocessing_parameters(fold_num):
               'chroma_folder': './chroma/',
               'context_frames': 7, # 2000 # 2
               'is_chroma': False,
-              'is_hpcp': False,
+              'is_hpcp': True,
               'audio_config': {'num_channels': 1,
                                'sample_rate': 44100,
                                'filterbank': 'LogarithmicFilterbank',
