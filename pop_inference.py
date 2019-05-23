@@ -49,7 +49,7 @@ def write_note_activation_to_mat(write_file, base_dir, read_file, audio_config, 
     savemat(write_file, {"features": note_activation, "labels": ground_truth})
 
 
-def get_note_activation(base_dir, read_file, audio_config, norm, context_frames, predictor, n_onset_plus, is_hpcp=False, use_rnn=False):
+def get_note_activation(base_dir, read_file, audio_config, norm, context_frames, predictor, n_onset_plus, is_hpcp=False, use_rnn=False, offset=0):
     """Transforms a wav and mid file to features and writes them to a tfrecords file."""
 
     if is_hpcp:
@@ -72,12 +72,12 @@ def get_note_activation(base_dir, read_file, audio_config, norm, context_frames,
     if use_rnn:
         note_activation = spectrogram_to_non_overlap_note_activation(spectrogram, 2000, predictor)
     else:
-        note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor)
+        note_activation = spectrogram_to_note_activation(spectrogram, context_frames, predictor, offset)
 
     return note_activation, gt_frame, gt_onset, gt_offset, onset_plus
 
 
-def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, norm=False, n_onset_plus=25):
+def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, norm=False, n_onset_plus=25, offset=0):
     """Error metrics for an entire fold as defined in the preprocessing parameters.
         fold - Fold.fold_1, Fold.fold_2, Fold.fold_3, Fold.fold_4, Fold.fold_benchmark
         mode - 'train', 'valid' or 'test' to address the correct config parameter
@@ -121,7 +121,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
     note_wise_onset_metrics_with_onset_pred_heuristic = []
     note_wise_onset_offset_metrics_with_onset_pred_heuristic = []
 
-    #filenames = filenames[0:3]
+    filenames = filenames[0:3]
     num_pieces = len(filenames)
     file_num = 0
     onset_duration_heuristic = 10
@@ -132,7 +132,7 @@ def compute_all_error_metrics(fold, mode, net, model_dir, save_dir, save_file, n
         gt_offset, \
         onset_plus = get_note_activation(config['audio_path'], file, audio_config,
                                          norm, config['context_frames'], predictor, n_onset_plus, config['is_hpcp'],
-                                         use_rnn=hparams['use_rnn'])
+                                         use_rnn=hparams['use_rnn'], offset=offset)
 
         frames = np.greater_equal(note_activation, 0.5)
         # return precision, recall, f-score, accuracy (without TN)
@@ -426,15 +426,15 @@ def get_activation(features, estimator_predictor):
     return p['probabilities']
 
 
-def spectrogram_to_note_activation(spec, context_frames, estimator_predictor):
+def spectrogram_to_note_activation(spec, context_frames, estimator_predictor, offset=0):
     note_activation = np.zeros([spec.shape[0], 88])
     for frame in range(context_frames, spec.shape[0] - context_frames):
         note_activation[frame, :] = get_activation(spec[frame - context_frames:frame + context_frames + 1, :],
                                                    estimator_predictor)
-    #return np.append(note_activation[8:], np.zeros([8, 88]), axis=0) # for ResNet
+    #return np.append(note_activation[3:], np.zeros([3, 88]), axis=0) # for ResNet
     # return np.append(note_activation[3:], np.zeros([3, 88]), axis=0) # for CNN
-    return np.append(note_activation[3:], np.zeros([3, 88]), axis=0)
-    #return note_activation
+    return np.append(note_activation[offset:], np.zeros([offset, 88]), axis=0)
+    # return note_activation
 
 
 def spectrogram_to_non_overlap_note_activation(spec, context_frames, estimator_predictor):
