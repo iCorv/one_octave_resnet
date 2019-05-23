@@ -18,9 +18,9 @@ def get_preprocessing_parameters(fold_num):
               'chord_folder': './tfrecords-dataset/chords/',
               'chord_fold': './splits/chord-splits/train',
               'chroma_folder': './chroma/',
-              'context_frames': 7, # 2000 # 2
+              'context_frames': 2000, # 2000 # 2
               'is_chroma': False,
-              'is_hpcp': True,
+              'is_hpcp': False,
               'audio_config': {'num_channels': 1,
                                'sample_rate': 44100,
                                'filterbank': 'LogarithmicFilterbank',
@@ -28,8 +28,8 @@ def get_preprocessing_parameters(fold_num):
                                'fft_size': 4096,
                                'fps': 100,
                                'num_bands': 48,
-                               'fmin': 30.0, # 30.0 # 10.0
-                               'fmax': 8000.0, # 8000.0 # 5000.0
+                               'fmin': 10.0, # 30.0 # 10.0
+                               'fmax': 5000.0, # 8000.0 # 5000.0
                                'fref': 440.0,
                                'norm_filters': True,
                                'unique_filters': True,
